@@ -162,6 +162,25 @@ REST API는 Django REST Framework를 사용합니다:
 3. 코드 리뷰 후 develop에 머지
 4. develop에서 테스트 완료 후 main머지
 
+### 코드 작업중에 팀원이 pr요청 -> 원격 develop 브랜치가 최신화 되었을때
+
+1. 내가 작업하던 브랜치에 최신화된 원격 기록 가져오기
+ ```
+ git fetch origin
+ ```
+ 2. 원격 develop rebase
+ ```
+ git rebase origin develop
+ ```
+3. 로컬 develop 브랜치로 이동
+```
+git switch develop
+```
+4. 원격 내용으로 최신화
+```
+git pull origin develop
+```
+
 
 ### 4.Pull Request
 PR시 수정에 대한 상세한 설명 작성
