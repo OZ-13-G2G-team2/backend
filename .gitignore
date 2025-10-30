@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pyd
+*.pyo
+
+# 가상환경
+.venv/
+.env
+*.env
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Django
+*.log
+*.pot
+*.pyc
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+
+# VSCode
+.vscode/
+
+# 기타
+*.swp
+*.swo
