@@ -1,14 +1,12 @@
 # Python
-config/__pycache__/
 __pycache__/
+config/__pycache__/
 *.py[cod]
 *.pyo
 *.pyd
 *.pyc
-*.pyd
-*.pyo
 
-# IDE
+#IDE
 .idea/
 
 # 가상환경
@@ -24,7 +22,6 @@ __pycache__/
 # Django
 *.log
 *.pot
-*.pyc
 *.sqlite3
 db.sqlite3
 media/
