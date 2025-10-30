@@ -1,11 +1,15 @@
 # Python
 __pycache__/
+config/__pycache__/
 *.py[cod]
 *.pyo
 *.pyd
 *.pyc
 *.pyd
 *.pyo
+
+#IDE
+.idea/
 
 # 가상환경
 .venv/
