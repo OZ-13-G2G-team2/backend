@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'products',
     'orders',
     # Third-party
-    'rest_framework'
+    'rest_framework',
     "rest_framework_simplejwt",
     'django_filters',
 ]
