@@ -26,9 +26,9 @@ class Product(models.Model):
         related_name='products',
         blank=True
     )
-    name = models.CharField(max_length=255, not_null=True)
+    name = models.CharField(max_length=255, null=False)
     origin = models.CharField(max_length=100)
-    price = models.DecimalField(max_digits=10, decimal_places=2, not_null=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2, null=False)
     overseas_shipping = models.BooleanField(default=False)
     delivery_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     description = models.TextField()
@@ -39,7 +39,7 @@ class Product(models.Model):
 class ProductImages(models.Model):
     image_id = models.AutoField(primary_key=True)
     product_id = models.ForeignKey('Product', on_delete=models.CASCADE)
-    image_url = models.URLField(not_null=True)
+    image_url = models.URLField(null=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
 
