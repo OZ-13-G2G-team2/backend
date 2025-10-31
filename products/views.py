@@ -1,6 +1,6 @@
 from rest_framework import generics, permissions
-from products.models import Product
 from .serializers import ProductSerializer
+from .models import Product
 
 
 # 상품 목록 조회 + 등록
@@ -13,5 +13,14 @@ class ProductListCreateAPIView(generics.ListCreateAPIView):
             return [permissions.IsAuthenticated()]
         return [permissions.AllowAny()]
 
-    def preform_create(self, serializer):
-        serializer.save(seller_id=self.request.user.id)
+    def perform_create(self, serializer):
+        serializer.save(seller=self.request.user.id)
+
+class ProductDetailAPIView(generics.RetrieveAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+
+
+
+
+

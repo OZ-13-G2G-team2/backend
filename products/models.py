@@ -31,21 +31,29 @@ class Category(models.Model):
 
 class Product(models.Model):
     product_id = models.AutoField(primary_key=True)
-    seller_id = models.ForeignKey('users.User', on_delete=models.CASCADE)
+    seller = models.ForeignKey('users.User',verbose_name="판매자", on_delete=models.CASCADE)
     categories = models.ManyToManyField(
         'Category',
+        verbose_name="카테고리",
         related_name='products',
         blank=True
     )
-    name = models.CharField(max_length=255, null=False)
-    origin = models.CharField(max_length=100)
-    price = models.DecimalField(max_digits=10, decimal_places=2, null=False)
-    overseas_shipping = models.BooleanField(default=False)
-    delivery_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    description = models.TextField()
-    sold_out = models.BooleanField(default=False)
+    name = models.CharField(verbose_name="상품명", max_length=255, null=False)
+    origin = models.CharField( verbose_name="원산지", max_length=100)
+    price = models.DecimalField(verbose_name="가격", max_digits=10, decimal_places=2, null=False)
+    overseas_shipping = models.BooleanField(verbose_name="해외배송 여부", default=False)
+    delivery_fee = models.DecimalField(verbose_name="배송비", max_digits=10, decimal_places=2, default=0)
+    description = models.TextField(verbose_name="상품설명")
+    quantity = models.PositiveIntegerField(
+        default=0,
+        verbose_name="수량"
+    )
+    sold_out = models.BooleanField(verbose_name="품절버튼", default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'{self.name} - {self.price}원'
 
     class Meta:
         verbose_name = '상품'
