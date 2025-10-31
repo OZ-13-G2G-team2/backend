@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     'orders',
     # Third-party
     'rest_framework',
-    "rest_framework_simplejwt",
+    'rest_framework_simplejwt',
+    'drf_spectacular',
     'django_filters',
 ]
 
@@ -106,8 +107,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-AUTH_USER_MODEL = "users.User"
-
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
@@ -136,7 +135,9 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
+
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),  # 엑세스 토큰 만료 시간

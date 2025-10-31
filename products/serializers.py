@@ -24,7 +24,7 @@ class ProductImagesSerializer(serializers.ModelSerializer):
         fields = ['image_url']
 
 class ProductSerializer(serializers.ModelSerializer):
-    category = serializers.StringRelatedField(many=True)
+    categories = serializers.StringRelatedField(many=True)
     images = ProductImagesSerializer(many=True, read_only=True)
     options = ProductOptionSerializer(many=True, read_only=True)
 
