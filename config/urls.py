@@ -14,6 +14,8 @@ urlpatterns = [
     # reviews 앱 include
     path("api/reviews/", include("reviews.urls")),
 
+    path("api/orders/", include("orders.urls", namespace="orders")),
+
 
 
     # 스키마 자동 생성
