@@ -3,7 +3,7 @@ from users.models import User
 
 
 class Seller(models.Model):
-    seller_id = models.BigAutoField(primary_key=True)
+    seller = models.BigAutoField(primary_key=True)
 
     user = models.OneToOneField(
         User,
