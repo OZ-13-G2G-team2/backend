@@ -5,8 +5,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, Sp
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # path('', 메인 페이지),
-
+    # path('', 메인 페이지)
     # users 앱 include
     path('api/users/', include('users.urls', namespace='users')),
     # products 앱 include
