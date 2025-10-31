@@ -25,8 +25,9 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name='email',
         unique=True,
     )
+
     # 권한 부분
-    is_active = models.BooleanField(default=True) # 개발 단계 인증 구현 전까지 임시 True
+    is_active = models.BooleanField(default=True) # todo 개발 단계 인증 구현 전까지 임시 True✅
     is_staff = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
 
