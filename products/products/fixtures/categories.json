@@ -16,3 +16,4 @@
     {"model": "products.category", "pk": 12, "fields": {"name": "농산가공", "group": 2}},
     {"model": "products.category", "pk": 13, "fields": {"name": "기타", "group": 2}}
 ]
+
