@@ -16,11 +16,10 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
         return user
     def create_superuser(self, email, password=None, **extra_fields):
-        extra_fields.setdefault('is_admin', True)
         extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_active', True)
 
-        if extra_fields.get('is_admin') is not True:
+        if extra_fields.get('is_staff') is not True:
             raise ValueError("슈퍼유저 설정을 해주세요")
         return self.create_user(email, password, **extra_fields)
 
@@ -30,7 +29,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         unique=True,
     )
     is_active = models.BooleanField(default=True) # 개발 단계 인증 구현 전까지 임시 True
-    is_admin = models.BooleanField(default=False)
+    is_staff = models.BooleanField(default=False)
 
     username = models.CharField(max_length=20)
     address = models.CharField(max_length=100)
