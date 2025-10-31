@@ -7,11 +7,11 @@ from .serializers import UserSerializer, UserRegisterSerializer
 class UserRegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserRegisterSerializer
-    permission_classes = [permissions.AllowAny]  # 누구나 접근 가능
+    permission_classes = [permissions.AllowAny]
 
 # 유저 정보 조회 API
 class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]  # 로그인 필요
+    permission_classes = [permissions.IsAuthenticated]
     lookup_field = 'id'
