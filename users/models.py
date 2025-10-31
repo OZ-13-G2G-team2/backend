@@ -8,9 +8,6 @@ class UserManager(BaseUserManager):
         if not email:
             raise ValueError('이메일은 필수 기재 사항입니다.')
 
-        user = self.model(
-            email=self.normalize_email(email)
-        )
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
@@ -28,8 +25,10 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name='email',
         unique=True,
     )
+    # 권한 부분
     is_active = models.BooleanField(default=True) # 개발 단계 인증 구현 전까지 임시 True
     is_staff = models.BooleanField(default=False)
+    is_admin = models.BooleanField(default=False)
 
     username = models.CharField(max_length=20)
     address = models.CharField(max_length=100)
