@@ -11,7 +11,8 @@ urlpatterns = [
     # products 앱 include
     path('api/products/', include('products.urls', namespace='products')),
 
-
+    # reviews 앱 include
+    path("api/reviews/", include("reviews.urls")),
 
 
 
