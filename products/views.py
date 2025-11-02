@@ -1,8 +1,16 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status, serializers
 from rest_framework.response import Response
-from .serializers import ProductSerializer, CategorySerializer
+from rest_framework.parsers import MultiPartParser, FormParser
+from .serializers import (
+    ProductSerializer,
+    CategorySerializer,
+    ProductStockSerializer,
+    ProductImagesSerializer,
+)
 from .models import Product, Category, CategoryGroup
 from django.http.response import Http404
+
 
 # 상품 목록 조회 + 등록
 class ProductListCreateAPIView(generics.ListCreateAPIView):
@@ -10,36 +18,40 @@ class ProductListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = ProductSerializer
 
     def get_permissions(self):
-        if self.request.method == 'POST':
+        if self.request.method == "POST":
             return [permissions.IsAuthenticated()]
         return [permissions.AllowAny()]
 
     def perform_create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if not request.user.is_authenticated:
-            return Response({"error": "인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"error": "인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN
+            )
         try:
             serializer.is_valid(raise_exception=True)
             serializer.save(seller=request.user)
 
         except serializers.ValidationError as e:
-            return Response({"error":"잘못된 입력입니다.", "details": e.detail})
+            return Response({"error": "잘못된 입력입니다.", "details": e.detail})
 
         except Exception as e:
-            return Response({"error":str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )
 
 
 # 상품 상세페이지 / 수정 / 삭제
 class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    lookup_field = 'product_id'
+    lookup_field = "product_id"
 
     def get_permissions(self):
-        if self.request.method in ['PUT', 'PATCH', 'DELETE']:
+        if self.request.method in ["PUT", "PATCH", "DELETE"]:
             return [permissions.IsAuthenticated()]
         return [permissions.AllowAny()]
 
@@ -50,8 +62,8 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
             return Response(serializer.data)
         except Http404:
             return Response(
-                {"detail":"해당 상품을 찾을 수 없습니다."},
-                status=status.HTTP_404_NOT_FOUND
+                {"detail": "해당 상품을 찾을 수 없습니다."},
+                status=status.HTTP_404_NOT_FOUND,
             )
 
     def put(self, request, *args, **kwargs):
@@ -59,26 +71,36 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
             product = self.get_object()
         except Http404:
             return Response(
-                {"detail":"해당 상품을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND
+                {"detail": "해당 상품을 찾을 수 없습니다."},
+                status=status.HTTP_404_NOT_FOUND,
             )
         if product.seller != self.request.user.id:
-            return Response({"error":"인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"error": "인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN
+            )
 
         serializer = self.get_serializer(product, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         else:
-            return Response({"error":"잘못된 입력입니다."}, status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "잘못된 입력입니다."}, status.HTTP_400_BAD_REQUEST
+            )
 
     def delete(self, request, *args, **kwargs):
         try:
             product = self.get_object()
         except Http404:
-            return Response({"detail":"해당 상품을 찾을 수 없습니다."},status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "해당 상품을 찾을 수 없습니다."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         if product.seller != self.request.user.id:
-            return Response({"error":"인증이 필요합니다."},status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"error": "인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN
+            )
 
         product.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -93,6 +115,35 @@ class CategoryByGroupAPIView(generics.ListAPIView):
         if not CategoryGroup.objects.filter(id=group_id).exists():
             raise Http404("해당 카테고리는 존재하지 않습니다.")
 
-        return Category.objects.filter(group_id=group_id).order_by('id')
+        return Category.objects.filter(group_id=group_id).order_by("id")
 
 
+class ProductStockUpdateAPIView(generics.UpdateAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductStockSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def patch(self, request, *args, **kwargs):
+        product = self.get_object()
+
+        if product.seller != request.user:
+            return Response(
+                {"error": "인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN
+            )
+
+        serializer = self.get_serializer(product, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# 이미지 등록 view
+class ProductImageUploadAPIView(generics.CreateAPIView):
+    serializer_class = ProductImagesSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def perform_create(self, serializer):
+        product_id = self.kwargs.get("product_id")
+        product = get_object_or_404(Product, id=product_id)
+        serializer.save(product=product)

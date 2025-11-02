@@ -14,5 +14,7 @@ urlpatterns = [
     path("<int:pk>/", ReviewUpdateView.as_view(), name="review-update"),  # PUT
     path("<int:pk>/", ReviewDeleteView.as_view(), name="review-delete"),  # DELETE
     path("<int:review_id>/like/", ReviewLikeView.as_view(), name="review-like"),  # POST
-    path("<int:review_id>/image/", ReviewImageUploadView.as_view(), name="review-image"),  # POST
+    path(
+        "<int:review_id>/image/", ReviewImageUploadView.as_view(), name="review-image"
+    ),  # POST
 ]

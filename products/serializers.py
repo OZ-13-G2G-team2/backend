@@ -3,16 +3,26 @@ from .models import Product, ProductImages, Category, ProductOptionValue
 
 
 class CategorySerializer(serializers.ModelSerializer):
-    group_name = serializers.CharField(source='group.name', read_only=True)
+    group_name = serializers.CharField(source="group.name", read_only=True)
 
     class Meta:
         model = Category
-        fields = ['id', 'group_name', 'name']
+        fields = ["id", "group_name", "name"]
+
 
 class ProductImagesSerializer(serializers.ModelSerializer):
+    images_url = serializers.ImageField(source="image_url", read_only=True)
+
     class Meta:
         model = ProductImages
-        fields = ['image_id','image_url']
+        fields = ["image_id", "product", "user", "images_url"]
+
+    def get_image_url(self, obj):
+        request = self.context.get("request")
+        if request:
+            return request.build_absolute_uri(obj.image_url.url)
+        return obj.image_url.url
+
 
 # 상품 상세 조회 시 옵션과 추가금 표시
 class ProductOptionValueSerializer(serializers.ModelSerializer):
@@ -20,13 +30,13 @@ class ProductOptionValueSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProductOptionValue
-        fields = ['id', 'category', 'extra_price']
+        fields = ["id", "category", "extra_price"]
+
 
 class ProductSerializer(serializers.ModelSerializer):
     categories = serializers.StringRelatedField(many=True)
     images = ProductImagesSerializer(many=True, read_only=True)
     option_values = ProductOptionValueSerializer(many=True, read_only=True)
-
 
     class Meta:
         model = Product
@@ -34,3 +44,7 @@ class ProductSerializer(serializers.ModelSerializer):
         read_only_fields = ("seller",)
 
 
+class ProductStockSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ["stock"]
