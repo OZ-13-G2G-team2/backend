@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
+from products.views import CategoryByGroupAPIView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -19,6 +20,11 @@ urlpatterns = [
 
 
 
+    # 카테고리 관련
+    path('api/categories/group/<int:group_id>/', CategoryByGroupAPIView.as_view(), name='category-by-group'),
+
+
+
     # 스키마 자동 생성
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
 
@@ -29,3 +35,5 @@ urlpatterns = [
     path('redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 
 ]
+
+
