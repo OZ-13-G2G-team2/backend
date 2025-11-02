@@ -8,7 +8,6 @@ urlpatterns = [
     # path('', 메인 페이지)
     # users 앱 include
     path('api/users/', include('users.urls', namespace='users')),
-    # products 앱 include
     path('api/products/', include('products.urls', namespace='products')),
 
     # reviews 앱 include

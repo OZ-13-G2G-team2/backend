@@ -17,7 +17,7 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault('is_active', True)
 
         if extra_fields.get('is_staff') is not True:
-            raise ValueError("슈퍼유저 설정을 해주세요")
+            raise ValueError("is_staff 설정이 되어야 합니다.")
         return self.create_user(email, password, **extra_fields)
 
 class User(AbstractBaseUser, PermissionsMixin):

@@ -1,12 +1,14 @@
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from .models import User
+from sellers.models import Seller
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'email', 'username', 'address', 'phone_number', 'created_at', 'updated_at',  'is_active', 'is_admin', 'is_staff')
-        read_only_fields = ('id', 'created_at', 'updated_at',  'is_active', 'is_admin', 'is_staff')
+        fields = ('id', 'email', 'username', 'address', 'phone_number', 'created_at', 'updated_at',  'is_active', 'is_staff')
+        read_only_fields = ('id', 'created_at', 'updated_at',  'is_active', 'is_staff')
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
