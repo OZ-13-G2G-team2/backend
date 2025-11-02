@@ -14,7 +14,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     # path('', 메인 페이지)
     # users 앱 include
-    path("api/users/", include("users.urls", namespace="users")),
+    path('api/users/', include('users.urls', namespace='users')),
     #sellers 앱 include
     path('api/sellers/', include('sellers.urls', namespace='sellers')),
     #products 앱 include
