@@ -4,8 +4,20 @@ from products import views
 app_name = "products"
 
 urlpatterns = [
-    path('',views.ProductListCreateAPIView.as_view(), name='product_list'),
-    path('<int:product_id>/', views.ProductRetrieveUpdateDestroyAPIView.as_view(), name='product_detail'),
-
-
+    path("", views.ProductListCreateAPIView.as_view(), name="product-list"),
+    path(
+        "<int:product_id>/",
+        views.ProductRetrieveUpdateDestroyAPIView.as_view(),
+        name="product-detail",
+    ),
+    path(
+        "<int:product_id>/stock/",
+        views.ProductStockUpdateAPIView.as_view(),
+        name="product-stock",
+    ),
+    path(
+        "<int:product_id>/images/",
+        views.ProductImageUploadAPIView.as_view(),
+        name="product-image-upload",
+    ),
 ]

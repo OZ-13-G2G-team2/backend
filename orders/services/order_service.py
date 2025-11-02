@@ -1,6 +1,6 @@
-
 from orders.models import Order
 from orders.exceptions import OrderNotFound, InvalidOrderStatus
+
 
 class OrderService:
     @staticmethod
