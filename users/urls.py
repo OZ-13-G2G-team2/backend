@@ -8,5 +8,5 @@ urlpatterns = [
     path('signup/seller', SellerRegisterView.as_view(), name='seller-signup'),
     path('login/', UserLoginView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', UserTokenRefreshView.as_view(), name='token_refresh'),
-    path('<int:id>/me', UserDetailView.as_view(), name='user-detail'),
+    path('<int:id>/', UserDetailView.as_view(), name='user-detail'),
 ]
