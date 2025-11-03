@@ -1,6 +1,7 @@
 from orders.models import OrderItem
 from orders.exceptions import OrderNotFound
 
+
 class OrderItemService:
 
     @staticmethod
@@ -18,9 +19,9 @@ class OrderItemService:
         for data in items_data:
             item = OrderItem.objects.create(
                 order=order,
-                product=data['product'],
-                quantity=data['quantity'],
-                price_at_purchase=data['price_at_purchase']
+                product=data["product"],
+                quantity=data["quantity"],
+                price_at_purchase=data["price_at_purchase"],
             )
             created_items.append(item)
         return created_items
