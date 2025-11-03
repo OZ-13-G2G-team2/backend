@@ -19,8 +19,9 @@ class Order(models.Model):
     )
     order_date = models.DateTimeField(auto_now_add=True, verbose_name="주문일")
     total_amount = models.DecimalField(
-        max_digits=10, decimal_places=2, verbose_name="총 금액"
+        max_digits=10, decimal_places=2, null=False, default=0
     )
+
     address = models.CharField(
         "주소", max_length=255, default="", null=False, blank=False
     )

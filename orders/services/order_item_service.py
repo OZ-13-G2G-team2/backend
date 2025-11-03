@@ -3,7 +3,6 @@ from orders.exceptions import OrderNotFound
 
 
 class OrderItemService:
-
     @staticmethod
     def get_item(item_id, user=None):
         try:
