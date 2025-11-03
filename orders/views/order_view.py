@@ -3,10 +3,12 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from orders.models import Order
+from orders.models import Order,OrderItem
 from orders.serializers.order_serializer import OrderSerializer
 from orders.serializers.order_item_serializer import OrderItemSerializer
 from orders.services import OrderService
+from products.models import Product
+
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -15,10 +17,36 @@ class OrderViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Order.objects.filter(user=self.request.user).order_by("-order_date")
+        queryset = Order.objects.all().order_by("-order_date")
+        user_id = self.request.query_params.get("user_id")
+        if user_id:
+            queryset = queryset.filter(user_id=user_id)
+        else:
+            queryset = queryset.filter(user=self.request.user)
+        return queryset
 
     def perform_create(self, serializer):
         order = serializer.save(user=self.request.user)
+        order_items_data = self.request.data.get("items", [])
+
+        for item in order_items_data:
+            try:
+                product = Product.objects.get(id=item["product_id"])
+            except Product.DoesNotExist:
+                raise ValueError(f"존재하지 않는 상품: {item['product_id']}")
+
+            quantity = item.get("quantity", 0)
+            if quantity <= 0:
+                raise ValueError(f"잘못된 수량: {quantity}")
+
+            price_at_purchase = item.get("price_at_purchase") or product.price
+            OrderItem.objects.create(
+                order=order,
+                product=product,
+                quantity=quantity,
+                price_at_purchase=price_at_purchase
+            )
+
         order.calculate_total()
 
     @action(detail=True, methods=["get"])
@@ -30,7 +58,6 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["patch"], url_path="status")
     def update_status(self, request, pk=None):
-        """주문 상태 변경"""
         order = self.get_object()
         new_status = request.data.get("status")
         update_note = request.data.get("update_note", "")

@@ -1,8 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework import status
 from django.contrib.auth import get_user_model
-from orders.models import Order
-from order_items.models import OrderItem
+from orders.models import Order, OrderItem
 from products.models import Product
 
 User = get_user_model()
@@ -16,7 +15,7 @@ class OrderItemsAPITest(APITestCase):
 
         self.product = Product.objects.create(name="티셔츠", price=12000)
         self.order = Order.objects.create(
-            user=self.user, user_address="서울시 강남구", payment_method="card"
+            user=self.user, user_address="m", payment_method="card"
         )
         self.order_item = OrderItem.objects.create(
             order=self.order, product=self.product, quantity=2, price_at_purchase=12000
