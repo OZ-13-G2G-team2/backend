@@ -14,11 +14,14 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     # path('', 메인 페이지)
     # users 앱 include
-    path("api/users/", include("users.urls", namespace="users")),
-    # products 앱 include
-    path("api/products/", include("products.urls", namespace="products")),
+    path('api/users/', include('users.urls', namespace='users')),
+    #sellers 앱 include
+    path('api/sellers/', include('sellers.urls', namespace='sellers')),
+    #products 앱 include
+    path('api/products/', include('products.urls', namespace='products')),
     # reviews 앱 include
     path("api/reviews/", include("reviews.urls")),
+    # orders 앱 include
     path("api/orders/", include("orders.urls", namespace="orders")),
     # 카테고리 관련
     path(
