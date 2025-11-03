@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from products.models import Product  # 상품 모델과 연결
+from backend.products.models import Product  # 상품 모델과 연결
 
 
 class Review(models.Model):
