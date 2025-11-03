@@ -31,7 +31,7 @@ class OrdersAPITest(APITestCase):
         response = self.client.patch(
             f"/api/rders/{self.order.id}/status/",
             {"status": "shipping", "update_note": "테스트"},
-            format="jason"
+            format="jason",
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["status"], "shipping")

@@ -3,12 +3,11 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from orders.models import Order,OrderItem
+from orders.models import Order, OrderItem
 from orders.serializers.order_serializer import OrderSerializer
 from orders.serializers.order_item_serializer import OrderItemSerializer
 from orders.services import OrderService
 from products.models import Product
-
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -44,7 +43,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 order=order,
                 product=product,
                 quantity=quantity,
-                price_at_purchase=price_at_purchase
+                price_at_purchase=price_at_purchase,
             )
 
         order.calculate_total()

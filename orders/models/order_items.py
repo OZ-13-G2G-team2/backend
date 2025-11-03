@@ -4,7 +4,6 @@ from products.models import Product
 from django.utils import timezone
 
 
-
 class OrderItem(models.Model):
     order = models.ForeignKey(
         Order, on_delete=models.CASCADE, related_name="items", verbose_name="주문"
@@ -15,7 +14,9 @@ class OrderItem(models.Model):
         related_name="order_items",
         verbose_name="상품",
     )
-    change_reason = models.CharField("변경 사유",max_length=255, blank=True, default="")
+    change_reason = models.CharField(
+        "변경 사유", max_length=255, blank=True, default=""
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     quantity = models.PositiveIntegerField(verbose_name="수량")
@@ -40,10 +41,12 @@ class OrderItem(models.Model):
         return self.subtotal * (1 + tax_rate)
 
     def reduce_stock(self, diff_quantity=None):
-        quantity_to_reduce = diff_quantity if diff_quantity is not None else self.quantity
+        quantity_to_reduce = (
+            diff_quantity if diff_quantity is not None else self.quantity
+        )
         if self.product.stock >= quantity_to_reduce:
             self.product.stock -= quantity_to_reduce
-            self.product.save(update_fields=['stock'])
+            self.product.save(update_fields=["stock"])
             return True
         return False
 

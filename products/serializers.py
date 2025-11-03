@@ -35,8 +35,7 @@ class ProductOptionValueSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     categories = serializers.PrimaryKeyRelatedField(
-        many=True,
-        queryset=Category.objects.all()
+        many=True, queryset=Category.objects.all()
     )
     images = ProductImagesSerializer(many=True, read_only=True)
     option_values = ProductOptionValueSerializer(many=True, read_only=True)
@@ -50,12 +49,9 @@ class ProductSerializer(serializers.ModelSerializer):
 class ProductStockSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ["stock", 'sold_out']
+        fields = ["stock", "sold_out"]
 
     def update(self, instance, validated_data):
         instance.stock = validated_data.get("stock", instance.stock)
         instance.save()
         return instance
-
-
-

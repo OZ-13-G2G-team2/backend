@@ -13,11 +13,13 @@ class CartViewSet(viewsets.ViewSet):
     # POST /apicarts/ : 장바구니 추가
     def create(self, request):
         user = request.user
-        product_id = request.data.get('product_id')
-        quantity = request.data.get('quantity', 1)
+        product_id = request.data.get("product_id")
+        quantity = request.data.get("quantity", 1)
 
         if not Product.objects.filter(id=product_id).exists():
-            return Response({"error": "유효하지 않은 상품 ID가 존재합니다."}, status=400)
+            return Response(
+                {"error": "유효하지 않은 상품 ID가 존재합니다."}, status=400
+            )
 
         cart, _ = Cart.objects.get_or_create(user=user)
         if CartItem.objects.filter(cart=cart, product_id=product_id).exists():
@@ -28,7 +30,7 @@ class CartViewSet(viewsets.ViewSet):
 
     # GET /apicarts/?user_id={id} : 장바구니 조회
     def list(self, request):
-        user_id = request.query_params.get('user_id')
+        user_id = request.query_params.get("user_id")
         if not user_id:
             return Response({"error": "user_id 필요"}, status=400)
 
@@ -47,7 +49,7 @@ class CartViewSet(viewsets.ViewSet):
         except CartItem.DoesNotExist:
             return Response({"error": "잘못된 수량"}, status=400)
 
-        item.quantity = request.data.get('quantity', item.quantity)
+        item.quantity = request.data.get("quantity", item.quantity)
         item.save()
         return Response({"message": "수정이 완료되었습니다."}, status=200)
 
@@ -62,10 +64,10 @@ class CartViewSet(viewsets.ViewSet):
         return Response({"message": "상품이 삭제되었습니다."}, status=200)
 
     # POST /apicarts/bulk/ : 여러 상품 추가
-    @action(detail=False, methods=['post'], url_path='bulk')
+    @action(detail=False, methods=["post"], url_path="bulk")
     def bulk_add(self, request):
         user = request.user
-        items = request.data.get('items', [])
+        items = request.data.get("items", [])
         if not items:
             return Response({"error": "상품 데이터 없음"}, status=400)
 
@@ -73,9 +75,11 @@ class CartViewSet(viewsets.ViewSet):
         created, duplicate = [], []
 
         for it in items:
-            pid, qty = it.get('product_id'), it.get('quantity', 1)
+            pid, qty = it.get("product_id"), it.get("quantity", 1)
             if not Product.objects.filter(id=pid).exists():
-                return Response({"error": "유효하지 않은 상품 ID가 존재합니다."}, status=400)
+                return Response(
+                    {"error": "유효하지 않은 상품 ID가 존재합니다."}, status=400
+                )
             if CartItem.objects.filter(cart=cart, product_id=pid).exists():
                 duplicate.append(pid)
                 continue
@@ -83,7 +87,8 @@ class CartViewSet(viewsets.ViewSet):
             created.append(pid)
 
         if duplicate:
-            return Response({"error": "일부 상품이 이미 장바구니에 존재합니다."}, status=409)
+            return Response(
+                {"error": "일부 상품이 이미 장바구니에 존재합니다."}, status=409
+            )
 
         return Response({"message": "상품이 장바구니에 추가되었습니다."}, status=200)
-

@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     "orders",
     "sellers",
     "reviews",
-    "carts"
+    "carts",
 ]
 
 MIDDLEWARE = [

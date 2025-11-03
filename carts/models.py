@@ -17,8 +17,7 @@ class CartItem(models.Model):
     quantity = models.PositiveIntegerField(default=1)
 
     class Meta:
-        unique_together = ('cart', 'product')  # 동일 상품 중복 방지
+        unique_together = ("cart", "product")  # 동일 상품 중복 방지
 
     def __str__(self):
         return f"{self.product.name} x {self.quantity}"
-

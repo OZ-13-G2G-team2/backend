@@ -3,8 +3,8 @@ from rest_framework.routers import DefaultRouter
 from .views import CartViewSet
 
 router = DefaultRouter()
-router.register(r'apicarts', CartViewSet, basename='cart')
+router.register(r"apicarts", CartViewSet, basename="cart")
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path("", include(router.urls)),
 ]

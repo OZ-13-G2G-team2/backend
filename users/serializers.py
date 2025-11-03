@@ -4,8 +4,6 @@ from .models import User
 from sellers.models import Seller
 
 
-
-
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
