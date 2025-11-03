@@ -5,6 +5,7 @@ app_name = "products"
 
 urlpatterns = [
     path("", views.ProductListCreateAPIView.as_view(), name="product-list"),
+    path("search/", views.ProductSearchAPIView.as_view(), name="product-search"),
     path(
         "<int:product_id>/",
         views.ProductRetrieveUpdateDestroyAPIView.as_view(),
