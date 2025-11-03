@@ -61,10 +61,11 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     #         )
 
 class ChangePasswordView(APIView):
+    serializer_class = ChangePasswordSerializer
     permission_classes = [permissions.IsAuthenticated] # 로그인 유저만 할 수 있음.
 
     def post(self, request):
-        serializer = ChangePasswordSerializer(data=request.data)
+        serializer = self.serializer_class(data=request.data)
 
         if serializer.is_valid():
             user = request.user

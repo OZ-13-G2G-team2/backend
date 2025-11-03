@@ -22,7 +22,7 @@ urlpatterns = [
     # todo 로그아웃 구현
     # 유저정보 조회
     path('<int:id>/', UserDetailView.as_view(), name='user-detail'),
-    path('<int:id>/password/', ChangePasswordView.as_view(), name='change-password'),
+    path('password/', ChangePasswordView.as_view(), name='change-password'),
     # 토큰 발급
     path('token/refresh/', UserTokenRefreshView.as_view(), name='token_refresh'),
 ]
