@@ -1,4 +1,5 @@
 from django.contrib.auth import update_session_auth_hash
+from django.core.exceptions import PermissionDenied
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
@@ -48,7 +49,13 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
     lookup_field = "id"
-    #
+
+    def get_object(self):
+        user = super().get_object()
+        if self.request.user != user:
+            raise PermissionDenied("본인 계정만 접근할 수 있습니다.")
+        return user
+
     # def get(self, request, *args, **kwargs):
     #     try:
     #         user = self.get_object()
@@ -60,6 +67,7 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     #             status=status.HTTP_404_NOT_FOUND
     #         )
 
+# 비밀번호 변경
 class ChangePasswordView(APIView):
     serializer_class = ChangePasswordSerializer
     permission_classes = [permissions.IsAuthenticated] # 로그인 유저만 할 수 있음.
@@ -84,6 +92,6 @@ class ChangePasswordView(APIView):
             # 비밀번호 변경 후에도 로그인 유지
             update_session_auth_hash(request, user)
 
-            return Response({"detail": "비밀번호가 성공적으로 변경되었습니다."}, status=status.HTTP_200_OK)
+            return Response({"detail": "회원 비밀 번호 수정."}, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
