@@ -26,7 +26,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         order = serializer.save(user=self.request.user)
-        """order_items_data = self.request.data.get("items", [])
+        order_items_data = self.request.data.get("items", [])
         for item in order_items_data:
             try:
                 product = Product.objects.get(id=item["product_id"])
@@ -43,7 +43,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 product=product,
                 quantity=quantity,
                 price_at_purchase=price_at_purchase,
-            )"""
+            )
 
         order.calculate_total()
 
