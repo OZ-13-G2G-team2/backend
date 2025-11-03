@@ -1,10 +1,11 @@
 from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.request import Request
+
 
 from orders.models import OrderItem
 from orders.serializers.order_item_serializer import OrderItemSerializer
-from orders.services.order_item_service import OrderItemService
 
 
 class OrderItemViewSet(viewsets.ModelViewSet):
@@ -13,34 +14,81 @@ class OrderItemViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return (
-            OrderItem.objects.filter(order__user=self.request.user)
-            .select_related("product", "order")
-            .order_by("-order__order_date")
-        )
+        request: Request = self.request
+        queryset = OrderItem.objects.select_related("product", "order").all()
+        order_id = request.query_params.get("order_id")
+        if order_id:
+            queryset = queryset.filter(order_id=order_id)
+        else:
+            queryset = queryset.filter(order__user=request.user)
+        return queryset.order_by("-order__order_date")
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        order = serializer.validated_data["order"]
+        product = serializer.validated_data["product"]
+        price_at_purchase = serializer.validated_data.get("price_at_purchase") or product.price
+
+        quantity = serializer.validated_data["quantity"]
+        if product.stock < quantity:
+            return Response({"error": f"재고 부족: {product.name}"}, status=status.HTTP_400_BAD_REQUEST)
+        product.stock -= quantity
+        product.save(update_fields=["stock"])
+
+        serializer.save(price_at_purchase=price_at_purchase)
+
+        order.calculate_total()
+        order.save(update_fields=["total_amount", "updated_at"])
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def partial_update(self, request, *args, **kwargs):
         item = self.get_object()
         new_quantity = request.data.get("quantity")
-        if new_quantity is None or int(new_quantity) <= 0:
+        change_reason = request.data.get("change_reason", "")
+
+        if not change_reason:
+            return Response({"error": "변경 사유(change_reason)는 필수입니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            new_quantity_int = int(new_quantity)
+            if new_quantity_int <= 0:
+                raise ValueError
+        except (ValueError, TypeError):
             return Response({"error": "잘못된 수량"}, status=status.HTTP_400_BAD_REQUEST)
 
-        change_reason = request.data.get("change_reason", "")
-        previous_quantity = item.quantity
-        updated_item = OrderItemService.update_quantity(
-            item.id, int(new_quantity), user=request.user
-        )
+        diff = new_quantity_int - item.quantity
+        if diff > 0 and item.product.stock < diff:
+            return Response({"error": f"재고 부족: {item.product.name}"}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(
-            {
-                "order_item_id": updated_item.id,
-                "product_id": updated_item.product.id,
-                "product_name": updated_item.product.name,
-                "previous_quantity": previous_quantity,
-                "updated_quantity": updated_item.quantity,
-                "change_reason": change_reason,
-                "updated_at": updated_item.order.updated_at,
-                "message": "주문상품 정보가 수정되었습니다.",
-            },
-            status=status.HTTP_200_OK,
-        )
+        item.product.stock -= diff
+        item.product.save(update_fields=["stock"])
+        item.quantity = new_quantity_int
+        item.change_reason = change_reason
+        item.save(update_fields=["quantity", "change_reason", "updated_at"])
+
+
+        item.order.calculate_total()
+        item.order.save(update_fields=["total_amount", "updated_at"])
+
+        return Response({
+            "order_item_id": item.id,
+            "product_id": item.product.id,
+            "product_name": item.product.name,
+            "updated_quantity": item.quantity,
+            "change_reason": change_reason,
+            "updated_at": item.order.updated_at,
+        }, status=status.HTTP_200_OK)
+
+    def destroy(self, request, *args, **kwargs):
+        item = self.get_object()
+        item.product.stock += item.quantity
+        item.product.save(update_fields=["stock"])
+        order = item.order
+        item.delete()
+        order.calculate_total()
+        order.save(update_fields=["total_amount", "updated_at"])
+
+        return Response(status=status.HTTP_204_NO_CONTENT)

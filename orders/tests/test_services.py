@@ -1,10 +1,8 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
-from orders.models import Order
-from order_items.models import OrderItem
+from orders.models import Order, OrderItem
 from products.models import Product
-from orders.services import OrderService
-from order_items.services import OrderItemService
+from orders.services import OrderService, OrderItemService
 
 User = get_user_model()
 
