@@ -2,14 +2,19 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from .models import User
-from .serializers import UserSerializer, UserRegisterSerializer, SellerRegisterSerializer
+from .serializers import (
+    UserSerializer,
+    UserRegisterSerializer,
+    SellerRegisterSerializer,
+)
 
 
-#user/signup
+# user/signup
 class UserRegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserRegisterSerializer
     permission_classes = [permissions.AllowAny]
+
 
 # seller/signup
 class SellerRegisterView(generics.CreateAPIView):
@@ -17,9 +22,11 @@ class SellerRegisterView(generics.CreateAPIView):
     serializer_class = SellerRegisterSerializer
     permission_classes = [permissions.AllowAny]
 
+
 # 로그인 (JWT 발급)
 class UserLoginView(TokenObtainPairView):
     permission_classes = [permissions.AllowAny]
+
 
 # 토큰 갱신
 class UserTokenRefreshView(TokenRefreshView):

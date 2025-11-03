@@ -6,7 +6,9 @@ from orders.serializers.order_item_serializer import OrderItemSerializer
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     user_name = serializers.CharField(source="user.username", read_only=True)
-    total_amount = serializers.DecimalField(source="total_amount", max_digits=10, decimal_places=2, read_only=True)
+    total_amount = serializers.DecimalField(
+        max_digits=10, decimal_places=2, read_only=True
+    )
 
     class Meta:
         model = Order

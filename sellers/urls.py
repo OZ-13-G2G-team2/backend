@@ -4,5 +4,5 @@ from .views import SellerDetailView
 app_name = "sellers"
 
 urlpatterns = [
-    path('<int:id>/', SellerDetailView.as_view(), name='seller-detail'),
+    path("<int:id>/", SellerDetailView.as_view(), name="seller-detail"),
 ]

@@ -75,7 +75,7 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
                 {"detail": "해당 상품을 찾을 수 없습니다."},
                 status=status.HTTP_404_NOT_FOUND,
             )
-        user = getattr(request.user, 'user', request.user)
+        user = getattr(request.user, "user", request.user)
         if product.seller != user:
             return Response(
                 {"error": "인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN
@@ -99,7 +99,7 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        user = getattr(request.user, 'user', request.user)
+        user = getattr(request.user, "user", request.user)
         if product.seller != user:
             return Response(
                 {"error": "인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN
@@ -125,12 +125,12 @@ class ProductStockUpdateAPIView(generics.UpdateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductStockSerializer
     permission_classes = [permissions.IsAuthenticated]
-    lookup_field = 'product_id'
+    lookup_field = "product_id"
 
     def patch(self, request, *args, **kwargs):
         product = self.get_object()
 
-        user = getattr(request.user, 'user', request.user)
+        user = getattr(request.user, "user", request.user)
         if product.seller != user:
             return Response(
                 {"error": "인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN

@@ -29,11 +29,16 @@ class OrderItemViewSet(viewsets.ModelViewSet):
 
         order = serializer.validated_data["order"]
         product = serializer.validated_data["product"]
-        price_at_purchase = serializer.validated_data.get("price_at_purchase") or product.price
+        price_at_purchase = (
+            serializer.validated_data.get("price_at_purchase") or product.price
+        )
 
         quantity = serializer.validated_data["quantity"]
         if product.stock < quantity:
-            return Response({"error": f"재고 부족: {product.name}"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": f"재고 부족: {product.name}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         product.stock -= quantity
         product.save(update_fields=["stock"])
 
@@ -50,18 +55,26 @@ class OrderItemViewSet(viewsets.ModelViewSet):
         change_reason = request.data.get("change_reason", "")
 
         if not change_reason:
-            return Response({"error": "변경 사유(change_reason)는 필수입니다."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "변경 사유(change_reason)는 필수입니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         try:
             new_quantity_int = int(new_quantity)
             if new_quantity_int <= 0:
                 raise ValueError
         except (ValueError, TypeError):
-            return Response({"error": "잘못된 수량"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "잘못된 수량"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         diff = new_quantity_int - item.quantity
         if diff > 0 and item.product.stock < diff:
-            return Response({"error": f"재고 부족: {item.product.name}"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": f"재고 부족: {item.product.name}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         item.product.stock -= diff
         item.product.save(update_fields=["stock"])
@@ -69,18 +82,20 @@ class OrderItemViewSet(viewsets.ModelViewSet):
         item.change_reason = change_reason
         item.save(update_fields=["quantity", "change_reason", "updated_at"])
 
-
         item.order.calculate_total()
         item.order.save(update_fields=["total_amount", "updated_at"])
 
-        return Response({
-            "order_item_id": item.id,
-            "product_id": item.product.id,
-            "product_name": item.product.name,
-            "updated_quantity": item.quantity,
-            "change_reason": change_reason,
-            "updated_at": item.order.updated_at,
-        }, status=status.HTTP_200_OK)
+        return Response(
+            {
+                "order_item_id": item.id,
+                "product_id": item.product.id,
+                "product_name": item.product.name,
+                "updated_quantity": item.quantity,
+                "change_reason": change_reason,
+                "updated_at": item.order.updated_at,
+            },
+            status=status.HTTP_200_OK,
+        )
 
     def destroy(self, request, *args, **kwargs):
         item = self.get_object()

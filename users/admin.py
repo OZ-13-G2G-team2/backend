@@ -10,6 +10,8 @@ class UserAdmin(BaseUserAdmin):
     ordering = ("email",)
     search_fields = ("email", "username")
 
+    readonly_fields = ("created_at", "updated_at")
+
     fieldsets = (
         (None, {"fields": ("email", "password")}),
         (_("Personal info"), {"fields": ("username", "address", "phone_number")}),
