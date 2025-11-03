@@ -8,8 +8,11 @@ class OrderItemInline(admin.TabularInline):
     can_delete = True
 
     def subtotal(self, obj):
-        return obj.quantity * obj.price_at_purchase
+        quantity = obj.quantity or 0
+        price = obj.price_at_purchase or 0
+        return quantity * price
     subtotal.short_description = 'Subtotal'
+
 
 
 @admin.register(Order)
@@ -28,31 +31,34 @@ class OrderAdmin(admin.ModelAdmin):
     ordering = ("-order_date",)
     list_per_page = 20
 
-
     inlines = [OrderItemInline]
-
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)  # 먼저 obj 저장
-        total = sum(item.quantity * item.price_at_purchase for item in obj.orderitem_set.all())
+        total = sum(
+            (item.quantity or 0) * (item.price_at_purchase or 0)
+            for item in obj.orderitem_set.all()
+        )
         if obj.total_amount != total:
             obj.total_amount = total
             obj.save(update_fields=['total_amount'])
-
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.prefetch_related('orderitem_set')
 
 
+
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
     list_display = ('id', 'order', 'product', 'quantity', 'price_at_purchase', 'subtotal')
     search_fields = ('order__id', 'product__name')
-
     readonly_fields = ('subtotal',)
 
     def subtotal(self, obj):
-        return obj.quantity * obj.price_at_purchase
-    subtotal.short_description = 'Subtotal'
+        quantity = obj.quantity or 0
+        price = obj.price_at_purchase or 0
+        return quantity * price
+    subtotal.short_description = '상품 합계'
+
 

@@ -19,7 +19,7 @@ class Order(models.Model):
     )
     order_date = models.DateTimeField(auto_now_add=True, verbose_name='주문일')
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='총 금액')
-    address = models.CharField(max_length=255, default="", null=False, blank=False)
+    address = models.CharField("주소",max_length=255, default="", null=False, blank=False)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='주문 상태')
     payment_method = models.CharField(max_length=50, null=True, blank=True, verbose_name='결제 방법')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='생성일')
