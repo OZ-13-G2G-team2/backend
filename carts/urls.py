@@ -6,6 +6,5 @@ router = DefaultRouter()
 router.register(r'apicarts', CartViewSet, basename='cart')
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
     path('', include(router.urls)),
 ]

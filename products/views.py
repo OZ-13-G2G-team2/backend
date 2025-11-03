@@ -24,6 +24,7 @@ class ProductListCreateAPIView(generics.ListCreateAPIView):
 
     def perform_create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
+        request = self.request
         if not request.user.is_authenticated:
             return Response(
                 {"error": "인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN
@@ -74,7 +75,8 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
                 {"detail": "해당 상품을 찾을 수 없습니다."},
                 status=status.HTTP_404_NOT_FOUND,
             )
-        if product.seller != self.request.user.id:
+        user = getattr(request.user, 'user', request.user)
+        if product.seller != user:
             return Response(
                 {"error": "인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN
             )
@@ -97,7 +99,8 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        if product.seller != self.request.user.id:
+        user = getattr(request.user, 'user', request.user)
+        if product.seller != user:
             return Response(
                 {"error": "인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN
             )
@@ -122,11 +125,13 @@ class ProductStockUpdateAPIView(generics.UpdateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductStockSerializer
     permission_classes = [permissions.IsAuthenticated]
+    lookup_field = 'product_id'
 
     def patch(self, request, *args, **kwargs):
         product = self.get_object()
 
-        if product.seller != request.user:
+        user = getattr(request.user, 'user', request.user)
+        if product.seller != user:
             return Response(
                 {"error": "인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN
             )
@@ -146,4 +151,4 @@ class ProductImageUploadAPIView(generics.CreateAPIView):
     def perform_create(self, serializer):
         product_id = self.kwargs.get("product_id")
         product = get_object_or_404(Product, id=product_id)
-        serializer.save(product=product)
+        serializer.save(product=product, user=self.request.user)

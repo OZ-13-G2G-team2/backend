@@ -64,6 +64,11 @@ class Product(models.Model):
             models.Index(fields=["seller_id"]),
         ]
 
+    def save(self, *args, update_sold_out=True, **kwargs):
+        if update_sold_out:
+            self.sold_out = self.stock == 0
+        super().save(*args, **kwargs)
+
 
 class ProductImages(models.Model):
     image_id = models.AutoField(primary_key=True)
