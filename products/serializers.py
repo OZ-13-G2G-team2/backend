@@ -11,11 +11,11 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class ProductImagesSerializer(serializers.ModelSerializer):
-    images_url = serializers.ImageField(source="image_url", read_only=True)
+    image_url = serializers.ImageField(read_only=False)
 
     class Meta:
         model = ProductImages
-        fields = ["image_id", "product", "user", "images_url"]
+        fields = ["image_id", "product", "user", "image_url"]
 
     def get_image_url(self, obj):
         request = self.context.get("request")
@@ -34,7 +34,10 @@ class ProductOptionValueSerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    categories = serializers.StringRelatedField(many=True)
+    categories = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Category.objects.all()
+    )
     images = ProductImagesSerializer(many=True, read_only=True)
     option_values = ProductOptionValueSerializer(many=True, read_only=True)
 
@@ -47,4 +50,12 @@ class ProductSerializer(serializers.ModelSerializer):
 class ProductStockSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ["stock"]
+        fields = ["stock", 'sold_out']
+
+    def update(self, instance, validated_data):
+        instance.stock = validated_data.get("stock", instance.stock)
+        instance.save()
+        return instance
+
+
+
