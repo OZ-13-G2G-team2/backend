@@ -8,7 +8,6 @@ User = get_user_model()
 
 
 class OrderServiceTest(TestCase):
-
     def setUp(self):
         self.user = User.objects.create_user(username="testuser", password="testpass")
         self.product = Product.objects.create(name="m", price=12000)
@@ -27,7 +26,6 @@ class OrderServiceTest(TestCase):
 
 
 class OrderItemServiceTest(TestCase):
-
     def setUp(self):
         self.user = User.objects.create_user(username="testuser", password="testpass")
         self.product = Product.objects.create(name="m", price=12000)

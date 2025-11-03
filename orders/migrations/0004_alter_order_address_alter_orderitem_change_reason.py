@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("orders", "0003_orderitem_change_reason_orderitem_created_at_and_more"),
     ]

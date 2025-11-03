@@ -8,7 +8,6 @@ User = get_user_model()
 
 
 class OrderItemsAPITest(APITestCase):
-
     def setUp(self):
         self.user = User.objects.create_user(username="testuser", password="testpass")
         self.client.force_authenticate(user=self.user)
