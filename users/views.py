@@ -12,7 +12,13 @@ from .serializers import (
 )
 
 
-# user/signup
+# 유저 전체 조회
+class UserList(generics.ListAPIView):
+    queryset = User.objects.all().order_by('-id')
+    serializer_class = UserSerializer
+    # permission_classes = [permissions.IsAdminUser] todo 개발 편의성위해 임시 주석 처리
+
+#user/signup
 class UserRegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserRegisterSerializer
