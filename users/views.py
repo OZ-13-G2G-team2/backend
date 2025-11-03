@@ -16,7 +16,7 @@ from .serializers import (
 class UserList(generics.ListAPIView):
     queryset = User.objects.all().order_by('-id')
     serializer_class = UserSerializer
-    # permission_classes = [permissions.IsAdminUser] todo 개발 편의성위해 임시 주석 처리
+    permission_classes = [permissions.IsAdminUser]
 
 #user/signup
 class UserRegisterView(generics.CreateAPIView):
