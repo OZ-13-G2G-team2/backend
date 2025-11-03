@@ -17,16 +17,12 @@ class OrderItemViewSet(viewsets.ModelViewSet):
                                 .select_related('product', 'order')\
                                 .order_by('-order__order_date')
 
-    def partial_update(self, request, pk=None):
+    def partial_update(self, request, *args, **kwargs):
         item = self.get_object()
         new_quantity = request.data.get('quantity')
         if new_quantity is None or int(new_quantity) <= 0:
             return Response({"error": "잘못된 수량"}, status=status.HTTP_400_BAD_REQUEST)
 
-
-
-        if new_quantity is None or int(new_quantity) <= 0:
-            return Response({"error": "잘못된 수량"}, status=status.HTTP_400_BAD_REQUEST)
         change_reason = request.data.get('change_reason', '')
         previous_quantity = item.quantity
         updated_item = OrderItemService.update_quantity(item.id, int(new_quantity), user=request.user)

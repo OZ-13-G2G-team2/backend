@@ -31,3 +31,19 @@ class OrderItem(models.Model):
     @property
     def subtotal(self):
         return self.quantity * self.price_at_purchase
+
+    def total_with_tax(self, tax_rate=0.1):
+        return self.subtotal * (1 + tax_rate)
+
+    def reduce_stock(self):
+        if self.product.stock >= self.quantity:
+            self.product.stock -= self.quantity
+            self.product.save(update_fields=['stock'])
+            return True
+        return False
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            if not self.reduce_stock():
+                raise ValueError(f"재고 부족: {self.product.name}")
+        super().save(*args, **kwargs)
