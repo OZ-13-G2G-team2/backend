@@ -5,6 +5,7 @@ from .views import (
     UserTokenRefreshView,
     UserDetailView,
     SellerRegisterView,
+    ChangePasswordView
 )
 
 app_name = "users"
@@ -16,6 +17,7 @@ urlpatterns = [
     # 유저 로그인/ 로그아웃
     path("login/", UserLoginView.as_view(), name="token_obtain_pair"),
     # todo 로그아웃 구현
-    path("token/refresh/", UserTokenRefreshView.as_view(), name="token_refresh"),
-    path("<int:id>/", UserDetailView.as_view(), name="user-detail"),
+    path('token/refresh/', UserTokenRefreshView.as_view(), name='token_refresh'),
+    path('<int:id>/', UserDetailView.as_view(), name='user-detail'),
+    path('<int:id>/password/', ChangePasswordView.as_view(), name='change-password'),
 ]
