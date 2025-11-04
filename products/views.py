@@ -7,11 +7,13 @@ from .serializers import (
     CategorySerializer,
     ProductStockSerializer,
     ProductImagesSerializer,
+    ProductForSellerSerializer,
 )
 from .models import Product, Category, CategoryGroup
 from django.http.response import Http404
 from django.db.models import Q
 from drf_spectacular.utils import extend_schema
+from sellers.models import Seller
 
 
 # 상품 목록 조회 + 등록
@@ -54,7 +56,7 @@ class ProductListCreateAPIView(generics.ListCreateAPIView):
 @extend_schema(tags=["상품 상세 / 수정 / 삭제"])
 # 상품 상세페이지 / 수정 / 삭제
 class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
-    http_method_names = ['get', 'put', 'delete']
+    http_method_names = ["get", "put", "delete"]
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     lookup_field = "product_id"
@@ -132,7 +134,7 @@ class CategoryByGroupAPIView(generics.ListAPIView):
 
 @extend_schema(tags=["상품 재고 업데이트"])
 class ProductStockUpdateAPIView(generics.UpdateAPIView):
-    http_method_names = ['patch']
+    http_method_names = ["patch"]
     queryset = Product.objects.all()
     serializer_class = ProductStockSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -167,28 +169,24 @@ class ProductImageUploadAPIView(generics.CreateAPIView):
 
         if product.seller.user.email != user.email:
             return Response(
-                {"error":"인증이 필요합니다."},
+                {"error": "인증이 필요합니다."},
                 status=status.HTTP_403_FORBIDDEN,
             )
         image = self.request.data.get("image_url")
         if not image:
             return Response(
-                {"error":"이미지 파일이 필요합니다."},
+                {"error": "이미지 파일이 필요합니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         valid_extensions = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
         if not any(image.name.lower().endswith(ext) for ext in valid_extensions):
             return Response(
-                {"error":"올바르지 않은 확장자입니다."},
+                {"error": "올바르지 않은 확장자입니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(
-            product=product,
-            user=self.request.user,
-            image_url=image
-        )
+        serializer.save(product=product, user=self.request.user, image_url=image)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -201,12 +199,12 @@ class ProductSearchAPIView(generics.ListAPIView):
         queryset = Product.objects.all()
         params = self.request.query_params
 
-        q = params.get("q",'')
+        q = params.get("q", "")
         origin = params.get("origin")
         category_id = params.get("category_id")
-        min_price = params.get('min_price')
-        max_price = params.get('max_price')
-        sold_out = params.get('sold_out')
+        min_price = params.get("min_price")
+        max_price = params.get("max_price")
+        sold_out = params.get("sold_out")
         seller = params.get("seller")
         overseas_shipping = params.get("overseas_shipping")
 
@@ -215,10 +213,10 @@ class ProductSearchAPIView(generics.ListAPIView):
         # 검색어 기반
         if q:
             my_filters &= (
-                Q(name__icontains=q) |
-                Q(description__icontains=q) |
-                Q(origin__icontains=q) |
-                Q(categories__icontains=q)
+                Q(name__icontains=q)
+                | Q(description__icontains=q)
+                | Q(origin__icontains=q)
+                | Q(categories__icontains=q)
             )
 
         # 원산지 필터
@@ -227,9 +225,8 @@ class ProductSearchAPIView(generics.ListAPIView):
 
         # 카테고리 필터
         if category_id:
-            my_filters &= (
-                Q(categories__id__icontains=category_id) &
-                Q(categories__group=2)
+            my_filters &= Q(categories__id__icontains=category_id) & Q(
+                categories__group=2
             )
 
         # 가격 범위 필터
@@ -240,7 +237,7 @@ class ProductSearchAPIView(generics.ListAPIView):
 
         # 품절 여부 필터
         if sold_out is not None:
-            sold_out_value = sold_out.lower() == 'true'
+            sold_out_value = sold_out.lower() == "true"
             my_filters &= Q(sold_out=sold_out_value)
 
         # 판매자 필터
@@ -249,7 +246,21 @@ class ProductSearchAPIView(generics.ListAPIView):
 
         # 해외배송 여부 필터
         if overseas_shipping is not None:
-            overseas_value = overseas_shipping.lower() == 'true'
+            overseas_value = overseas_shipping.lower() == "true"
             my_filters &= Q(overseas_value=overseas_value)
 
         return queryset.filter(my_filters).distinct()
+
+
+# 판매자 상품 목록
+@extend_schema(tags=["판매자별 상품 목록 조회"])
+class SellerProductsListAPIView(generics.ListAPIView):
+    serializer_class = ProductForSellerSerializer
+
+    def get_queryset(self):
+        seller_id = self.kwargs.get("id")
+        try:
+            seller = Seller.objects.get(id=seller_id)
+        except Seller.DoesNotExist:
+            raise Http404("요청한 판매자가 존재하지 않습니다.")
+        return Product.objects.filter(seller_id=seller_id)
