@@ -1,5 +1,7 @@
 from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import PermissionDenied
+from django.utils.http import urlsafe_base64_decode
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
@@ -9,9 +11,11 @@ from .serializers import (
     UserSerializer,
     UserRegisterSerializer,
     SellerRegisterSerializer,
-    ChangePasswordSerializer,
+    ChangePasswordSerializer, PreSignUpSerializer,
 )
 from drf_spectacular.utils import extend_schema
+
+from .utils import send_activation_email
 
 
 # 유저 전체 조회
@@ -21,21 +25,48 @@ class UserList(generics.ListAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAdminUser]
 
+# 이메일 인증 요청 api
+@extend_schema(tags=["이메일 인증 요청"])
+class PreSignUpView(generics.CreateAPIView):
+    serializer_class = PreSignUpSerializer
+    permission_classes = [permissions.AllowAny]
 
-# user/signup
+# 이메일 인증
+@extend_schema(tags=["이메일 인증"])
+class UserActivateView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, uidb64, token):
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = User.objects.get(pk=uid)
+        except (User.DoesNotExist, ValueError, TypeError, OverflowError):
+            return Response({"error": "유효하지 않은 링크입니다."}, status=400)
+
+        if default_token_generator.check_token(user, token):
+            user.is_active = True
+            user.save()
+            return Response({"message": "이메일 인증이 완료되었습니다."}, status=200)
+
+        return Response({"error": "토큰이 유효하지 않습니다."}, status=400)
+
+
+#user/signup
 @extend_schema(tags=["유저 회원가입"])
-class UserRegisterView(generics.CreateAPIView):
-    queryset = User.objects.all()
+class UserRegisterView(generics.UpdateAPIView):
+    queryset = User.objects.filter(is_active=True)
     serializer_class = UserRegisterSerializer
     permission_classes = [permissions.AllowAny]
+    # 회원 가입시 유저정보에서 is_active를 False로 설정 한뒤 email로 활성화에 필요한 이메일을 전송
 
 
 # seller/signup
 @extend_schema(tags=["판매자 회원가입"])
-class SellerRegisterView(generics.CreateAPIView):
-    queryset = User.objects.all()
+class SellerRegisterView(generics.UpdateAPIView):
+    queryset = User.objects.filter(is_active=True)
     serializer_class = SellerRegisterSerializer
     permission_classes = [permissions.AllowAny]
+
 
 
 # 로그인 (JWT 발급)
@@ -44,11 +75,10 @@ class UserLoginView(TokenObtainPairView):
     permission_classes = [permissions.AllowAny]
 
 
-# 토큰 갱신
+# 토큰 갱신 todo 토큰갱신 테스트 해보기
 @extend_schema(tags=["토큰 갱신"])
 class UserTokenRefreshView(TokenRefreshView):
     permission_classes = [permissions.AllowAny]
-
 
 # 유저 정보 조회 API
 @extend_schema(tags=["유저 상세"])
