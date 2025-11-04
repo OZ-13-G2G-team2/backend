@@ -2,12 +2,31 @@ from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.request import Request
+from drf_spectacular.utils import extend_schema, extend_schema_view
 
 
 from orders.models import OrderItem
 from orders.serializers.order_item_serializer import OrderItemSerializer
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="주문상품 목록 조회", description="주문상품 목록을 조회합니다.", tags=["주문상품"]
+    ),
+    create=extend_schema(
+        summary="주문상품 등록", description="새 주문상품을 등록합니다.", tags=["주문상품"]
+    ),
+    retrieve=extend_schema(
+        summary="주문상품 상세 조회", description="주문상품 상세 정보를 조회합니다.", tags=["주문상품"]
+    ),
+    update=extend_schema(
+        summary="주문상품 수정", description="주문상품 정보를 전체 수정합니다.", tags=["주문상품"]
+    ),
+    partial_update=extend_schema(
+        summary="주문상품 부분 수정", description="주문상품 정보를 일부 수정합니다.", tags=["주문상품"]
+    ),
+    destroy=extend_schema(summary="주문상품 삭제", description="주문상품을 삭제합니다.", tags=["주문상품"]),
+)
 class OrderItemViewSet(viewsets.ModelViewSet):
     queryset = OrderItem.objects.all()
     serializer_class = OrderItemSerializer
@@ -65,9 +84,7 @@ class OrderItemViewSet(viewsets.ModelViewSet):
             if new_quantity_int <= 0:
                 raise ValueError
         except (ValueError, TypeError):
-            return Response(
-                {"error": "잘못된 수량"}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "잘못된 수량"}, status=status.HTTP_400_BAD_REQUEST)
 
         diff = new_quantity_int - item.quantity
         if diff > 0 and item.product.stock < diff:

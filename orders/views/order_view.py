@@ -8,8 +8,26 @@ from orders.serializers.order_serializer import OrderSerializer
 from orders.serializers.order_item_serializer import OrderItemSerializer
 from orders.services import OrderService
 from products.models import Product
+from drf_spectacular.utils import extend_schema, extend_schema_view
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="주문 목록 조회", description="사용자의 주문 목록을 조회합니다.", tags=["주문"]
+    ),
+    create=extend_schema(summary="주문 등록", description="새 주문을 등록합니다.", tags=["주문"]),
+    retrieve=extend_schema(
+        summary="주문 상세 조회", description="주문 상세 정보를 조회합니다.", tags=["주문"]
+    ),
+    update=extend_schema(summary="주문 수정", description="주문 정보를 전체 수정합니다.", tags=["주문"]),
+    destroy=extend_schema(summary="주문 삭제", description="주문을 삭제합니다.", tags=["주문"]),
+    update_status=extend_schema(
+        summary="주문 상태 변경", description="주문의 상태를 변경합니다.", tags=["주문"]
+    ),
+    items=extend_schema(
+        summary="주문 상품 조회", description="주문에 포함된 상품 목록을 조회합니다.", tags=["주문"]
+    ),
+)
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all().order_by("-order_date")
     serializer_class = OrderSerializer
