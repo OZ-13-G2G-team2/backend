@@ -65,21 +65,28 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             "password2",
         ]
 
-    def validate(self, attrs):
-        if attrs["password"] != attrs["password2"]:
+    def validate(self, data):
+        # 비밀번호 중복 처리
+        if data["password"] != data["password2"]:
             raise serializers.ValidationError(
                 {"password": "비밀번호가 일치하지 않습니다."}
             )
-        return attrs
+        # 이메일 중복 처리
+        if User.objects.filter(email=data["email"]).exists():
+            raise serializers.ValidationError({"email": "이미 사용 중인 이메일입니다."})
+        return data
 
     def update(self, instance, validated_data):
         validated_data.pop("password2")
         password = validated_data.pop("password")
 
+        validated_data.pop("email", None)
+
         for attr, val in validated_data.items():
             setattr(instance, attr, val)
 
         instance.set_password(password)
+        instance.is_active = True
         instance.save()
         return instance
 
