@@ -1,5 +1,5 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import generics, permissions, status, serializers
+from rest_framework import generics, permissions, status, serializers, filters
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from .serializers import (
@@ -11,12 +11,17 @@ from .serializers import (
 from .models import Product, Category, CategoryGroup
 from django.http.response import Http404
 from django.db.models import Q
+from drf_spectacular.utils import extend_schema
 
 
 # 상품 목록 조회 + 등록
+@extend_schema(tags=["상품 목록 조회 / 등록"])
 class ProductListCreateAPIView(generics.ListCreateAPIView):
-    queryset = Product.objects.all()
+    queryset = Product.objects.all().order_by("-created_at")
     serializer_class = ProductSerializer
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ["price"]
+    ordering = ("-created_at",)
 
     def get_permissions(self):
         if self.request.method == "POST":
@@ -46,6 +51,7 @@ class ProductListCreateAPIView(generics.ListCreateAPIView):
         )
 
 
+@extend_schema(tags=["상품 상세 / 수정 / 삭제"])
 # 상품 상세페이지 / 수정 / 삭제
 class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Product.objects.all()
@@ -110,6 +116,7 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+@extend_schema(tags=["카테고리"])
 class CategoryByGroupAPIView(generics.ListAPIView):
     serializer_class = CategorySerializer
 
@@ -122,6 +129,7 @@ class CategoryByGroupAPIView(generics.ListAPIView):
         return Category.objects.filter(group_id=group_id).order_by("id")
 
 
+@extend_schema(tags=["상품 재고 업데이트"])
 class ProductStockUpdateAPIView(generics.UpdateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductStockSerializer
@@ -144,6 +152,7 @@ class ProductStockUpdateAPIView(generics.UpdateAPIView):
 
 
 # 이미지 등록 view
+@extend_schema(tags=["이미지 등록"])
 class ProductImageUploadAPIView(generics.CreateAPIView):
     serializer_class = ProductImagesSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -156,6 +165,7 @@ class ProductImageUploadAPIView(generics.CreateAPIView):
 
 
 # 검색
+@extend_schema(tags=["검색 기능"])
 class ProductSearchAPIView(generics.ListAPIView):
     serializer_class = ProductSerializer
 
@@ -172,11 +182,11 @@ class ProductSearchAPIView(generics.ListAPIView):
         seller = params.get("seller")
         overseas_shipping = params.get("overseas_shipping")
 
-        filters = Q()
+        my_filters = Q()
 
         # 검색어 기반
         if q:
-            filters &= (
+            my_filters &= (
                 Q(name__icontains=q) |
                 Q(description__icontains=q) |
                 Q(origin__icontains=q) |
@@ -185,33 +195,33 @@ class ProductSearchAPIView(generics.ListAPIView):
 
         # 원산지 필터
         if origin:
-            filters &= Q(origin_iexact=origin)
+            my_filters &= Q(origin_iexact=origin)
 
         # 카테고리 필터
         if category_id:
-            filters &= (
+            my_filters &= (
                 Q(categories__id__icontains=category_id) &
                 Q(categories__group=2)
             )
 
         # 가격 범위 필터
         if min_price:
-            filters &= Q(price__gte=min_price)
+            my_filters &= Q(price__gte=min_price)
         if max_price:
-            filters &= Q(price__lte=max_price)
+            my_filters &= Q(price__lte=max_price)
 
         # 품절 여부 필터
         if sold_out is not None:
             sold_out_value = sold_out.lower() == 'true'
-            filters &= Q(sold_out=sold_out_value)
+            my_filters &= Q(sold_out=sold_out_value)
 
         # 판매자 필터
         if seller:
-            filters &= Q(seller_id=seller)
+            my_filters &= Q(seller_id=seller)
 
         # 해외배송 여부 필터
         if overseas_shipping is not None:
             overseas_value = overseas_shipping.lower() == 'true'
-            filters &= Q(overseas_value=overseas_value)
+            my_filters &= Q(overseas_value=overseas_value)
 
-        return queryset.filter(filters).distinct()
+        return queryset.filter(my_filters).distinct()
