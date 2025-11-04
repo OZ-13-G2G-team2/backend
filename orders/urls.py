@@ -1,6 +1,6 @@
 from django.urls import path
 from .views.order_item_view import OrderItemViewSet
-from .views import OrderViewSet
+from .views.order_view import OrderViewSet
 
 app_name = "orders"
 

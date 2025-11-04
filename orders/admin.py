@@ -38,7 +38,7 @@ class OrderAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)  # 먼저 obj 저장
         total = sum(
             (item.quantity or 0) * (item.price_at_purchase or 0)
-            for item in obj.orderitem_set.all()
+            for item in obj.items.all()
         )
         if obj.total_amount != total:
             obj.total_amount = total
@@ -46,7 +46,7 @@ class OrderAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs.prefetch_related("orderitem_set")
+        return qs.prefetch_related("items")
 
 
 @admin.register(OrderItem)
