@@ -10,6 +10,11 @@ class Order(models.Model):
         ("shipping", "배송 중"),
         ("delivered", "배달 완료"),
     ]
+    PAYMENT_CHOICES = [
+        ("card", "신용/체크카드"),
+        ("bank_transfer", "무통장입금"),
+        ("bank", "계좌이체"),
+    ]
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -32,7 +37,11 @@ class Order(models.Model):
         verbose_name="주문 상태",
     )
     payment_method = models.CharField(
-        max_length=50, null=True, blank=True, verbose_name="결제 방법"
+        max_length=50,
+        choices=PAYMENT_CHOICES,
+        null=True,
+        blank=True,
+        verbose_name="결제 방법",
     )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="생성일")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="수정일")

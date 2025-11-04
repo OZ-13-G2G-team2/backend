@@ -2,6 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from django.db import transaction
 
 from app.orders.models import Order, OrderItem
 from app.orders.serializers.order_serializer import OrderSerializer
@@ -54,12 +55,17 @@ class OrderViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(user=self.request.user)
         return queryset
 
+    @transaction.atomic
     def perform_create(self, serializer):
         order = serializer.save(user=self.request.user)
         order_items_data = self.request.data.get("items", [])
+
+        if not order_items_data:
+            raise ValueError("주문 상품이 비어 있습니다.")
+
         for item in order_items_data:
             try:
-                product = Product.objects.get(id=item["product_id"])
+                product = Product.objects.select_for_update().get(id=item["product_id"])
             except Product.DoesNotExist:
                 raise ValueError(f"존재하지 않는 상품: {item['product_id']}")
 
@@ -67,7 +73,14 @@ class OrderViewSet(viewsets.ModelViewSet):
             if quantity <= 0:
                 raise ValueError(f"잘못된 수량: {quantity}")
 
+            if product.stock < quantity:
+                raise ValueError(f"재고 부족: {product.name} (현재 재고: {product.stock})")
+
+            product.stock -= quantity
+            product.save(update_fields=["stock"])
+
             price_at_purchase = item.get("price_at_purchase") or product.price
+
             OrderItem.objects.create(
                 order=order,
                 product=product,
