@@ -10,6 +10,7 @@ from .serializers import (
 )
 from .models import Product, Category, CategoryGroup
 from django.http.response import Http404
+from django.db.models import Q
 
 
 # 상품 목록 조회 + 등록
@@ -152,3 +153,65 @@ class ProductImageUploadAPIView(generics.CreateAPIView):
         product_id = self.kwargs.get("product_id")
         product = get_object_or_404(Product, id=product_id)
         serializer.save(product=product, user=self.request.user)
+
+
+# 검색
+class ProductSearchAPIView(generics.ListAPIView):
+    serializer_class = ProductSerializer
+
+    def get_queryset(self):
+        queryset = Product.objects.all()
+        params = self.request.query_params
+
+        q = params.get("q",'')
+        origin = params.get("origin")
+        category_id = params.get("category_id")
+        min_price = params.get('min_price')
+        max_price = params.get('max_price')
+        sold_out = params.get('sold_out')
+        seller = params.get("seller")
+        overseas_shipping = params.get("overseas_shipping")
+
+        filters = Q()
+
+        # 검색어 기반
+        if q:
+            filters &= (
+                Q(name__icontains=q) |
+                Q(description__icontains=q) |
+                Q(origin__icontains=q) |
+                Q(categories__icontains=q)
+            )
+
+        # 원산지 필터
+        if origin:
+            filters &= Q(origin_iexact=origin)
+
+        # 카테고리 필터
+        if category_id:
+            filters &= (
+                Q(categories__id__icontains=category_id) &
+                Q(categories__group=2)
+            )
+
+        # 가격 범위 필터
+        if min_price:
+            filters &= Q(price__gte=min_price)
+        if max_price:
+            filters &= Q(price__lte=max_price)
+
+        # 품절 여부 필터
+        if sold_out is not None:
+            sold_out_value = sold_out.lower() == 'true'
+            filters &= Q(sold_out=sold_out_value)
+
+        # 판매자 필터
+        if seller:
+            filters &= Q(seller_id=seller)
+
+        # 해외배송 여부 필터
+        if overseas_shipping is not None:
+            overseas_value = overseas_shipping.lower() == 'true'
+            filters &= Q(overseas_value=overseas_value)
+
+        return queryset.filter(filters).distinct()

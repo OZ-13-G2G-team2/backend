@@ -1,6 +1,5 @@
 from django.db import models
 
-
 class CategoryGroup(models.Model):
     name = models.CharField(max_length=50, unique=True)
 
@@ -32,7 +31,7 @@ class Category(models.Model):
 class Product(models.Model):
     product_id = models.AutoField(primary_key=True)
     seller = models.ForeignKey(
-        "users.User", verbose_name="판매자", on_delete=models.CASCADE
+        "sellers.Seller", verbose_name="판매자", on_delete=models.CASCADE
     )
     categories = models.ManyToManyField(
         "Category", verbose_name="카테고리", related_name="products", blank=True
@@ -53,7 +52,10 @@ class Product(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.name} - {self.seller.username} - {self.origin}"
+        seller_user = self.seller
+        if hasattr(self.seller, "user"):
+            seller_user = self.seller.user
+        return f"{self.name} - {seller_user.username} - {self.origin}"
 
     class Meta:
         verbose_name = "상품"
