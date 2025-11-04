@@ -1,4 +1,5 @@
 from django.contrib.auth import update_session_auth_hash
+from django.core.exceptions import PermissionDenied
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
@@ -10,15 +11,17 @@ from .serializers import (
     SellerRegisterSerializer,
     ChangePasswordSerializer,
 )
-
+from drf_spectacular.utils import extend_schema
 
 # 유저 전체 조회
+@extend_schema(tags=["유저 전체 조회"])
 class UserList(generics.ListAPIView):
     queryset = User.objects.all().order_by('-id')
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAdminUser]
 
 #user/signup
+@extend_schema(tags=["유저 회원가입"])
 class UserRegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserRegisterSerializer
@@ -26,6 +29,7 @@ class UserRegisterView(generics.CreateAPIView):
 
 
 # seller/signup
+@extend_schema(tags=["판매자 회원가입"])
 class SellerRegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = SellerRegisterSerializer
@@ -33,22 +37,31 @@ class SellerRegisterView(generics.CreateAPIView):
 
 
 # 로그인 (JWT 발급)
+@extend_schema(tags=["유저 로그인"])
 class UserLoginView(TokenObtainPairView):
     permission_classes = [permissions.AllowAny]
 
 
 # 토큰 갱신
+@extend_schema(tags=["토큰 갱신"])
 class UserTokenRefreshView(TokenRefreshView):
     permission_classes = [permissions.AllowAny]
 
 
 # 유저 정보 조회 API
+@extend_schema(tags=["유저 상세"])
 class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
     lookup_field = "id"
-    #
+
+    def get_object(self):
+        user = super().get_object()
+        if self.request.user != user:
+            raise PermissionDenied("본인 계정만 접근할 수 있습니다.")
+        return user
+
     # def get(self, request, *args, **kwargs):
     #     try:
     #         user = self.get_object()
@@ -60,6 +73,8 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     #             status=status.HTTP_404_NOT_FOUND
     #         )
 
+# 비밀번호 변경
+@extend_schema(tags=["비밀번호 변경"])
 class ChangePasswordView(APIView):
     serializer_class = ChangePasswordSerializer
     permission_classes = [permissions.IsAuthenticated] # 로그인 유저만 할 수 있음.
@@ -84,6 +99,6 @@ class ChangePasswordView(APIView):
             # 비밀번호 변경 후에도 로그인 유지
             update_session_auth_hash(request, user)
 
-            return Response({"detail": "비밀번호가 성공적으로 변경되었습니다."}, status=status.HTTP_200_OK)
+            return Response({"detail": "회원 비밀 번호 수정."}, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
