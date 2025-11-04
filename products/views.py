@@ -54,6 +54,7 @@ class ProductListCreateAPIView(generics.ListCreateAPIView):
 @extend_schema(tags=["상품 상세 / 수정 / 삭제"])
 # 상품 상세페이지 / 수정 / 삭제
 class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    http_method_names = ['get', 'put', 'delete']
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     lookup_field = "product_id"
@@ -82,8 +83,8 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
                 {"detail": "해당 상품을 찾을 수 없습니다."},
                 status=status.HTTP_404_NOT_FOUND,
             )
-        user = getattr(request.user, "user", request.user)
-        if product.seller != user:
+        user = self.request.user
+        if product.seller.user.email != user.email:
             return Response(
                 {"error": "인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN
             )
@@ -106,8 +107,8 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        user = getattr(request.user, "user", request.user)
-        if product.seller != user:
+        user = self.request.user
+        if product.seller.user.email != user.email:
             return Response(
                 {"error": "인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN
             )
@@ -131,6 +132,7 @@ class CategoryByGroupAPIView(generics.ListAPIView):
 
 @extend_schema(tags=["상품 재고 업데이트"])
 class ProductStockUpdateAPIView(generics.UpdateAPIView):
+    http_method_names = ['patch']
     queryset = Product.objects.all()
     serializer_class = ProductStockSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -139,8 +141,8 @@ class ProductStockUpdateAPIView(generics.UpdateAPIView):
     def patch(self, request, *args, **kwargs):
         product = self.get_object()
 
-        user = getattr(request.user, "user", request.user)
-        if product.seller != user:
+        user = self.request.user
+        if product.seller.user.email != user.email:
             return Response(
                 {"error": "인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN
             )
@@ -158,10 +160,36 @@ class ProductImageUploadAPIView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
 
-    def perform_create(self, serializer):
+    def create(self, request, *args, **kwargs):
         product_id = self.kwargs.get("product_id")
-        product = get_object_or_404(Product, id=product_id)
-        serializer.save(product=product, user=self.request.user)
+        product = get_object_or_404(Product, product_id=product_id)
+        user = self.request.user
+
+        if product.seller.user.email != user.email:
+            return Response(
+                {"error":"인증이 필요합니다."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        image = self.request.data.get("image_url")
+        if not image:
+            return Response(
+                {"error":"이미지 파일이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        valid_extensions = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
+        if not any(image.name.lower().endswith(ext) for ext in valid_extensions):
+            return Response(
+                {"error":"올바르지 않은 확장자입니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(
+            product=product,
+            user=self.request.user,
+            image_url=image
+        )
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 # 검색
