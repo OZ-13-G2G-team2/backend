@@ -28,20 +28,4 @@ class OrderSerializer(serializers.ModelSerializer):
         ]
 
     def create(self, validated_data):
-        items_data = validated_data.pop("items", [])
-        order = Order.objects.create(**validated_data)
-        for item_data in items_data:
-            product_id = (
-                item_data["product"].id
-                if hasattr(item_data["product"], "id")
-                else item_data["product"]
-            )
-            product = Product.objects.get(id=product_id)
-            OrderItem.objects.create(
-                order=order,
-                product=product,
-                quantity=item_data["quantity"],
-                price_at_purchase=item_data.get("price_at_purchase") or product.price,
-            )
-        order.calculate_total()
-        return order
+        return Order.objects.create(**validated_data)

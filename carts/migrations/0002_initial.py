@@ -9,40 +9,39 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("orders", "0001_initial"),
+        ("carts", "0001_initial"),
         ("products", "0002_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="order",
+            model_name="cart",
             name="user",
             field=models.ForeignKey(
                 on_delete=django.db.models.deletion.CASCADE,
-                related_name="orders",
+                related_name="carts",
                 to=settings.AUTH_USER_MODEL,
-                verbose_name="주문자",
             ),
         ),
         migrations.AddField(
-            model_name="orderitem",
-            name="order",
+            model_name="cartitem",
+            name="cart",
             field=models.ForeignKey(
                 on_delete=django.db.models.deletion.CASCADE,
                 related_name="items",
-                to="orders.order",
-                verbose_name="주문",
+                to="carts.cart",
             ),
         ),
         migrations.AddField(
-            model_name="orderitem",
+            model_name="cartitem",
             name="product",
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.PROTECT,
-                related_name="order_items",
-                to="products.product",
-                verbose_name="상품",
+                on_delete=django.db.models.deletion.CASCADE, to="products.product"
             ),
+        ),
+        migrations.AlterUniqueTogether(
+            name="cartitem",
+            unique_together={("cart", "product")},
         ),
     ]
