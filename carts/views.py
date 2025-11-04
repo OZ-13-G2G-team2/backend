@@ -5,12 +5,14 @@ from rest_framework.decorators import action
 from .models import Cart, CartItem
 from .serializers import CartSerializer, CartItemSerializer
 from products.models import Product
+from drf_yasg.utils import extend_schema
 
 
+@extend_schema(tags=["장바구니 관리"])
 class CartViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
-    # POST /apicarts/ : 장바구니 추가
+    # POST /api/carts/ : 장바구니 추가
     def create(self, request):
         user = request.user
         product_id = request.data.get("product_id")
@@ -28,7 +30,7 @@ class CartViewSet(viewsets.ViewSet):
         CartItem.objects.create(cart=cart, product_id=product_id, quantity=quantity)
         return Response({"message": "상품이 장바구니에 추가되었습니다."}, status=200)
 
-    # GET /apicarts/?user_id={id} : 장바구니 조회
+    # GET /api/carts/?user_id={id} : 장바구니 조회
     def list(self, request):
         user_id = request.query_params.get("user_id")
         if not user_id:
@@ -42,7 +44,7 @@ class CartViewSet(viewsets.ViewSet):
         serializer = CartSerializer(cart)
         return Response({"data": serializer.data}, status=200)
 
-    # PUT /apicarts/{cart_item_id}/ : 수량 변경
+    # PUT /api/carts/{cart_item_id}/ : 수량 변경
     def update(self, request, pk=None):
         try:
             item = CartItem.objects.get(id=pk)
@@ -53,7 +55,7 @@ class CartViewSet(viewsets.ViewSet):
         item.save()
         return Response({"message": "수정이 완료되었습니다."}, status=200)
 
-    # DELETE /apicarts/{cart_item_id}/ : 장바구니 상품 삭제
+    # DELETE /api/carts/{cart_item_id}/ : 장바구니 상품 삭제
     def destroy(self, request, pk=None):
         try:
             item = CartItem.objects.get(id=pk)
@@ -63,7 +65,7 @@ class CartViewSet(viewsets.ViewSet):
         item.delete()
         return Response({"message": "상품이 삭제되었습니다."}, status=200)
 
-    # POST /apicarts/bulk/ : 여러 상품 추가
+    # POST /api/carts/bulk/ : 여러 상품 추가
     @action(detail=False, methods=["post"], url_path="bulk")
     def bulk_add(self, request):
         user = request.user
