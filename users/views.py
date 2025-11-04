@@ -13,14 +13,16 @@ from .serializers import (
 )
 from drf_spectacular.utils import extend_schema
 
+
 # 유저 전체 조회
 @extend_schema(tags=["유저 전체 조회"])
 class UserList(generics.ListAPIView):
-    queryset = User.objects.all().order_by('-id')
+    queryset = User.objects.all().order_by("-id")
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAdminUser]
 
-#user/signup
+
+# user/signup
 @extend_schema(tags=["유저 회원가입"])
 class UserRegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -73,11 +75,12 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     #             status=status.HTTP_404_NOT_FOUND
     #         )
 
+
 # 비밀번호 변경
 @extend_schema(tags=["비밀번호 변경"])
 class ChangePasswordView(APIView):
     serializer_class = ChangePasswordSerializer
-    permission_classes = [permissions.IsAuthenticated] # 로그인 유저만 할 수 있음.
+    permission_classes = [permissions.IsAuthenticated]  # 로그인 유저만 할 수 있음.
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -99,6 +102,8 @@ class ChangePasswordView(APIView):
             # 비밀번호 변경 후에도 로그인 유지
             update_session_auth_hash(request, user)
 
-            return Response({"detail": "회원 비밀 번호 수정."}, status=status.HTTP_200_OK)
+            return Response(
+                {"detail": "회원 비밀 번호 수정."}, status=status.HTTP_200_OK
+            )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

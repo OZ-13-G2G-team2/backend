@@ -16,9 +16,8 @@ class Review(models.Model):
 
 
 class ReviewImage(models.Model):
-    review = models.ForeignKey(Review, on_delete=models.CASCADE, related_name='images')
+    review = models.ForeignKey(Review, on_delete=models.CASCADE, related_name="images")
     image_url = models.URLField(blank=True, null=True)
 
     def __str__(self):
         return f"리뷰 이미지 {self.id} (리뷰 {self.review.id})"
-

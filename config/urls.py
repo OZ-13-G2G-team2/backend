@@ -8,7 +8,7 @@ from drf_spectacular.views import (
 )
 
 from config import settings
-from products.views import CategoryByGroupAPIView
+from products.views import CategoryByGroupAPIView, SellerProductsListAPIView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -28,6 +28,12 @@ urlpatterns = [
         "api/categories/group/<int:group_id>/",
         CategoryByGroupAPIView.as_view(),
         name="category-by-group",
+    ),
+    # 판매자 별 상품 목록 조회
+    path(
+        "api/sellers/<int:id>/products/",
+        SellerProductsListAPIView.as_view(),
+        name="seller-products-list",
     ),
     # 스키마 자동 생성
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),

@@ -1,4 +1,6 @@
 from rest_framework import serializers
+
+from sellers.models import Seller
 from .models import Product, ProductImages, Category, ProductOptionValue
 
 
@@ -55,3 +57,27 @@ class ProductStockSerializer(serializers.ModelSerializer):
         instance.stock = validated_data.get("stock", instance.stock)
         instance.save()
         return instance
+
+
+class ProductForSellerSerializer(serializers.ModelSerializer):
+    seller_username = serializers.CharField(
+        source="seller.user.username", read_only=True
+    )
+    seller_business_name = serializers.CharField(
+        source="seller.business_name", read_only=True
+    )
+    seller_business_number = serializers.CharField(
+        source="seller.business_number", read_only=True
+    )
+
+    class Meta:
+        model = Product
+        fields = [
+            "product_id",
+            "name",
+            "origin",
+            "price",
+            "seller_username",
+            "seller_business_name",
+            "seller_business_number",
+        ]

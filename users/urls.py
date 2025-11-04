@@ -13,7 +13,7 @@ app_name = "users"
 
 urlpatterns = [
     # 전체 유정 조회
-    path('a_users/', UserList.as_view(), name='user-list'),
+    path("a_users/", UserList.as_view(), name="user-list"),
     # user/seller 회원가입
     path("signup/", UserRegisterView.as_view(), name="user-signup"),
     path("signup/seller", SellerRegisterView.as_view(), name="seller-signup"),
@@ -21,8 +21,8 @@ urlpatterns = [
     path("login/", UserLoginView.as_view(), name="token_obtain_pair"),
     # todo 로그아웃 구현
     # 유저정보 조회
-    path('<int:id>/', UserDetailView.as_view(), name='user-detail'),
-    path('password/', ChangePasswordView.as_view(), name='change-password'),
+    path("<int:id>/", UserDetailView.as_view(), name="user-detail"),
+    path("password/", ChangePasswordView.as_view(), name="change-password"),
     # 토큰 발급
-    path('token/refresh/', UserTokenRefreshView.as_view(), name='token_refresh'),
+    path("token/refresh/", UserTokenRefreshView.as_view(), name="token_refresh"),
 ]

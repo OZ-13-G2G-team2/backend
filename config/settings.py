@@ -43,8 +43,8 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "drf_spectacular",
     "django_filters",
-    'dj_rest_auth',
-    'dj_rest_auth.registration',
+    "dj_rest_auth",
+    "dj_rest_auth.registration",
     # OWN apps
     "users",
     "products",
@@ -53,14 +53,14 @@ INSTALLED_APPS = [
     "reviews",
     "carts",
     # Django allauth
-    'django.contrib.sites',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
+    "django.contrib.sites",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
     # Providers (소셜로그인)
-    'allauth.socialaccount.providers.naver',
-    'allauth.socialaccount.providers.kakao',
-    'allauth.socialaccount.providers.google',
+    "allauth.socialaccount.providers.naver",
+    "allauth.socialaccount.providers.kakao",
+    "allauth.socialaccount.providers.google",
 ]
 
 MIDDLEWARE = [
@@ -71,8 +71,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-
-    #allauth middleware
+    # allauth middleware
     "allauth.account.middleware.AccountMiddleware",
 ]
 
@@ -153,7 +152,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 
 REST_FRAMEWORK = {
-    "TOKEN_MODEL" : None,
+    "TOKEN_MODEL": None,
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
@@ -172,12 +171,12 @@ SIMPLE_JWT = {
 AUTH_USER_MODEL = "users.User"
 
 
-#social login
+# social login
 SITE_ID = 1
 
 AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
 REST_USE_JWT = True
