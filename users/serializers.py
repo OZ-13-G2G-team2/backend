@@ -2,6 +2,8 @@ from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from .models import User
 from sellers.models import Seller
+from .utils import send_activation_email
+from django.db import transaction
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -26,7 +28,26 @@ class UserSerializer(serializers.ModelSerializer):
             "is_staff",
         )
 
+# email 인증시 임시 회원 생성 시리얼라이저
+class PreSignUpSerializer(serializers.Serializer):
+    email = serializers.EmailField()
 
+    def validate_email(self, value):
+        if User.objects.filter(email=value, is_active=True).exists():
+            raise serializers.ValidationError("이미 사용중인 이메일입니다.")
+        return value
+
+    def create(self, validated_data):
+        email = validated_data["email"]
+        user, created = User.objects.get_or_create(
+            email=email,
+            defaults={"is_active": False}
+        )
+
+        send_activation_email(user)
+        return user
+
+# 유저 회원가입 시리얼라이저
 class UserRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True, required=True, validators=[validate_password]
@@ -44,15 +65,31 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             "password2",
         ]
 
-    def validate(self, attrs):
-        if attrs["password"] != attrs["password2"]:
+    def validate(self, data):
+        # 비밀번호 중복 처리
+        if data["password"] != data["password2"]:
             raise serializers.ValidationError(
                 {"password": "비밀번호가 일치하지 않습니다."}
             )
-        return attrs
+        # 이메일 중복 처리
+        if User.objects.filter(email=data["email"], is_active=True).exists():
+            raise serializers.ValidationError({"email": "이미 사용 중인 이메일입니다."})
+        return data
 
-    def create(self, validated_data):
+    def update(self, instance, validated_data):
         validated_data.pop("password2")
+        password = validated_data.pop("password")
+
+        validated_data.pop("email", None)
+
+        for attr, val in validated_data.items():
+            setattr(instance, attr, val)
+
+        instance.set_password(password)
+        instance.is_active = True
+        instance.save()
+        return instance
+
         user = User.objects.create_user(**validated_data)
         return user
 
@@ -85,25 +122,32 @@ class SellerRegisterSerializer(serializers.ModelSerializer):
                 {"message": "비밀번호가 일치하지 않습니다."}
             )
         return data
-
-    def create(self, validated_data):
+    @transaction.atomic
+    def update(self, instance, validated_data):
         business_address = validated_data.pop("business_address")
         business_name = validated_data.pop("business_name")
         business_number = validated_data.pop("business_number")
         validated_data.pop("password2")
 
-        user = User.objects.create_user(**validated_data)
+        password = validated_data.pop("password")
+        validated_data.pop("email", None)
+
+        for attr, val in validated_data.items():
+            setattr(instance, attr, val)
+
+        instance.set_password(password)
+        instance.is_active = True
+        instance.save()
+
         Seller.objects.create(
-            user=user,
+            user=instance,
             business_address=business_address,
             business_name=business_name,
             business_number=business_number,
         )
-        return user
+        return instance
 
-    # 비밀번호 변경
-
-
+# 비밀번호 변경
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True, validators=[validate_password])
