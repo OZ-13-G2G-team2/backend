@@ -1,14 +1,15 @@
-from rest_framework import status, generics
+from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 from .models import Review
 from .serializers import ReviewSerializer
-from products.models import Product
+from drf_spectacular.utils import extend_schema
 
 
 # 리뷰 등록
+@extend_schema(tags=["리뷰 관리"])
 class ReviewCreateView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ReviewSerializer
@@ -18,6 +19,7 @@ class ReviewCreateView(generics.CreateAPIView):
 
 
 # 상품별 리뷰 조회
+@extend_schema(tags=["리뷰 조회"])
 class ReviewListView(generics.ListAPIView):
     serializer_class = ReviewSerializer
 
@@ -27,6 +29,7 @@ class ReviewListView(generics.ListAPIView):
 
 
 # 리뷰 수정
+@extend_schema(tags=["리뷰 수정"])
 class ReviewUpdateView(generics.UpdateAPIView):
     permission_classes = [IsAuthenticated]
     queryset = Review.objects.all()
@@ -34,6 +37,7 @@ class ReviewUpdateView(generics.UpdateAPIView):
 
 
 # 리뷰 삭제
+@extend_schema(tags=["리뷰 삭제"])
 class ReviewDeleteView(generics.DestroyAPIView):
     permission_classes = [IsAuthenticated]
     queryset = Review.objects.all()
@@ -41,6 +45,7 @@ class ReviewDeleteView(generics.DestroyAPIView):
 
 
 # 리뷰 좋아요 추가
+@extend_schema(tags=["리뷰 좋아요"])
 class ReviewLikeView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -55,6 +60,7 @@ class ReviewLikeView(APIView):
 
 
 # 리뷰 사진 업로드
+@extend_schema(tags=["리뷰 사진"])
 class ReviewImageUploadView(APIView):
     permission_classes = [IsAuthenticated]
 
