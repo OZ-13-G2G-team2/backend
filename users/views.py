@@ -11,7 +11,7 @@ from .serializers import (
     UserSerializer,
     UserRegisterSerializer,
     SellerRegisterSerializer,
-    ChangePasswordSerializer,
+    ChangePasswordSerializer, PreSignUpSerializer,
 )
 from drf_spectacular.utils import extend_schema
 
@@ -25,30 +25,11 @@ class UserList(generics.ListAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAdminUser]
 
-
-# user/signup
-@extend_schema(tags=["유저 회원가입"])
-class UserRegisterView(generics.CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserRegisterSerializer
+# 이메일 인증 요청 api
+@extend_schema(tags=["이메일 인증 요청"])
+class PreSignUpView(generics.CreateAPIView):
+    serializer_class = PreSignUpSerializer
     permission_classes = [permissions.AllowAny]
-    # 회원 가입시 유저정보에서 is_active를 False로 설정 한뒤 email로 활성화에 필요한 이메일을 전송
-    def perform_create(self, serializer):
-        user = serializer.save(is_active=False)
-        send_activation_email(user)
-
-
-# seller/signup
-@extend_schema(tags=["판매자 회원가입"])
-class SellerRegisterView(generics.CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = SellerRegisterSerializer
-    permission_classes = [permissions.AllowAny]
-
-    def perform_create(self, serializer):
-        user = serializer.save(is_active=False)
-        send_activation_email(user)
-
 
 # 이메일 인증
 @extend_schema(tags=["이메일 인증"])
@@ -68,6 +49,24 @@ class UserActivateView(APIView):
             return Response({"message": "이메일 인증이 완료되었습니다."}, status=200)
 
         return Response({"error": "토큰이 유효하지 않습니다."}, status=400)
+
+
+#user/signup
+@extend_schema(tags=["유저 회원가입"])
+class UserRegisterView(generics.UpdateAPIView):
+    queryset = User.objects.filter(is_active=True)
+    serializer_class = UserRegisterSerializer
+    permission_classes = [permissions.AllowAny]
+    # 회원 가입시 유저정보에서 is_active를 False로 설정 한뒤 email로 활성화에 필요한 이메일을 전송
+
+
+# seller/signup
+@extend_schema(tags=["판매자 회원가입"])
+class SellerRegisterView(generics.UpdateAPIView):
+    queryset = User.objects.filter(is_active=True)
+    serializer_class = SellerRegisterSerializer
+    permission_classes = [permissions.AllowAny]
+
 
 
 # 로그인 (JWT 발급)
