@@ -11,7 +11,8 @@ from .serializers import (
     UserSerializer,
     UserRegisterSerializer,
     SellerRegisterSerializer,
-    ChangePasswordSerializer, PreSignUpSerializer,
+    ChangePasswordSerializer,
+    PreSignUpSerializer,
 )
 from drf_spectacular.utils import extend_schema
 
@@ -25,11 +26,13 @@ class UserList(generics.ListAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAdminUser]
 
+
 # 이메일 인증 요청 api
 @extend_schema(tags=["이메일 인증"], summary="이메일 인증용 임시 유저")
 class PreSignUpView(generics.CreateAPIView):
     serializer_class = PreSignUpSerializer
     permission_classes = [permissions.AllowAny]
+
 
 # 이메일 인증
 @extend_schema(tags=["이메일 인증"], summary="이메일 인증후 활성화")
@@ -51,7 +54,7 @@ class UserActivateView(APIView):
         return Response({"error": "토큰이 유효하지 않습니다."}, status=400)
 
 
-#user/signup
+# user/signup
 @extend_schema(tags=["유저 회원가입"])
 class UserRegisterView(generics.UpdateAPIView):
     queryset = User.objects.filter(is_active=True)
@@ -68,7 +71,6 @@ class SellerRegisterView(generics.UpdateAPIView):
     permission_classes = [permissions.AllowAny]
 
 
-
 # 로그인 (JWT 발급)
 @extend_schema(tags=["유저 로그인"])
 class UserLoginView(TokenObtainPairView):
@@ -79,6 +81,7 @@ class UserLoginView(TokenObtainPairView):
 @extend_schema(tags=["토큰 갱신"])
 class UserTokenRefreshView(TokenRefreshView):
     permission_classes = [permissions.AllowAny]
+
 
 # 유저 정보 조회 API
 @extend_schema(tags=["유저 상세"])

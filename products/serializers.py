@@ -39,7 +39,10 @@ class ProductSerializer(serializers.ModelSerializer):
     categories = serializers.PrimaryKeyRelatedField(
         many=True, queryset=Category.objects.all()
     )
-    images = ProductImagesSerializer(many=True, read_only=True,)
+    images = ProductImagesSerializer(
+        many=True,
+        read_only=True,
+    )
     option_values = ProductOptionValueSerializer(many=True, read_only=True)
 
     class Meta:

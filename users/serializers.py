@@ -28,6 +28,7 @@ class UserSerializer(serializers.ModelSerializer):
             "is_staff",
         )
 
+
 # email 인증시 임시 회원 생성 시리얼라이저
 class PreSignUpSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -40,12 +41,12 @@ class PreSignUpSerializer(serializers.Serializer):
     def create(self, validated_data):
         email = validated_data["email"]
         user, created = User.objects.get_or_create(
-            email=email,
-            defaults={"is_active": False}
+            email=email, defaults={"is_active": False}
         )
 
         send_activation_email(user)
         return user
+
 
 # 유저 회원가입 시리얼라이저
 class UserRegisterSerializer(serializers.ModelSerializer):
@@ -122,6 +123,7 @@ class SellerRegisterSerializer(serializers.ModelSerializer):
                 {"message": "비밀번호가 일치하지 않습니다."}
             )
         return data
+
     @transaction.atomic
     def update(self, instance, validated_data):
         business_address = validated_data.pop("business_address")
@@ -146,6 +148,7 @@ class SellerRegisterSerializer(serializers.ModelSerializer):
             business_number=business_number,
         )
         return instance
+
 
 # 비밀번호 변경
 class ChangePasswordSerializer(serializers.Serializer):
