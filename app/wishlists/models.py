@@ -1,6 +1,6 @@
 from django.db import models
-from users.models import User
-from products.models import Product
+from app.users.models import User
+from app.products.models import Product
 
 class Wishlist(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wishlists')

@@ -19,14 +19,12 @@ urlpatterns = [
     path("api/sellers/", include("app.sellers.urls", namespace="sellers")),
     # products 앱 include
     path("api/products/", include("app.products.urls", namespace="products")),
-    path("api/products/", include("products.urls", namespace="products")),
     # carts 앱 include
-    path("api/carts/", include("carts.urls")),
+    path("api/carts/", include("app.carts.urls")),
     # reviews 앱 include
-    path("api/reviews/", include("app.reviews.urls")),
-    path("api/reviews/", include("reviews.urls", namespace="reviews")),
+    path("api/reviews/", include("app.reviews.urls", namespace="reviews")),
     # Wishlists 앱 include
-    path("api/wishlists/", include("wishlists.urls", namespace="wishlists")),
+    path("api/wishlists/", include("app.wishlists.urls", namespace="wishlists")),
     # orders 앱 include
     path("api/orders/", include("app.orders.urls", namespace="orders")),
     # 카테고리 관련
