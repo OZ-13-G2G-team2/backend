@@ -19,8 +19,12 @@ urlpatterns = [
     path("api/sellers/", include("sellers.urls", namespace="sellers")),
     # products 앱 include
     path("api/products/", include("products.urls", namespace="products")),
+    # carts 앱 include
+    path("api/carts/", include("carts.urls")),
     # reviews 앱 include
-    path("api/reviews/", include("reviews.urls")),
+    path("api/reviews/", include("reviews.urls", namespace="reviews")),
+    # Wishlists 앱 include
+    path("api/wishlists/", include("wishlists.urls", namespace="wishlists")),
     # orders 앱 include
     path("api/orders/", include("orders.urls", namespace="orders")),
     # 카테고리 관련

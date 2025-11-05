@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "sellers",
     "reviews",
     "carts",
+    "wishlists",
     # Django allauth
     'django.contrib.sites',
     'allauth',
