@@ -74,7 +74,9 @@ class OrderViewSet(viewsets.ModelViewSet):
                 raise ValueError(f"잘못된 수량: {quantity}")
 
             if product.stock < quantity:
-                raise ValueError(f"재고 부족: {product.name} (현재 재고: {product.stock})")
+                raise ValueError(
+                    f"재고 부족: {product.name} (현재 재고: {product.stock})"
+                )
 
             product.stock -= quantity
             product.save(update_fields=["stock"])

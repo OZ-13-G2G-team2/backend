@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv(BASE_DIR / '.env')
 
-DEBUG = True
+DEBUG = False
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALLOWED_HOSTS = ["localhost","127.0.0.1","13.124.51.27"]
