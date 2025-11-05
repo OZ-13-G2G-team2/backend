@@ -7,26 +7,28 @@ from drf_spectacular.views import (
     SpectacularRedocView,
 )
 
-from config import settings
-from products.views import CategoryByGroupAPIView, SellerProductsListAPIView
+from config.settings import base, dev, prod
+from app.products.views import CategoryByGroupAPIView, SellerProductsListAPIView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     # path('', 메인 페이지)
     # users 앱 include
-    path("api/users/", include("users.urls", namespace="users")),
+    path("api/users/", include("app.users.urls", namespace="users")),
     # sellers 앱 include
-    path("api/sellers/", include("sellers.urls", namespace="sellers")),
+    path("api/sellers/", include("app.sellers.urls", namespace="sellers")),
     # products 앱 include
+    path("api/products/", include("app.products.urls", namespace="products")),
     path("api/products/", include("products.urls", namespace="products")),
     # carts 앱 include
     path("api/carts/", include("carts.urls")),
     # reviews 앱 include
+    path("api/reviews/", include("app.reviews.urls")),
     path("api/reviews/", include("reviews.urls", namespace="reviews")),
     # Wishlists 앱 include
     path("api/wishlists/", include("wishlists.urls", namespace="wishlists")),
     # orders 앱 include
-    path("api/orders/", include("orders.urls", namespace="orders")),
+    path("api/orders/", include("app.orders.urls", namespace="orders")),
     # 카테고리 관련
     path(
         "api/categories/group/<int:group_id>/",
@@ -46,7 +48,8 @@ urlpatterns = [
     # Redoc UI
     path("redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
 ]
-# 개발용: MEDIA_URL로 업로드된 파일 접근 가능하게 함.
-# 배포시에는 필요없음. (삭제 요망)
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# 디버그 툴 바
+if dev.DEBUG:
+    import debug_toolbar
+    urlpatterns += [path("__debug__/", include(debug_toolbar.urls))]

@@ -44,3 +44,4 @@ volumes:
 networks:
   ws:
     driver: bridge
+

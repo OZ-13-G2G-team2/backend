@@ -22,14 +22,15 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 # Poetry 설치
+ENV PATH="/root/.local/bin/poetry/bin:$PATH"
 RUN curl -sSL https://install.python-poetry.org | python3 - \
- && /root/.local/bin/poetry --version
+ && poetry --version
 
 # pyproject.toml & poetry.lock 복사 후 의존성 설치
 COPY pyproject.toml poetry.lock* ./
 
 # Poetry 의존성 설치 (루트 패키지는 설치하지 않음)
-RUN /root/.local/bin/poetry install --no-interaction --no-ansi --no-root
+RUN poetry install --no-interaction --no-ansi --no-root
 
 # 앱 코드 및 실행 스크립트 복사
 COPY . /app
@@ -38,9 +39,15 @@ COPY . /app
 RUN chmod +x /app/scripts/run.sh
 
 # 정적 파일 저장용 디렉토리 (collectstatic용)
-RUN mkdir -p /vol/static && chmod 755 /vol/static
+RUN mkdir -p /vol/web/static && \
+    mkdir -p /vol/web/media && \
+    chmod 755 /vol/web
+
+# 실행 스크립트 권한
+RUN chmod +x /app/scripts/run.sh
 
 # 포트 설정
 EXPOSE 8000
 
 CMD ["/app/scripts/run.sh"]
+
