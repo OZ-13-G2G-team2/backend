@@ -30,8 +30,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     # 권한 부분
     is_active = models.BooleanField(
-        default=True
-    )  # todo 개발 단계 인증 구현 전까지 임시 True✅
+        default=False,
+    )
     is_staff = models.BooleanField(default=False)
 
     username = models.CharField(max_length=20)
