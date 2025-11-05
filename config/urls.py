@@ -50,4 +50,5 @@ urlpatterns = [
 # 디버그 툴 바
 if dev.DEBUG:
     import debug_toolbar
+
     urlpatterns += [path("__debug__/", include(debug_toolbar.urls))]

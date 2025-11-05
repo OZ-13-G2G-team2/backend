@@ -18,14 +18,20 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
         description="사용자의 주문 목록을 조회합니다.",
         tags=["주문"],
     ),
-    create=extend_schema(summary="주문 등록", description="새 주문을 등록합니다.", tags=["주문"]),
+    create=extend_schema(
+        summary="주문 등록", description="새 주문을 등록합니다.", tags=["주문"]
+    ),
     retrieve=extend_schema(
         summary="주문 상세 조회",
         description="주문 상세 정보를 조회합니다.",
         tags=["주문"],
     ),
-    update=extend_schema(summary="주문 수정", description="주문 정보를 전체 수정합니다.", tags=["주문"]),
-    destroy=extend_schema(summary="주문 삭제", description="주문을 삭제합니다.", tags=["주문"]),
+    update=extend_schema(
+        summary="주문 수정", description="주문 정보를 전체 수정합니다.", tags=["주문"]
+    ),
+    destroy=extend_schema(
+        summary="주문 삭제", description="주문을 삭제합니다.", tags=["주문"]
+    ),
     update_status=extend_schema(
         summary="주문 상태 변경", description="주문의 상태를 변경합니다.", tags=["주문"]
     ),
@@ -68,7 +74,9 @@ class OrderViewSet(viewsets.ModelViewSet):
                 raise ValueError(f"잘못된 수량: {quantity}")
 
             if product.stock < quantity:
-                raise ValueError(f"재고 부족: {product.name} (현재 재고: {product.stock})")
+                raise ValueError(
+                    f"재고 부족: {product.name} (현재 재고: {product.stock})"
+                )
 
             product.stock -= quantity
             product.save(update_fields=["stock"])

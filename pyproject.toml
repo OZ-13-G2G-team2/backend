@@ -35,3 +35,6 @@ ruff = "^0.14.2"
 black = "^25.9.0"
 isort = "^7.0.0"
 
+[tool.poetry]
+package-mode = false
+

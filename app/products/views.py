@@ -302,4 +302,3 @@ class SellerProductsListAPIView(generics.ListAPIView):
         except Seller.DoesNotExist:
             raise Http404("요청한 판매자가 존재하지 않습니다.")
         return Product.objects.filter(seller_id=seller_id)
-

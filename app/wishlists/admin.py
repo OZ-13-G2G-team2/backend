@@ -27,13 +27,15 @@ class WishlistAdmin(admin.ModelAdmin):
                 first_image.image_url.url,
             )
         return "(이미지 없음)"
+
     product_thumbnail.short_description = "상품 이미지"
 
     def activate_wishlist(self, request, queryset):
         queryset.update(is_active=True)
+
     activate_wishlist.short_description = "선택된 찜 활성화"
 
     def deactivate_wishlist(self, request, queryset):
         queryset.update(is_active=False)
-    deactivate_wishlist.short_description = "선택된 찜 비활성화"
 
+    deactivate_wishlist.short_description = "선택된 찜 비활성화"
