@@ -5,12 +5,12 @@ from django.utils.translation import gettext_lazy as _
 
 
 class UserAdmin(BaseUserAdmin):
-    list_display = ("id", "email", "username", "is_staff", "is_active")
+    list_display = ("id", "email", "username", "is_staff", "is_active", "is_superuser",)
     list_filter = ("is_staff", "is_active")
     ordering = ("email",)
     search_fields = ("email", "username")
 
-    readonly_fields = ("created_at", "updated_at")
+    readonly_fields = ("created_at", "updated_at", "last_login")
 
     fieldsets = (
         (None, {"fields": ("email", "password")}),
@@ -42,6 +42,7 @@ class UserAdmin(BaseUserAdmin):
                     "password2",
                     "is_active",
                     "is_staff",
+                    "is_superuser",
                 ),
             },
         ),
