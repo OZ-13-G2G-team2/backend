@@ -26,13 +26,13 @@ class UserList(generics.ListAPIView):
     permission_classes = [permissions.IsAdminUser]
 
 # 이메일 인증 요청 api
-@extend_schema(tags=["이메일 인증 요청"])
+@extend_schema(tags=["이메일 인증"], summary="이메일 인증용 임시 유저")
 class PreSignUpView(generics.CreateAPIView):
     serializer_class = PreSignUpSerializer
     permission_classes = [permissions.AllowAny]
 
 # 이메일 인증
-@extend_schema(tags=["이메일 인증"])
+@extend_schema(tags=["이메일 인증"], summary="이메일 인증후 활성화")
 class UserActivateView(APIView):
     permission_classes = [permissions.AllowAny]
 

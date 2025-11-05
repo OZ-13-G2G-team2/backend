@@ -182,3 +182,9 @@ AUTHENTICATION_BACKENDS = [
 REST_USE_JWT = True
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = "none"
+
+# 임시 개발용 백엔드 URL
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+DEFAULT_FROM_EMAIL = "noreply@example.com"
+# 프론트 엔드 URL
+FRONTEND_URL = "http://127.0.0.1:8000"

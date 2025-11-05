@@ -6,7 +6,7 @@ from .views import (
     UserDetailView,
     SellerRegisterView,
     ChangePasswordView,
-    UserList,
+    UserList, PreSignUpView, UserActivateView,
 )
 
 app_name = "users"
@@ -14,9 +14,12 @@ app_name = "users"
 urlpatterns = [
     # 전체 유정 조회
     path("a_users/", UserList.as_view(), name="user-list"),
+    #이메일 인증
+    path("pre-signup/", PreSignUpView.as_view(), name="pre-signup"),
+    path("activate/", UserActivateView.as_view(), name="user-activate"),
     # user/seller 회원가입
     path("signup/", UserRegisterView.as_view(), name="user-signup"),
-    path("signup/seller", SellerRegisterView.as_view(), name="seller-signup"),
+    path("signup/seller/", SellerRegisterView.as_view(), name="seller-signup"),
     # 유저 로그인/ 로그아웃
     path("login/", UserLoginView.as_view(), name="token_obtain_pair"),
     # todo 로그아웃 구현
