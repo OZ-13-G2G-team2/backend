@@ -60,6 +60,7 @@ class UserRegisterView(generics.UpdateAPIView):
     queryset = User.objects.filter(is_active=True)
     serializer_class = UserRegisterSerializer
     permission_classes = [permissions.AllowAny]
+    lookup_field = "pk"
     # 회원 가입시 유저정보에서 is_active를 False로 설정 한뒤 email로 활성화에 필요한 이메일을 전송
 
 
@@ -69,6 +70,7 @@ class SellerRegisterView(generics.UpdateAPIView):
     queryset = User.objects.filter(is_active=True)
     serializer_class = SellerRegisterSerializer
     permission_classes = [permissions.AllowAny]
+    lookup_field = "pk"
 
 
 # 로그인 (JWT 발급)
