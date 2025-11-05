@@ -19,6 +19,7 @@ class UserSerializer(serializers.ModelSerializer):
             "updated_at",
             "is_active",
             "is_staff",
+            "is_superuser",
         )
         read_only_fields = (
             "id",
@@ -26,6 +27,7 @@ class UserSerializer(serializers.ModelSerializer):
             "updated_at",
             "is_active",
             "is_staff",
+            "is_superuser",
         )
 
 
