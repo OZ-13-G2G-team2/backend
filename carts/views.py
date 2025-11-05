@@ -5,7 +5,7 @@ from rest_framework.decorators import action
 from .models import Cart, CartItem
 from .serializers import CartSerializer, CartItemSerializer
 from products.models import Product
-from drf_yasg.utils import extend_schema
+from drf_spectacular.utils import extend_schema
 
 
 @extend_schema(tags=["장바구니 관리"])
