@@ -8,6 +8,9 @@ from .views import (
     ReviewImageUploadView,
 )
 
+app_name = "reviews"
+
+
 urlpatterns = [
     path("", ReviewCreateView.as_view(), name="review-create"),  # POST
     path("", ReviewListView.as_view(), name="review-list"),  # GET ?product_id=
