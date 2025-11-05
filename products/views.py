@@ -17,7 +17,7 @@ from sellers.models import Seller
 
 
 # 상품 목록 조회 + 등록
-@extend_schema(tags=["상품 목록 조회 / 등록"])
+@extend_schema(tags=["상품 목록 조회 / 등록"], summary="목록 조회 및 등록")
 class ProductListCreateAPIView(generics.ListCreateAPIView):
     queryset = Product.objects.all().order_by("-created_at")
     serializer_class = ProductSerializer
@@ -66,6 +66,7 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
             return [permissions.IsAuthenticated()]
         return [permissions.AllowAny()]
 
+    @extend_schema(summary="상품 상세 조회")
     def get(self, request, *args, **kwargs):
         try:
             product = self.get_object()
@@ -77,6 +78,7 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
                 status=status.HTTP_404_NOT_FOUND,
             )
 
+    @extend_schema(summary="상품 수정")
     def put(self, request, *args, **kwargs):
         try:
             product = self.get_object()
@@ -100,6 +102,7 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
                 {"error": "잘못된 입력입니다."}, status.HTTP_400_BAD_REQUEST
             )
 
+    @extend_schema(summary="상품 삭제")
     def delete(self, request, *args, **kwargs):
         try:
             product = self.get_object()
@@ -119,7 +122,7 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-@extend_schema(tags=["카테고리"])
+@extend_schema(tags=["카테고리"], summary="카테고리 관련")
 class CategoryByGroupAPIView(generics.ListAPIView):
     serializer_class = CategorySerializer
 
@@ -132,7 +135,7 @@ class CategoryByGroupAPIView(generics.ListAPIView):
         return Category.objects.filter(group_id=group_id).order_by("id")
 
 
-@extend_schema(tags=["상품 재고 업데이트"])
+@extend_schema(tags=["상품 재고 업데이트"], summary="상품 재고 업데이트")
 class ProductStockUpdateAPIView(generics.UpdateAPIView):
     http_method_names = ["patch"]
     queryset = Product.objects.all()
@@ -156,7 +159,27 @@ class ProductStockUpdateAPIView(generics.UpdateAPIView):
 
 
 # 이미지 등록 view
-@extend_schema(tags=["이미지 등록"])
+@extend_schema(
+    tags=["이미지 등록"],
+    summary="상품 이미지 업로드",  # 요약 추가
+
+    request={
+        'multipart/form-data': {
+            'type': 'object',
+            'properties': {
+                'product': {'type': 'integer'},
+                'user': {'type': 'integer'},
+
+                'image_url': {
+                    'type': 'string',
+                    'format': 'binary'
+                }
+            },
+            'required': ['product', 'user', 'image_url']
+        }
+    },
+    responses=ProductImagesSerializer
+)
 class ProductImageUploadAPIView(generics.CreateAPIView):
     serializer_class = ProductImagesSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -191,7 +214,7 @@ class ProductImageUploadAPIView(generics.CreateAPIView):
 
 
 # 검색
-@extend_schema(tags=["검색 기능"])
+@extend_schema(tags=["검색 기능"], summary="상품 검색", description="범위: 검색어,원산지,카테고리,최소금액&최대금액 필터,품절아닌 상품,판매자")
 class ProductSearchAPIView(generics.ListAPIView):
     serializer_class = ProductSerializer
 
@@ -264,3 +287,4 @@ class SellerProductsListAPIView(generics.ListAPIView):
         except Seller.DoesNotExist:
             raise Http404("요청한 판매자가 존재하지 않습니다.")
         return Product.objects.filter(seller_id=seller_id)
+
