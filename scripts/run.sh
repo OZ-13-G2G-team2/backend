@@ -4,6 +4,9 @@ cd /app
 
 export DJANGO_SETTINGS_MODULE=config.settings.prod
 
+chmod +x /root/.local/bin/poetry
+/root/.local/bin/poetry install
+
 echo "=== Running Django migrations ==="
 /root/.local/bin/poetry run python manage.py makemigrations --noinput || true
 /root/.local/bin/poetry run python manage.py migrate --noinput

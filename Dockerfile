@@ -1,6 +1,9 @@
 # 베이스 이미지
 FROM python:3.13-slim
 
+# root 권한 보장
+USER root
+
 # 환경 변수 설정
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -24,7 +27,8 @@ RUN apt-get update \
 # Poetry 설치
 ENV PATH="/root/.local/bin/poetry/bin:$PATH"
 RUN curl -sSL https://install.python-poetry.org | python3 - \
- && poetry --version
+    && chmod +x /root/.local/bin/poetry \
+    && poetry --version
 
 # pyproject.toml & poetry.lock 복사 후 의존성 설치
 COPY pyproject.toml poetry.lock* ./
