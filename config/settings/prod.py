@@ -1,6 +1,8 @@
+import os # noqa
+from pathlib import Path # noqa
 from .base import *  # noqa: F403
-import os
 from dotenv import load_dotenv
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
