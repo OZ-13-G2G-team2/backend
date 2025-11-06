@@ -16,7 +16,7 @@ class OrderServiceTest(TestCase):
             name="Sample Product", price=12000, stock=10
         )
         self.order = Order.objects.create(
-            user=self.user, user_address="주소", payment_method="card"
+            user=self.user, address="주소", payment_method="card"
         )
         self.order_item = OrderItem.objects.create(
             order=self.order, product=self.product, quantity=2, price_at_purchase=12000
@@ -38,7 +38,7 @@ class OrderItemServiceTest(TestCase):
             name="Sample Product", price=12000, stock=10
         )
         self.order = Order.objects.create(
-            user=self.user, user_address="주소", payment_method="card"
+            user=self.user, address="주소", payment_method="card"
         )
         self.order_item = OrderItem.objects.create(
             order=self.order, product=self.product, quantity=2, price_at_purchase=12000
