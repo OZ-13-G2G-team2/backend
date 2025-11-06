@@ -6,11 +6,10 @@ from django.db import transaction
 from app.orders.services.order_item_service import OrderItemService
 from rest_framework.exceptions import ValidationError
 
-from app.orders.models import Order, OrderItem
+from app.orders.models import Order
 from app.orders.serializers.order_serializer import OrderSerializer
 from app.orders.serializers.order_item_serializer import OrderItemSerializer
 from app.orders.services import OrderService
-from app.products.models import Product
 from drf_spectacular.utils import extend_schema, extend_schema_view
 
 

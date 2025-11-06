@@ -1,7 +1,6 @@
 from django.db import transaction
 from app.orders.models import OrderItem
 from app.products.models import Product
-from rest_framework.exceptions import ValidationError
 
 
 class OrderItemService:
