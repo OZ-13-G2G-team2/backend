@@ -1,7 +1,6 @@
 from django.db import models
 from app.orders.models import Order
 from app.products.models import Product
-from django.utils import timezone
 
 
 class OrderItem(models.Model):

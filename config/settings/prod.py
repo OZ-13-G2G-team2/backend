@@ -1,13 +1,16 @@
-from .base import *
-import os
+import os # noqa
+from pathlib import Path # noqa
+from .base import *  # noqa: F403
 from dotenv import load_dotenv
 
-load_dotenv(BASE_DIR / '.env')
+
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+load_dotenv(BASE_DIR / ".env")  # noqa: F405
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 DEBUG = False
-
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ["*"]
 
 DATABASES = {
     "default": {
@@ -15,13 +18,13 @@ DATABASES = {
         "NAME": os.getenv("POSTGRES_DB"),
         "USER": os.getenv("POSTGRES_USER"),
         "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
-        "HOST": os.getenv("DB_HOST", "localhost"),  # docker-compose의 서비스명
+        "HOST": os.getenv("DB_HOST"),  # docker-compose의 서비스명
         "PORT": os.getenv("DB_PORT", "5432"),
     }
 }
 
-STATIC_ROOT = BASE_DIR / "static"
-MEDIA_ROOT = BASE_DIR / "media"
+STATIC_ROOT = BASE_DIR / "static"  # noqa: F405
+MEDIA_ROOT = BASE_DIR / "media"  # noqa: F405
 
 # 실제 우리 서비스의 도메인을 넣으면 된다.
 # CSRF_TRUSTED_ORIGINS = [
