@@ -8,7 +8,7 @@ load_dotenv(BASE_DIR / ".env")  # noqa: F405
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 DEBUG = False
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ["*"]
 
 DATABASES = {
     "default": {
