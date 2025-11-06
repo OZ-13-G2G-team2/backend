@@ -291,7 +291,10 @@ class ProductSearchAPIView(generics.ListAPIView):
 
 
 # 판매자 상품 목록
-@extend_schema(tags=["판매자별 상품 목록 조회"], summary="판매자별 상품 목록 조회",)
+@extend_schema(
+    tags=["판매자별 상품 목록 조회"],
+    summary="판매자별 상품 목록 조회",
+)
 class SellerProductsListAPIView(generics.ListAPIView):
     serializer_class = ProductForSellerSerializer
 
@@ -303,4 +306,3 @@ class SellerProductsListAPIView(generics.ListAPIView):
         except Seller.DoesNotExist:
             raise Http404("요청한 판매자가 존재하지 않습니다.")
         return Product.objects.filter(seller_id=seller_id)
-

@@ -2,9 +2,12 @@ from django.db import models
 from app.users.models import User
 from app.products.models import Product
 
+
 class Wishlist(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="wishlists")
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="wishlists")
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, related_name="wishlists"
+    )
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -39,4 +42,3 @@ class Wishlist(models.Model):
     def product_wishlist_count(cls, product):
         """특정 상품의 찜 수 반환"""
         return cls.objects.filter(product=product, is_active=True).count()
-

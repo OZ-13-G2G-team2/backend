@@ -6,7 +6,9 @@ from .views import (
     UserDetailView,
     SellerRegisterView,
     ChangePasswordView,
-    UserList, PreSignUpView, UserActivateView,
+    UserList,
+    PreSignUpView,
+    UserActivateView,
 )
 
 app_name = "users"
@@ -14,10 +16,12 @@ app_name = "users"
 urlpatterns = [
     # 전체 유저 조회
     path("a_users/", UserList.as_view(), name="user-list"),
-    #이메일 인증
+    # 이메일 인증
     path("pre-signup/", PreSignUpView.as_view(), name="pre-signup"),
-    #이메일 인증을
-    path("activate/<uidb64>/<token>/", UserActivateView.as_view(), name="user-activate"),
+    # 이메일 인증을
+    path(
+        "activate/<uidb64>/<token>/", UserActivateView.as_view(), name="user-activate"
+    ),
     # user/seller 회원가입
     path("signup/<int:pk>", UserRegisterView.as_view(), name="user-signup"),
     path("signup/seller/<int:pk>", SellerRegisterView.as_view(), name="seller-signup"),
