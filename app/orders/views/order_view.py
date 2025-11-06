@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
 from app.orders.services.order_item_service import OrderItemService
+from rest_framework.exceptions import ValidationError
 
 from app.orders.models import Order, OrderItem
 from app.orders.serializers.order_serializer import OrderSerializer
@@ -56,7 +57,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         items = self.request.data.get("items", [])
 
         if not items:
-            raise ValueError("주문 상품이 비어 있습니다.")
+            raise ValidationError("주문 상품이 비어 있습니다.")
 
         for item in items:
             OrderItemService.create_item(
