@@ -130,7 +130,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
 LANGUAGE_CODE = "ko-kr"
-TIME_ZONE = "Asia/seoul"
+TIME_ZONE = "Asia/Seoul"
 USE_I18N = True
 USE_TZ = True
 
@@ -182,5 +182,5 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 REST_USE_JWT = True
-ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION = "none"
