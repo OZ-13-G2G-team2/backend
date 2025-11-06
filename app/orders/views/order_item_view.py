@@ -65,14 +65,16 @@ class OrderItemViewSet(viewsets.ModelViewSet):
             return Response({"error": "product 필수"}, status=status.HTTP_400_BAD_REQUEST)
         if not quantity or int(quantity) <= 0:
             return Response(
-                {"error": "quantity 필수 또는 0보다 커야 함"}, status=status.HTTP_400_BAD_REQUEST
+                {"error": "quantity 필수 또는 0보다 커야 함"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         quantity = int(quantity)
 
         if product.stock < quantity:
             return Response(
-                {"error": f"재고 부족: {product.name}"}, status=status.HTTP_400_BAD_REQUEST
+                {"error": f"재고 부족: {product.name}"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         price_at_purchase = price_at_purchase or product.price
