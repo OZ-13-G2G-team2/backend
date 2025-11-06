@@ -182,5 +182,5 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 REST_USE_JWT = True
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
+ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = "none"
