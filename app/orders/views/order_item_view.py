@@ -84,7 +84,11 @@ class OrderItemViewSet(viewsets.ModelViewSet):
 
     def partial_update(self, request, *args, **kwargs):
         item = self.get_object()
-        new_quantity = int(request.data.get("quantity"))
+        quantity = request.data.get("quantity")
+        if quantity is None or int(quantity) <= 0:
+            return Response({"error": "quantity는 1 이상이어야 합니다."}, status=400)
+
+        new_quantity = int(quantity)
         change_reason = request.data.get("change_reason")
 
         item = OrderItemService.update_quantity(item, new_quantity)
