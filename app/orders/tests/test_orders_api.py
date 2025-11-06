@@ -32,12 +32,12 @@ class OrdersAPITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # 리스트로 응답하는 형태에 맞게 수정
         self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["order_id"], self.order.id)
+        self.assertEqual(response.data[0]["id"], self.order.id)
 
     def test_get_order_detail(self):
         response = self.client.get(f"/orders/{self.order.id}/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["order_id"], self.order.id)
+        self.assertEqual(response.data["id"], self.order.id)
 
     def test_update_order_status(self):
         response = self.client.patch(

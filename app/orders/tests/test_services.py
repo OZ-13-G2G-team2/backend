@@ -45,7 +45,5 @@ class OrderItemServiceTest(TestCase):
         )
 
     def test_update_quantity(self):
-        updated_item = OrderItemService.update_quantity(
-            self.order_item.id, 3, user=self.user
-        )
+        updated_item = OrderItemService.update_quantity(self.order_item, 3)
         self.assertEqual(updated_item.quantity, 3)
