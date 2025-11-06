@@ -6,7 +6,7 @@ services:
     image: postgres:17
     restart: always
     env_file:
-      - ./envs/.env.prod
+      - ./.env
     ports:
       - "${DB_PORT:-5432}:5432"
     volumes:
@@ -14,7 +14,7 @@ services:
     networks:
       - ws
     healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "postgres" ]
+      test: [ "CMD", "pg_isready", "-U", "POSTGRES_USER" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -22,10 +22,12 @@ services:
 
   web:
     container_name: web
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     command: sh /app/scripts/run.sh
     env_file:
-      - ./envs/.env.prod
+      - ./.env
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings.prod
     ports:

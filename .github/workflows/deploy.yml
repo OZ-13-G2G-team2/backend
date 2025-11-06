@@ -1,0 +1,58 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [ main ]
+  workflow_run:
+    workflows: ["Build Docker Image"]
+    types:
+      - completed
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Prepare SSH key
+        env:
+          PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Deploy to EC2
+        env:
+          HOST: ${{ secrets.EC2_HOST }}
+          USER: ${{ secrets.EC2_USER }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $USER@$HOST << 'EOF'
+
+            DB_CONTAINER=db
+            WEB_CONTAINER=web
+            IMAGE_NAME=$DOCKER_USERNAME/django-app:latest
+          
+            # 기존 컨테이너 중지/삭제
+            docker stop $WEB_CONTAINER || true
+            docker rm $WEB_CONTAINER || true
+
+            # 최신 이미지 pull
+            docker pull $IMAGE_NAME
+
+            # 컨테이너 실행
+            docker run -d --name $WEB_CONTAINER -p 8000:8000 \
+              --env-file ./.env \
+              $IMAGE_NAME
+
+            # Django migration & static collect
+            docker exec $WEB_CONTAINER poetry run python manage.py migrate
+            docker exec $WEB_CONTAINER poetry run python manage.py collectstatic --noinput
+
+            # 불필요한 이미지 정리
+            docker image prune -af
+
+            # 확인
+            docker ps
+          EOF
