@@ -1,6 +1,7 @@
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularSwaggerView,
@@ -46,9 +47,3 @@ urlpatterns = [
     # Redoc UI
     path("redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
 ]
-
-# 디버그 툴 바
-if dev.DEBUG:
-    import debug_toolbar
-
-    urlpatterns += [path("__debug__/", include(debug_toolbar.urls))]
