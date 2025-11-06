@@ -1,13 +1,13 @@
-from .base import * # noqa: F403
+from .base import *
 import os
 from dotenv import load_dotenv
 
-load_dotenv(BASE_DIR / '.env') # noqa: F405
+load_dotenv(BASE_DIR / '.env')
+
+DEBUG = True
+
 SECRET_KEY = os.getenv("SECRET_KEY")
-
-DEBUG = False
-
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ["localhost","127.0.0.1","3.39.192.191"]
 
 DATABASES = {
     "default": {

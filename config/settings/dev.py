@@ -2,7 +2,8 @@ from .base import * # noqa: F403
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+load_dotenv(BASE_DIR / '.env')
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS")
 
 DATABASES = {
     'default': {
