@@ -291,7 +291,10 @@ class ProductSearchAPIView(generics.ListAPIView):
 
 
 # 판매자 상품 목록
-@extend_schema(tags=["판매자별 상품 목록 조회"], summary="판매자별 상품 목록 조회",)
+@extend_schema(
+    tags=["판매자별 상품 목록 조회"],
+    summary="판매자별 상품 목록 조회",
+)
 class SellerProductsListAPIView(generics.ListAPIView):
     serializer_class = ProductForSellerSerializer
 
