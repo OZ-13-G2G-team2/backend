@@ -3,7 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.request import Request
 from drf_spectacular.utils import extend_schema, extend_schema_view
-
+from rest_framework.decorators import action
 
 from app.orders.models import OrderItem
 from app.orders.serializers.order_item_serializer import OrderItemSerializer
@@ -35,9 +35,7 @@ from app.orders.serializers.order_item_serializer import OrderItemSerializer
         description="주문상품 정보를 일부 수정합니다.",
         tags=["주문상품"],
     ),
-    destroy=extend_schema(
-        summary="주문상품 삭제", description="주문상품을 삭제합니다.", tags=["주문상품"]
-    ),
+    destroy=extend_schema(summary="주문상품 삭제", description="주문상품을 삭제합니다.", tags=["주문상품"]),
 )
 class OrderItemViewSet(viewsets.ModelViewSet):
     queryset = OrderItem.objects.all()
@@ -59,17 +57,26 @@ class OrderItemViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
 
         order = serializer.validated_data["order"]
-        product = serializer.validated_data["product"]
-        price_at_purchase = (
-            serializer.validated_data.get("price_at_purchase") or product.price
-        )
+        product = serializer.validated_data.get("product")
+        quantity = serializer.validated_data.get("quantity")
+        price_at_purchase = serializer.validated_data.get("price_at_purchase")
 
-        quantity = serializer.validated_data["quantity"]
+        if not product:
+            return Response({"error": "product 필수"}, status=status.HTTP_400_BAD_REQUEST)
+        if not quantity or int(quantity) <= 0:
+            return Response(
+                {"error": "quantity 필수 또는 0보다 커야 함"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        quantity = int(quantity)
+
         if product.stock < quantity:
             return Response(
-                {"error": f"재고 부족: {product.name}"},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"error": f"재고 부족: {product.name}"}, status=status.HTTP_400_BAD_REQUEST
             )
+
+        price_at_purchase = price_at_purchase or product.price
+
         product.stock -= quantity
         product.save(update_fields=["stock"])
 
@@ -83,7 +90,7 @@ class OrderItemViewSet(viewsets.ModelViewSet):
     def partial_update(self, request, *args, **kwargs):
         item = self.get_object()
         new_quantity = request.data.get("quantity")
-        change_reason = request.data.get("change_reason", "")
+        change_reason = request.data.get("change_reason")
 
         if not change_reason:
             return Response(
@@ -96,11 +103,10 @@ class OrderItemViewSet(viewsets.ModelViewSet):
             if new_quantity_int <= 0:
                 raise ValueError
         except (ValueError, TypeError):
-            return Response(
-                {"error": "잘못된 수량"}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "잘못된 수량"}, status=status.HTTP_400_BAD_REQUEST)
 
         diff = new_quantity_int - item.quantity
+
         if diff > 0 and item.product.stock < diff:
             return Response(
                 {"error": f"재고 부족: {item.product.name}"},
@@ -109,6 +115,7 @@ class OrderItemViewSet(viewsets.ModelViewSet):
 
         item.product.stock -= diff
         item.product.save(update_fields=["stock"])
+
         item.quantity = new_quantity_int
         item.change_reason = change_reason
         item.save(update_fields=["quantity", "change_reason", "updated_at"])
@@ -116,17 +123,8 @@ class OrderItemViewSet(viewsets.ModelViewSet):
         item.order.calculate_total()
         item.order.save(update_fields=["total_amount", "updated_at"])
 
-        return Response(
-            {
-                "order_item_id": item.id,
-                "product_id": item.product.id,
-                "product_name": item.product.name,
-                "updated_quantity": item.quantity,
-                "change_reason": change_reason,
-                "updated_at": item.order.updated_at,
-            },
-            status=status.HTTP_200_OK,
-        )
+        serializer = self.get_serializer(item)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def destroy(self, request, *args, **kwargs):
         item = self.get_object()
@@ -138,3 +136,15 @@ class OrderItemViewSet(viewsets.ModelViewSet):
         order.save(update_fields=["total_amount", "updated_at"])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=False, methods=["get"], url_path="by_order")
+    def by_order(self, request):
+        order_id = request.query_params.get("order_id")
+        if not order_id:
+            return Response(
+                {"error": "order_id 필요"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        items = OrderItem.objects.filter(order_id=order_id).select_related("product")
+        serializer = self.get_serializer(items, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
