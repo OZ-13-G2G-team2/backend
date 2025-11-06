@@ -37,4 +37,9 @@ urlpatterns = [
         ),
         name="orderitem_detail",
     ),
+    path(
+        "order_items/by_order/",
+        OrderItemViewSet.as_view({"get": "by_order"}),
+        name="orderitem_by_order",
+    ),
 ]
