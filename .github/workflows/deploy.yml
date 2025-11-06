@@ -30,7 +30,6 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $USER@$HOST << 'EOF'
 
-            DB_CONTAINER=db
             WEB_CONTAINER=web
             IMAGE_NAME=$DOCKER_USERNAME/django-app:latest
           
