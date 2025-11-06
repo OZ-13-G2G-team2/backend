@@ -191,5 +191,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 REST_USE_JWT = True
-ACCOUNT_EMAIL_REQUIRED = True
+# allauth
+ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
+ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
