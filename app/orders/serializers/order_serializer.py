@@ -5,7 +5,7 @@ from app.products.models import Product
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    items = OrderItemSerializer(many=True, read_only=False)
+    items = OrderItemSerializer(many=True, read_only=True)
     user_name = serializers.CharField(source="user.username", read_only=True)
     total_amount = serializers.DecimalField(
         max_digits=10, decimal_places=2, read_only=True
@@ -26,6 +26,3 @@ class OrderSerializer(serializers.ModelSerializer):
             "updated_at",
             "items",
         ]
-
-    def create(self, validated_data):
-        return Order.objects.create(**validated_data)

@@ -73,7 +73,7 @@ class OrderItemViewSet(viewsets.ModelViewSet):
 
         quantity = int(quantity)
         item = OrderItemService.create_item(
-            order,
+            order=order,
             product_id=product.id,
             quantity=quantity,
             price_at_purchase=price_at_purchase,
