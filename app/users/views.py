@@ -16,7 +16,6 @@ from .serializers import (
 )
 from drf_spectacular.utils import extend_schema
 
-from .utils import send_activation_email
 
 
 # 유저 전체 조회

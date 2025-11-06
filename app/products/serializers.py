@@ -1,6 +1,5 @@
 from rest_framework import serializers
 
-from app.sellers.models import Seller
 from .models import Product, ProductImages, Category, ProductOptionValue
 
 

@@ -1,14 +1,11 @@
-from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
-from django.conf import settings
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularSwaggerView,
     SpectacularRedocView,
 )
 
-from config.settings import base, dev, prod
 from app.products.views import CategoryByGroupAPIView, SellerProductsListAPIView
 
 urlpatterns = [
