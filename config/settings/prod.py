@@ -2,7 +2,10 @@ from .base import *
 import os
 from dotenv import load_dotenv
 
-load_dotenv(BASE_DIR / '.env')
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+load_dotenv(BASE_DIR / '.env') # noqa: F405
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 DEBUG = False
 
