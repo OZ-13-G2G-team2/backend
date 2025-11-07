@@ -13,20 +13,22 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
+    env:
+      HOST: ${{ secrets.EC2_HOST }}
+      USER: ${{ secrets.EC2_USER }}
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
+      ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
     steps:
       - name: Prepare SSH key
-        env:
-          PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
+
         run: |
           mkdir -p ~/.ssh
           echo "$PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
       - name: Deploy to EC2
-        env:
-          HOST: ${{ secrets.EC2_HOST }}
-          USER: ${{ secrets.EC2_USER }}
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $USER@$HOST << 'EOF'
 
