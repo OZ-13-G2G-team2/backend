@@ -4,18 +4,19 @@ cd /app
 
 export DJANGO_SETTINGS_MODULE=config.settings.prod
 
-chmod +x /root/.local/bin/poetry
-/root/.local/bin/poetry install
+POETRY_BIN=/home/ec2-user/.local/bin/poetry
+chmod +x $POETRY_BIN
+$POETRY_BIN install
 
 echo "=== Running Django migrations ==="
-/root/.local/bin/poetry run python manage.py makemigrations --noinput || true
-/root/.local/bin/poetry run python manage.py migrate --noinput
+$POETRY_BIN run python manage.py makemigrations --noinput || true
+$POETRY_BIN run python manage.py migrate --noinput
 
 echo "=== Collecting static files ==="
-/root/.local/bin/poetry run python manage.py collectstatic --noinput
+$POETRY_BIN run python manage.py collectstatic --noinput
 
 echo "=== Starting Gunicorn server ==="
-exec /root/.local/bin/poetry run gunicorn config.wsgi:application \
+exec $POETRY_BIN run gunicorn config.wsgi:application \
     --bind 0.0.0.0:8000 \
     --workers 2 \
     --threads 2 \
