@@ -1,6 +1,7 @@
 version: '3.9'
 
 services:
+  #배포시 지워요
   db:
     container_name: db
     image: postgres:17
