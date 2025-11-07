@@ -10,6 +10,7 @@ from drf_spectacular.utils import extend_schema
 @extend_schema(tags=["찜목록 조회"])
 class WishlistView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = WishlistSerializer
 
     def post(self, request):
         user = request.user
@@ -33,6 +34,7 @@ class WishlistView(APIView):
 
 class WishlistDeleteView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = WishlistSerializer
 
     def delete(self, request, wish_id):
         wishlist = get_object_or_404(Wishlist, id=wish_id, user=request.user)
@@ -42,6 +44,7 @@ class WishlistDeleteView(APIView):
 
 class WishlistToggleView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = WishlistSerializer
 
     def patch(self, request, wish_id):
         wishlist = get_object_or_404(Wishlist, id=wish_id, user=request.user)
