@@ -1,5 +1,5 @@
-import os # noqa
-from pathlib import Path # noqa
+import os  # noqa
+from pathlib import Path  # noqa
 from .base import *  # noqa: F403
 from dotenv import load_dotenv
 

@@ -1,39 +1,57 @@
+from django.db import transaction
 from app.orders.models import OrderItem
-from app.orders.exceptions import OrderNotFound
+from app.products.models import Product
 
 
 class OrderItemService:
     @staticmethod
-    def get_item(item_id, user=None):
-        try:
-            if user:
-                return OrderItem.objects.get(id=item_id, order__user=user)
-            return OrderItem.objects.get(id=item_id)
-        except OrderItem.DoesNotExist:
-            raise OrderNotFound(f"OrderItem {item_id} not found")
+    @transaction.atomic
+    def create_item(order, product_id, quantity, price_at_purchase=None):
+        product = Product.objects.select_for_update().get(id=product_id)
 
-    @staticmethod
-    def create_items(order, items_data):
-        created_items = []
-        for data in items_data:
-            item = OrderItem.objects.create(
-                order=order,
-                product=data["product"],
-                quantity=data["quantity"],
-                price_at_purchase=data["price_at_purchase"],
-            )
-            created_items.append(item)
-        return created_items
+        if product.stock < quantity:
+            raise ValueError(f"재고 부족: {product.name}")
 
-    @staticmethod
-    def update_quantity(item_id, quantity, user=None):
-        item = OrderItemService.get_item(item_id, user)
-        item.quantity = quantity
-        item.save()
+        product.stock -= quantity
+        product.save(update_fields=["stock"])
+
+        price_at_purchase = price_at_purchase or product.price
+
+        item = OrderItem.objects.create(
+            order=order,
+            product=product,
+            quantity=quantity,
+            price_at_purchase=price_at_purchase,
+        )
+
+        order.calculate_total()
         return item
 
     @staticmethod
-    def delete_item(item_id, user=None):
-        item = OrderItemService.get_item(item_id, user)
+    @transaction.atomic
+    def update_quantity(item, new_quantity):
+        diff = new_quantity - item.quantity
+        product = item.product
+
+        if diff > 0 and product.stock < diff:
+            raise ValueError(f"재고 부족: {product.name}")
+
+        product.stock -= diff
+        product.save(update_fields=["stock"])
+
+        item.quantity = new_quantity
+        item.save(update_fields=["quantity"])
+
+        item.order.calculate_total()
+        return item
+
+    @staticmethod
+    @transaction.atomic
+    def delete_item(item):
+        product = item.product
+        product.stock += item.quantity
+        product.save(update_fields=["stock"])
+
+        order = item.order
         item.delete()
-        return True
+        order.calculate_total()

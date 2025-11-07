@@ -10,10 +10,11 @@ class Order(models.Model):
         ("shipping", "배송 중"),
         ("delivered", "배달 완료"),
     ]
-    PAYMENT_CHOICES = [
-        ("card", "신용/체크카드"),
-        ("bank_transfer", "무통장입금"),
-        ("bank", "계좌이체"),
+    PAYMENT_METHOD_CHOICES = [
+        ("card", "카드 결제"),
+        ("bank_transfer", "무통장 입금"),
+        ("easy_pay", "간편결제"),
+        ("mobile_pay", "휴대폰 결제"),
     ]
 
     user = models.ForeignKey(
@@ -22,11 +23,11 @@ class Order(models.Model):
         related_name="orders",
         verbose_name="주문자",
     )
+
     order_date = models.DateTimeField(auto_now_add=True, verbose_name="주문일")
     total_amount = models.DecimalField(
-        max_digits=10, decimal_places=2, null=False, default=0
+        max_digits=10, decimal_places=2, verbose_name="총 금액"
     )
-
     address = models.CharField(
         "주소", max_length=255, default="", null=False, blank=False
     )
@@ -38,7 +39,8 @@ class Order(models.Model):
     )
     payment_method = models.CharField(
         max_length=50,
-        choices=PAYMENT_CHOICES,
+        choices=PAYMENT_METHOD_CHOICES,
+        default="card",
         null=True,
         blank=True,
         verbose_name="결제 방법",

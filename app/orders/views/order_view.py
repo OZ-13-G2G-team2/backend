@@ -2,12 +2,14 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from django.db import transaction
+from app.orders.services.order_item_service import OrderItemService
+from rest_framework.exceptions import ValidationError
 
-from app.orders.models import Order, OrderItem
+from app.orders.models import Order
 from app.orders.serializers.order_serializer import OrderSerializer
 from app.orders.serializers.order_item_serializer import OrderItemSerializer
 from app.orders.services import OrderService
-from app.products.models import Product
 from drf_spectacular.utils import extend_schema, extend_schema_view
 
 
@@ -17,20 +19,14 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
         description="사용자의 주문 목록을 조회합니다.",
         tags=["주문"],
     ),
-    create=extend_schema(
-        summary="주문 등록", description="새 주문을 등록합니다.", tags=["주문"]
-    ),
+    create=extend_schema(summary="주문 등록", description="새 주문을 등록합니다.", tags=["주문"]),
     retrieve=extend_schema(
         summary="주문 상세 조회",
         description="주문 상세 정보를 조회합니다.",
         tags=["주문"],
     ),
-    update=extend_schema(
-        summary="주문 수정", description="주문 정보를 전체 수정합니다.", tags=["주문"]
-    ),
-    destroy=extend_schema(
-        summary="주문 삭제", description="주문을 삭제합니다.", tags=["주문"]
-    ),
+    update=extend_schema(summary="주문 수정", description="주문 정보를 전체 수정합니다.", tags=["주문"]),
+    destroy=extend_schema(summary="주문 삭제", description="주문을 삭제합니다.", tags=["주문"]),
     update_status=extend_schema(
         summary="주문 상태 변경", description="주문의 상태를 변경합니다.", tags=["주문"]
     ),
@@ -54,28 +50,21 @@ class OrderViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(user=self.request.user)
         return queryset
 
+    @transaction.atomic
     def perform_create(self, serializer):
         order = serializer.save(user=self.request.user)
-        order_items_data = self.request.data.get("items", [])
-        for item in order_items_data:
-            try:
-                product = Product.objects.get(id=item["product_id"])
-            except Product.DoesNotExist:
-                raise ValueError(f"존재하지 않는 상품: {item['product_id']}")
+        items = self.request.data.get("items", [])
 
-            quantity = item.get("quantity", 0)
-            if quantity <= 0:
-                raise ValueError(f"잘못된 수량: {quantity}")
+        if not items:
+            raise ValidationError("주문 상품이 비어 있습니다.")
 
-            price_at_purchase = item.get("price_at_purchase") or product.price
-            OrderItem.objects.create(
+        for item in items:
+            OrderItemService.create_item(
                 order=order,
-                product=product,
-                quantity=quantity,
-                price_at_purchase=price_at_purchase,
+                product_id=item["product_id"],
+                quantity=item["quantity"],
+                price_at_purchase=item.get("price_at_purchase"),
             )
-
-        order.calculate_total()
 
     @action(detail=True, methods=["get"])
     def items(self, request, pk=None):

@@ -21,15 +21,25 @@ urlpatterns = [
         name="order_update_status",
     ),
     path(
-        "order-items/",
+        "order_items/",
         OrderItemViewSet.as_view({"get": "list", "post": "create"}),
         name="orderitem_list_create",
     ),
     path(
-        "order-items/<int:pk>/",
+        "order_items/<int:pk>/",
         OrderItemViewSet.as_view(
-            {"get": "retrieve", "patch": "update", "delete": "destroy"}
+            {
+                "get": "retrieve",
+                "put": "update",
+                "patch": "partial_update",
+                "delete": "destroy",
+            }
         ),
         name="orderitem_detail",
+    ),
+    path(
+        "order_items/by_order/",
+        OrderItemViewSet.as_view({"get": "by_order"}),
+        name="orderitem_by_order",
     ),
 ]

@@ -38,9 +38,7 @@ class ProductListCreateAPIView(generics.ListCreateAPIView):
         serializer = self.get_serializer(data=request.data)
         request = self.request
         if not request.user.is_authenticated:
-            return Response(
-                {"error": "인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN
-            )
+            return Response({"error": "인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN)
         try:
             serializer.is_valid(raise_exception=True)
             serializer.save(seller=request.user)
@@ -99,22 +97,16 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
             )
         user = self.request.user
         if product.seller.user.email != user.email:
-            return Response(
-                {"error": "인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN
-            )
+            return Response({"error": "인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN)
 
         serializer = self.get_serializer(product, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         else:
-            return Response(
-                {"error": "잘못된 입력입니다."}, status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "잘못된 입력입니다."}, status.HTTP_400_BAD_REQUEST)
 
-    @extend_schema(
-        summary="상품 삭제", description="상품의 아이디를 입력하고 그 상품을 삭제"
-    )
+    @extend_schema(summary="상품 삭제", description="상품의 아이디를 입력하고 그 상품을 삭제")
     def delete(self, request, *args, **kwargs):
         try:
             product = self.get_object()
@@ -126,9 +118,7 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
 
         user = self.request.user
         if product.seller.user.email != user.email:
-            return Response(
-                {"error": "인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN
-            )
+            return Response({"error": "인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN)
 
         product.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -164,9 +154,7 @@ class ProductStockUpdateAPIView(generics.UpdateAPIView):
 
         user = self.request.user
         if product.seller.user.email != user.email:
-            return Response(
-                {"error": "인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN
-            )
+            return Response({"error": "인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN)
 
         serializer = self.get_serializer(product, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
