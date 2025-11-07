@@ -13,7 +13,9 @@ class OrderItem(models.Model):
         related_name="order_items",
         verbose_name="상품",
     )
-    change_reason = models.CharField("변경 사유", max_length=255, blank=True, default="")
+    change_reason = models.CharField(
+        "변경 사유", max_length=255, blank=True, default=""
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     quantity = models.PositiveIntegerField(verbose_name="수량")

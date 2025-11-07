@@ -37,7 +37,9 @@ from app.orders.serializers.order_item_serializer import OrderItemSerializer
         description="주문상품 정보를 일부 수정합니다.",
         tags=["주문상품"],
     ),
-    destroy=extend_schema(summary="주문상품 삭제", description="주문상품을 삭제합니다.", tags=["주문상품"]),
+    destroy=extend_schema(
+        summary="주문상품 삭제", description="주문상품을 삭제합니다.", tags=["주문상품"]
+    ),
 )
 class OrderItemViewSet(viewsets.ModelViewSet):
     queryset = OrderItem.objects.all()
@@ -64,7 +66,9 @@ class OrderItemViewSet(viewsets.ModelViewSet):
         price_at_purchase = serializer.validated_data.get("price_at_purchase")
 
         if not product:
-            return Response({"error": "product 필수"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "product 필수"}, status=status.HTTP_400_BAD_REQUEST
+            )
         if not quantity or int(quantity) <= 0:
             return Response(
                 {"error": "quantity 필수 또는 0보다 커야 함"},
