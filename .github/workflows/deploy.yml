@@ -10,7 +10,7 @@ on:
 
 jobs:
   deploy:
-    if: ${{ github.event_name == 'push' || github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name == 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     env:
@@ -18,7 +18,13 @@ jobs:
       USER: ${{ secrets.EC2_USER }}
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
-      ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
+
+      PROGRES_DB_NAME: ${{ secrets.PROGRES_DB_NAME }}
+      PROGRES_DB_USER: ${{ secrets.PROGRES_DB_USER }}
+      PROGRES_DB_PASSWORD: ${{ secrets.PROGRES_DB_PASSWORD }}
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_PORT: ${{ secrets.DB_PORT }}
+      DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
     steps:
       - name: Prepare SSH key
 
@@ -30,7 +36,7 @@ jobs:
       - name: Deploy to EC2
 
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $USER@$HOST << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $USER@$HOST << EOF
 
             WEB_CONTAINER=web
             IMAGE_NAME=$DOCKER_USERNAME/django-app:latest
@@ -41,6 +47,19 @@ jobs:
 
             # 최신 이미지 pull
             docker pull $IMAGE_NAME
+          
+            # EC2에 .env 파일 자동 생성
+            
+            cat <<EOT > .env
+            PROGRES_DB_NAME=${PROGRES_DB_NAME}
+            PROGRES_DB_USER=${PROGRES_DB_USER}
+            PROGRES_DB_PASSWORD=${PROGRES_DB_PASSWORD}
+            DB_HOST=${DB_HOST}
+            DB_PORT=${DB_PORT}
+            DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+            ALLOWED_HOSTS=${ALLOWED_HOSTS}
+            EOT
+
 
             # 컨테이너 실행
             docker run -d --name $WEB_CONTAINER -p 8000:8000 \
