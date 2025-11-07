@@ -17,7 +17,6 @@ from .serializers import (
 from drf_spectacular.utils import extend_schema
 
 
-
 # 유저 전체 조회
 @extend_schema(tags=["유저 전체 조회"])
 class UserList(generics.ListAPIView):

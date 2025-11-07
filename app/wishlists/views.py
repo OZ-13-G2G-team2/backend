@@ -20,7 +20,8 @@ class WishlistView(APIView):
 
         wishlist = Wishlist.objects.create(user=user, product_id=product_id)
         return Response(
-            {"message": "위시리스트에 추가되었습니다.", "id": wishlist.id}, status=status.HTTP_200_OK
+            {"message": "위시리스트에 추가되었습니다.", "id": wishlist.id},
+            status=status.HTTP_200_OK,
         )
 
     def get(self, request):
