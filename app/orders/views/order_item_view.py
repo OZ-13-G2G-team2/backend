@@ -83,7 +83,7 @@ class OrderItemViewSet(viewsets.ModelViewSet):
             price_at_purchase=price_at_purchase,
         )
 
-        order.save(update_fields=["total_amount", "updated_at"])
+
         return Response(self.get_serializer(item).data, status=status.HTTP_201_CREATED)
 
     def partial_update(self, request, *args, **kwargs):

@@ -13,7 +13,10 @@ class Order(models.Model):
     PAYMENT_CHOICES = [
         ("card", "신용/체크카드"),
         ("bank_transfer", "무통장입금"),
-        ("bank", "계좌이체"),
+        ("bank", "실시간 계좌이체"),
+        ("kakaopay", "카카오페이"),
+        ("payco", "페이코"),
+        ("naverpay", "네이버페이")
     ]
 
     user = models.ForeignKey(
