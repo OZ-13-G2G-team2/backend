@@ -93,9 +93,6 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
-        user = User.objects.create_user(**validated_data)
-        return user
-
 
 # 판매자 회원가입
 class SellerRegisterSerializer(serializers.ModelSerializer):
