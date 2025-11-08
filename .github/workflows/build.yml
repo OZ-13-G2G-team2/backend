@@ -1,6 +1,8 @@
-name: Build and Deploy Django App
+name: Build Docker Image
 
 on:
+  push:
+    branches: [ main ]
   workflow_run:
     workflows: ["Code Quality Checks"]
     types:
