@@ -7,7 +7,7 @@ load_dotenv(BASE_DIR / '.env')
 DEBUG = True
 
 SECRET_KEY = os.getenv("SECRET_KEY")
-ALLOWED_HOSTS = ["localhost","127.0.0.1","3.39.192.191"]
+ALLOWED_HOSTS = ["localhost","127.0.0.1","13.124.51.27"]
 
 DATABASES = {
     "default": {
