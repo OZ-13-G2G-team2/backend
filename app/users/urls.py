@@ -8,26 +8,26 @@ from .views import (
     ChangePasswordView,
     UserList,
     UserActivateView,
+    ResendActivationEmailView,
 )
 
 app_name = "users"
 
 urlpatterns = [
-    # 전체 유저 조회
-    path("a_users/", UserList.as_view(), name="user-list"),
-    #이메일 인증
-    path("pre-signup/", PreSignUpView.as_view(), name="pre-signup"),
-    #이메일 인증을
+    # --- 관리/조회 ---
+    path("list/", UserList.as_view(), name="user-list"),# 전체 유저 조회
+    # --- 인증 ---
     path("activate/<uidb64>/<token>/", UserActivateView.as_view(), name="user-activate"),
-    # user/seller 회원가입
-    path("signup/", UserRegisterView.as_view(), name="user-signup"),
-    path("signup/seller/", SellerRegisterView.as_view(), name="seller-signup"),
-    # 유저 로그인/ 로그아웃
-    path("login/", UserLoginView.as_view(), name="token_obtain_pair"),
-    # todo 로그아웃 구현
-    # 유저정보 조회
-    path("<int:id>/", UserDetailView.as_view(), name="user-detail"),
-    path("password/", ChangePasswordView.as_view(), name="change-password"),
-    # 토큰 발급
-    path("token/refresh/", UserTokenRefreshView.as_view(), name="token_refresh"),
+    path("activate/resend/", ResendActivationEmailView.as_view(), name="resend-activation"), #이메일 재전송
+    # --- 회원가입 ---
+    path("signup/", UserRegisterView.as_view(), name="user-signup"),  # 일반 유저
+    path("signup/seller/", SellerRegisterView.as_view(), name="seller-signup"),  # 판매자
+
+    # --- 로그인 / 토큰 ---
+    path("login/", UserLoginView.as_view(), name="login"),  # JWT 발급
+    path("token/refresh/", UserTokenRefreshView.as_view(), name="token-refresh"),
+
+    # --- 유저 정보 ---
+    path("<int:id>/", UserDetailView.as_view(), name="user-detail"),  # 상세 조회
+    path("password/change/", ChangePasswordView.as_view(), name="change-password"),
 ]
