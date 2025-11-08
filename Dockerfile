@@ -48,8 +48,8 @@ COPY --chown=ec2-user:ec2-user . /app
 RUN chmod +x /app/scripts/run.sh
 
 # 정적 파일 저장용 디렉토리 (collectstatic용)
-RUN mkdir -p /vol/web/static /vol/web/media \
-    && chmod 755 /vol/web
+RUN mkdir -p /home/ec2-user/vol/web/static /home/ec2-user/vol/web/media \
+    && chmod 755 /home/ec2-user/vol/web
 
 # 포트 설정
 EXPOSE 8000
