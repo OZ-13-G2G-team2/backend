@@ -33,3 +33,8 @@ staticfiles/
 # 기타
 *.swp
 *.swo
+
+deploy_key
+deploy_key.pub
+*.pem
+.ssh/
