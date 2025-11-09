@@ -3,6 +3,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import PermissionDenied
 from django.utils.http import urlsafe_base64_decode
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -86,9 +87,29 @@ class SellerRegisterView(generics.CreateAPIView):
 
 
 # 로그인 (JWT 발급)
-@extend_schema(tags=["유저 로그인"])
+@extend_schema(tags=["유저 로그인"], summary="로그인")
 class UserLoginView(TokenObtainPairView):
     permission_classes = [permissions.AllowAny]
+
+#로그 아웃
+@extend_schema(tags=["유저 로그인"], summary="로그 아웃")
+class UserLogoutView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        try:
+            # 1. 클라이언트에서 'refresh' 토큰을 POST 데이터로 받아야 합니다.
+            refresh_token = request.data["refresh"]
+            token = RefreshToken(refresh_token)
+
+            # 2. 해당 refresh 토큰을 블랙리스트에 추가합니다.
+            token.blacklist()
+
+            return Response({"detail": "로그아웃 되었습니다."}, status=status.HTTP_205_RESET_CONTENT)
+
+        except Exception as e:
+            # 'refresh' 토큰이 누락되었거나, 유효하지 않은 토큰일 때
+            return Response({"detail": "유효하지 않은 토큰입니다."}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # 토큰 갱신 todo 토큰갱신 테스트 해보기

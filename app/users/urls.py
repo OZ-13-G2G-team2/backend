@@ -8,7 +8,7 @@ from .views import (
     ChangePasswordView,
     UserList,
     UserActivateView,
-    ResendActivationEmailView,
+    ResendActivationEmailView, UserLogoutView,
 )
 
 app_name = "users"
@@ -26,6 +26,7 @@ urlpatterns = [
     # --- 로그인 / 토큰 ---
     path("login/", UserLoginView.as_view(), name="login"),  # JWT 발급
     path("token/refresh/", UserTokenRefreshView.as_view(), name="token-refresh"),
+    path('logout/', UserLogoutView.as_view(), name='logout'),
 
     # --- 유저 정보 ---
     path("<int:id>/", UserDetailView.as_view(), name="user-detail"),  # 상세 조회
