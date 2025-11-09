@@ -130,9 +130,9 @@ class ChangePasswordView(APIView):
     permission_classes = [permissions.IsAuthenticated]  # 로그인 유저만 할 수 있음.
 
     def post(self, request):
-        serializer = self.serializer_class(data=request.data)
+        serializer = self.serializer_class(data=request.data, context={"request": request})
 
-        if serializer.is_valid():
+        if serializer.is_valid(raise_exception=True):
             user = request.user
 
             # 기존 비밀번호와 일치한지 확인
@@ -141,17 +141,12 @@ class ChangePasswordView(APIView):
                     {"detail": "현재 비밀번호가 일치하지 않습니다."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-
-            # 새로운 비밀번호 설정
-            validate_strong_password(serializer.validated_data.get("new_password"))
+            # 2. 비밀번호 저장 및 세션 유지 로직
             user.set_password(serializer.validated_data.get("new_password"))
             user.save()
 
-            # 비밀번호 변경 후에도 로그인 유지
             update_session_auth_hash(request, user)
 
             return Response(
                 {"detail": "회원 비밀 번호 수정."}, status=status.HTTP_200_OK
             )
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
