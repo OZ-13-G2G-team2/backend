@@ -31,17 +31,6 @@ class UserSerializer(serializers.ModelSerializer):
             "is_staff",
             "is_superuser",
         )
-# 비밀번호 복잡도 인증 8자 이상, 영어, 숫자, 특수 문자
-def validate_strong_password(value):
-    if len(value) < 8:
-        raise serializers.ValidationError("비밀번호는 최소 8자 이상이어야 합니다.")
-    if not re.search(r"[A-Za-z]", value):
-        raise serializers.ValidationError("비밀번호에 영문이 포함되어야 합니다.")
-    if not re.search(r"\d", value):
-        raise serializers.ValidationError("비밀번호에 숫자가 포함되어야 합니다.")
-    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", value):
-        raise serializers.ValidationError("비밀번호에 특수문자가 포함되어야 합니다.")
-    return value
 
 #회원가입 공동 로직
 class BaseRegisterSerializer(serializers.ModelSerializer):
@@ -141,6 +130,23 @@ class SellerRegisterSerializer(BaseRegisterSerializer):
         )
 
         return user
+
+# 로그아웃 시리얼라이저
+# 로그아웃 요청에 필요한 데이터 구조를 정의
+class LogoutSerializer(serializers.Serializer):
+    refresh = serializers.CharField(required=True)
+
+# 비밀번호 복잡도 인증 8자 이상, 영어, 숫자, 특수 문자
+def validate_strong_password(value):
+    if len(value) < 8:
+        raise serializers.ValidationError("비밀번호는 최소 8자 이상이어야 합니다.")
+    if not re.search(r"[A-Za-z]", value):
+        raise serializers.ValidationError("비밀번호에 영문이 포함되어야 합니다.")
+    if not re.search(r"\d", value):
+        raise serializers.ValidationError("비밀번호에 숫자가 포함되어야 합니다.")
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", value):
+        raise serializers.ValidationError("비밀번호에 특수문자가 포함되어야 합니다.")
+    return value
 
 
 # 비밀번호 변경

@@ -12,7 +12,8 @@ from .serializers import (
     UserSerializer,
     UserRegisterSerializer,
     SellerRegisterSerializer,
-    ChangePasswordSerializer, validate_strong_password,
+    ChangePasswordSerializer,
+    LogoutSerializer,
 )
 from drf_spectacular.utils import extend_schema
 
@@ -91,23 +92,20 @@ class UserLoginView(TokenObtainPairView):
     permission_classes = [permissions.AllowAny]
 
 #로그 아웃
-@extend_schema(tags=["유저 로그인"], summary="로그 아웃")
+@extend_schema(tags=["유저 로그인"], summary="로그 아웃", request=LogoutSerializer)
 class UserLogoutView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = LogoutSerializer
 
     def post(self, request):
         try:
-            # 1. 클라이언트에서 'refresh' 토큰을 POST 데이터로 받아야 합니다.
             refresh_token = request.data["refresh"]
             token = RefreshToken(refresh_token)
-
-            # 2. 해당 refresh 토큰을 블랙리스트에 추가합니다.
             token.blacklist()
-
             return Response({"detail": "로그아웃 되었습니다."}, status=status.HTTP_205_RESET_CONTENT)
 
         except Exception as e:
-            # 'refresh' 토큰이 누락되었거나, 유효하지 않은 토큰일 때
+            # refresh 토큰이 유효하지 않은 토큰일 때
             return Response({"detail": "유효하지 않은 토큰입니다."}, status=status.HTTP_400_BAD_REQUEST)
 
 
