@@ -47,7 +47,7 @@ class UserActivateView(APIView):
         return Response({"error": "토큰이 유효하지 않습니다."}, status=400)
 
 
-# 비밀 번호 인증 재전송
+# 이메일 인증 재전송
 @extend_schema(tags=["이메일 인증"], summary="이메일 인증 재전송")
 class ResendActivationEmailView(APIView):
     def post(self, request):
