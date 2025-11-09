@@ -103,6 +103,14 @@ class SellerRegisterSerializer(BaseRegisterSerializer):
             "business_number",
         ]
 
+    def validate_business_number(self, value):
+        # 길이 검사: 사업자 번호 10자리
+        if len(value) != 10:
+            raise serializers.ValidationError("사업자등록번호는 10자리여야 합니다.")
+
+        # 숫자 패턴 검사: 모두 숫자인지 확인
+        if not re.match(r"^\d{10}$", value):
+            raise serializers.ValidationError("사업자등록번호는 숫자만 포함해야 합니다.")
 
     def validate(self, data):
         data = super().validate(data)
