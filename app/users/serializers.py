@@ -61,6 +61,11 @@ class BaseRegisterSerializer(serializers.ModelSerializer):
         if User.objects.filter(email=data["email"]).exists():
             raise serializers.ValidationError({"email": "이미 사용 중인 이메일입니다."})
 
+        # 전화번호 중복 확인
+        phone_number = data.get("phone_number")
+        if phone_number and User.objects.filter(phone_number=phone_number).exists():
+            raise serializers.ValidationError({"phone_number": "이미 사용 중인 전화번호입니다."})
+
         # 비밀번호 복잡도 검증
         validate_strong_password(data["password"])
 
