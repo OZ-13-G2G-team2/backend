@@ -17,12 +17,13 @@ jobs:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       EC2_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
 
-      PROGRES_DB_NAME: ${{ secrets.PROGRES_DB_NAME }}
-      PROGRES_DB_USER: ${{ secrets.PROGRES_DB_USER }}
-      PROGRES_DB_PASSWORD: ${{ secrets.PROGRES_DB_PASSWORD }}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
       DB_HOST: ${{ secrets.DB_HOST }}
       DB_PORT: ${{ secrets.DB_PORT }}
       DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+      ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
     steps:
       - name: Prepare SSH key
 
@@ -50,9 +51,9 @@ jobs:
           # EC2에 .env 파일 자동 생성
             
           cat <<EOT > .env
-          PROGRES_DB_NAME=${PROGRES_DB_NAME}
-          PROGRES_DB_USER=${PROGRES_DB_USER}
-          PROGRES_DB_PASSWORD=${PROGRES_DB_PASSWORD}
+          POSTGRES_DB=${POSTGRES_DB}
+          POSTGRES_USER=${POSTGRES_USER}
+          POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
           DB_HOST=${DB_HOST}
           DB_PORT=${DB_PORT}
           DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
