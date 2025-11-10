@@ -13,7 +13,9 @@ class Seller(models.Model):
 
     business_address = models.CharField(max_length=225, null=True, blank=True)
     business_name = models.CharField(max_length=225, verbose_name="업체명(상호명)")
-    business_number = models.CharField(max_length=100, verbose_name="사업자등록번호", unique=True)
+    business_number = models.CharField(
+        max_length=100, verbose_name="사업자등록번호", unique=True
+    )
 
     class Meta:
         db_table = "sellers"

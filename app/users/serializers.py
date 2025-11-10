@@ -32,19 +32,29 @@ class UserSerializer(serializers.ModelSerializer):
             "is_superuser",
         )
 
-#회원가입 공동 로직
+
+# 회원가입 공동 로직
 class BaseRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, validators=[validate_password])
     password2 = serializers.CharField(write_only=True)
 
     class Meta:
         model = User
-        fields = ["email", "username", "address", "phone_number", "password", "password2"]
+        fields = [
+            "email",
+            "username",
+            "address",
+            "phone_number",
+            "password",
+            "password2",
+        ]
 
     def validate(self, data):
         # 비밀번호 일치 확인
         if data["password"] != data["password2"]:
-            raise serializers.ValidationError({"password": "비밀번호가 일치하지 않습니다."})
+            raise serializers.ValidationError(
+                {"password": "비밀번호가 일치하지 않습니다."}
+            )
 
         # 이메일 중복 확인
         if User.objects.filter(email=data["email"]).exists():
@@ -53,7 +63,9 @@ class BaseRegisterSerializer(serializers.ModelSerializer):
         # 전화번호 중복 확인
         phone_number = data.get("phone_number")
         if phone_number and User.objects.filter(phone_number=phone_number).exists():
-            raise serializers.ValidationError({"phone_number": "이미 사용 중인 전화번호입니다."})
+            raise serializers.ValidationError(
+                {"phone_number": "이미 사용 중인 전화번호입니다."}
+            )
 
         # 비밀번호 복잡도 검증
         validate_strong_password(data["password"])
@@ -104,12 +116,16 @@ class SellerRegisterSerializer(BaseRegisterSerializer):
 
         # 숫자 패턴 검사: 모두 숫자인지 확인
         if not re.match(r"^\d{10}$", value):
-            raise serializers.ValidationError("사업자등록번호는 숫자만 포함해야 합니다.")
+            raise serializers.ValidationError(
+                "사업자등록번호는 숫자만 포함해야 합니다."
+            )
 
     def validate(self, data):
         data = super().validate(data)
         if Seller.objects.filter(business_number=data["business_number"]).exists():
-            raise serializers.ValidationError({"business_number": "이미 등록된 사업자번호입니다."})
+            raise serializers.ValidationError(
+                {"business_number": "이미 등록된 사업자번호입니다."}
+            )
         return data
 
     @transaction.atomic
@@ -131,10 +147,12 @@ class SellerRegisterSerializer(BaseRegisterSerializer):
 
         return user
 
+
 # 로그아웃 시리얼라이저
 # 로그아웃 요청에 필요한 데이터 구조를 정의
 class LogoutSerializer(serializers.Serializer):
     refresh = serializers.CharField(required=True)
+
 
 # 비밀번호 복잡도 인증 8자 이상, 영어, 숫자, 특수 문자
 def validate_strong_password(value):
@@ -160,7 +178,9 @@ class ChangePasswordSerializer(serializers.Serializer):
 
         # 기존 비밀번호 일치 확인
         if not user.check_password(data["old_password"]):
-            raise serializers.ValidationError({"old_password": "기존 비밀번호가 올바르지 않습니다."})
+            raise serializers.ValidationError(
+                {"old_password": "기존 비밀번호가 올바르지 않습니다."}
+            )
 
         # 새 비밀번호 복잡도 검사
         validate_strong_password(data["new_password"])

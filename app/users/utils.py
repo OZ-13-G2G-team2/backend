@@ -4,13 +4,14 @@ from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.core.mail import send_mail
 
+
 # 이메일인증 링크 생성
 def send_activation_email(user):
     token = default_token_generator.make_token(user)
     uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
 
     # activation_link = f"{settings.FRONTEND_URL}api/users/activate/{uidb64}/{token}"
-    #테스트용
+    # 테스트용
     activation_link = f"http://127.0.0.1:8000/api/users/activate/{uidb64}/{token}/"
 
     send_mail(

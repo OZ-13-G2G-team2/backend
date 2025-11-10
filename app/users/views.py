@@ -19,14 +19,13 @@ from drf_spectacular.utils import extend_schema
 
 from .utils import send_activation_email
 
+
 # 유저 전체 조회
 @extend_schema(tags=["유저 전체 조회"])
 class UserList(generics.ListAPIView):
     queryset = User.objects.all().order_by("-id")
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAdminUser]
-
-
 
 
 # 이메일 인증 링크 발송
@@ -55,19 +54,29 @@ class ResendActivationEmailView(APIView):
     def post(self, request):
         email = request.data.get("email")
         if not email:
-            return Response({"error": "이메일이 필요합니다."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "이메일이 필요합니다."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            return Response({"error": "해당 이메일의 사용자가 존재하지 않습니다."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "해당 이메일의 사용자가 존재하지 않습니다."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         if user.is_active:
-            return Response({"message": "이미 인증이 완료된 계정입니다."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"message": "이미 인증이 완료된 계정입니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # 이메일 재전송
         send_activation_email(user)
-        return Response({"message": "인증 메일을 다시 발송했습니다."}, status=status.HTTP_200_OK)
+        return Response(
+            {"message": "인증 메일을 다시 발송했습니다."}, status=status.HTTP_200_OK
+        )
 
 
 # user/signup
@@ -91,7 +100,8 @@ class SellerRegisterView(generics.CreateAPIView):
 class UserLoginView(TokenObtainPairView):
     permission_classes = [permissions.AllowAny]
 
-#로그 아웃
+
+# 로그 아웃
 @extend_schema(tags=["유저 로그인"], summary="로그 아웃", request=LogoutSerializer)
 class UserLogoutView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -102,11 +112,16 @@ class UserLogoutView(APIView):
             refresh_token = request.data["refresh"]
             token = RefreshToken(refresh_token)
             token.blacklist()
-            return Response({"detail": "로그아웃 되었습니다."}, status=status.HTTP_205_RESET_CONTENT)
+            return Response(
+                {"detail": "로그아웃 되었습니다."}, status=status.HTTP_205_RESET_CONTENT
+            )
 
-        except Exception as e:
+        except Exception:
             # refresh 토큰이 유효하지 않은 토큰일 때
-            return Response({"detail": "유효하지 않은 토큰입니다."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "유효하지 않은 토큰입니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 # 토큰 갱신 todo 토큰갱신 테스트 해보기
@@ -148,7 +163,9 @@ class ChangePasswordView(APIView):
     permission_classes = [permissions.IsAuthenticated]  # 로그인 유저만 할 수 있음.
 
     def post(self, request):
-        serializer = self.serializer_class(data=request.data, context={"request": request})
+        serializer = self.serializer_class(
+            data=request.data, context={"request": request}
+        )
 
         if serializer.is_valid(raise_exception=True):
             user = request.user

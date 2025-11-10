@@ -2,6 +2,7 @@ from app.orders.models import Order, OrderItem
 from app.orders.exceptions import OrderNotFound, InvalidOrderStatus
 from app.products.models import Product
 
+
 class OrderService:
     @staticmethod
     def get_order(order_id, user=None):
