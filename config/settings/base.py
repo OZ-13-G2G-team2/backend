@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",
     # Third-party
     "rest_framework",
     "rest_framework_simplejwt",
@@ -61,7 +62,6 @@ INSTALLED_APPS = [
     "app.carts",
     "app.wishlists",
     # Django allauth
-    "django.contrib.sites",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
