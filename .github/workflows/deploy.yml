@@ -1,8 +1,6 @@
 name: Deploy to EC2
 
 on:
-  push:
-    branches: [ main ]
   workflow_run:
     workflows: ["Build Docker Image"]
     types:
@@ -17,7 +15,7 @@ jobs:
       HOST: ${{ secrets.EC2_HOST }}
       USER: ${{ secrets.EC2_USER }}
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
+      PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
 
       PROGRES_DB_NAME: ${{ secrets.PROGRES_DB_NAME }}
       PROGRES_DB_USER: ${{ secrets.PROGRES_DB_USER }}
@@ -30,7 +28,7 @@ jobs:
 
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_PRIVATE_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
+          echo "${{ secrets.EC2_SSH_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
