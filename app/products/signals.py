@@ -5,7 +5,7 @@ from app.products.models import CategoryGroup, Category
 
 @receiver(post_migrate)
 def create_default_categories(sender, **kwargs):
-    if sender.name != "products":
+    if sender.name != "app.products":
         return
 
     if CategoryGroup.objects.exists():

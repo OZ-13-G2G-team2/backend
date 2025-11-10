@@ -5,6 +5,8 @@ on:
     branches:
       - main
   pull_request:
+    branches:
+      - main
 
 jobs:
   ci:
@@ -17,6 +19,7 @@ jobs:
           POSTGRES_USER: ${{ secrets.TEST_USER }}
           POSTGRES_PASSWORD: ${{ secrets.TEST_PASSWORD }}
           POSTGRES_DB: ${{ secrets.TEST_DB }}
+          ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
         ports:
           - 5432:5432
         options: >-
