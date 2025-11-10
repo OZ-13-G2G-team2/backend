@@ -12,6 +12,7 @@ from drf_spectacular.utils import extend_schema
 class CartViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = CartSerializer
+
     # POST /api/carts/ : 장바구니 추가
     def create(self, request):
         user = request.user
