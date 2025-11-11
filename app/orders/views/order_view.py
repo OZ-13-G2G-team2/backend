@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
 from app.orders.services.order_item_service import OrderItemService
 from rest_framework.exceptions import ValidationError
+from app.orders.exceptions import OrderNotFound, InvalidOrderStatus
 
 from app.orders.models import Order
 from app.orders.serializers.order_serializer import OrderSerializer
@@ -84,13 +85,12 @@ class OrderViewSet(viewsets.ModelViewSet):
         order = self.get_object()
         new_status = request.data.get("status")
         update_note = request.data.get("update_note", "")
-
         try:
-            updated_order = OrderService.update_status(
-                order.id, new_status, user=request.user
-            )
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            updated_order = OrderService.update_status(order.id, new_status, user=request.user)
+        except OrderNotFound:
+            return Response({"error": "주문을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+        except InvalidOrderStatus:
+            return Response({"error": "잘못된 주문 상태입니다."}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(
             {

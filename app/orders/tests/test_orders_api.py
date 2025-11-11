@@ -8,11 +8,12 @@ from app.sellers.models import Seller
 
 User = get_user_model()
 
-
 class OrdersAPITest(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(
-            username="testuser", email="testuser@example.com", password="testpass"
+            username="testuser",
+            email="testuser@example.com",
+            password="testpass"
         )
         self.client.force_authenticate(user=self.user)
 
@@ -23,11 +24,16 @@ class OrdersAPITest(APITestCase):
         )
 
         self.product = Product.objects.create(
-            name="Sample Product", price=12000, stock=10, seller=self.seller
+            name="Sample Product",
+            price=12000,
+            stock=10,
+            seller=self.seller
         )
 
         self.order = Order.objects.create(
-            user=self.user, address="주소", payment_method="card"
+            user=self.user,
+            address="주소",
+            payment_method="card"
         )
 
     def test_get_order_list(self):
