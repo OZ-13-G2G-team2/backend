@@ -2,6 +2,9 @@ from django.contrib.auth import get_user_model
 from rest_framework.test import APITestCase
 from rest_framework import status
 
+from app.carts.models import Cart, CartItem
+from unittest.mock import patch, MagicMock
+
 from app.orders.models import Order
 from app.products.models import Product
 from app.sellers.models import Seller
@@ -29,6 +32,8 @@ class OrdersAPITest(APITestCase):
         self.order = Order.objects.create(
             user=self.user, address="주소", payment_method="card"
         )
+        self.cart = Cart.objects.create(user=self.user)
+        CartItem.objects.create(cart=self.cart, product=self.product, quantity=2)
 
     def test_get_order_list(self):
         response = self.client.get("/api/orders/")
@@ -55,3 +60,31 @@ class OrdersAPITest(APITestCase):
         self.assertIn(
             response.status_code, [status.HTTP_200_OK, status.HTTP_204_NO_CONTENT]
         )
+
+
+@patch("app.carts.models.CartItem.objects.filter")
+@patch("app.orders.services.order_item_service.OrderItemService.create_item")
+@patch("app.orders.models.Order.save")
+def test_create_order_from_cart_mock(self, mock_order_save, mock_create_item, mock_cart_filter):
+    mock_cart_item = MagicMock()
+    mock_cart_item.product = self.product
+    mock_cart_item.quantity = 2
+    mock_cart_filter.return_value.exists.return_value = True
+    mock_cart_filter.return_value.__iter__.return_value = [mock_cart_item]
+
+    mock_order_save.return_value = None
+
+    response = self.client.post(
+        "/api/orders/",
+        {"address": "새 주소", "payment_method": "card"},
+        format="json",
+    )
+
+    self.assertIn(response.status_code, [status.HTTP_201_CREATED, status.HTTP_200_OK])
+
+    mock_create_item.assert_called_once_with(
+        order=self.order,
+        product_id=self.product.id,
+        quantity=2,
+        price_at_purchase=self.product.price
+    )
