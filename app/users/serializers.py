@@ -119,6 +119,7 @@ class SellerRegisterSerializer(BaseRegisterSerializer):
             raise serializers.ValidationError(
                 "사업자등록번호는 숫자만 포함해야 합니다."
             )
+        return value
 
     def validate(self, data):
         data = super().validate(data)
