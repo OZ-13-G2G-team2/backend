@@ -1,0 +1,27 @@
+version: '3.9'
+
+services:
+  web:
+    container_name: web
+    image: lusieda/django-app:latest
+    env_file:
+      - /home/ec2-user/app/.env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.prod
+    ports:
+      - "8000:8000"
+
+    command: /app/scripts/run.sh
+    restart: on-failure
+    networks:
+      - ws
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+networks:
+  ws:
+    driver: bridge

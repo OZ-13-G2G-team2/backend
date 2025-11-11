@@ -5,6 +5,7 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
     SpectacularRedocView,
 )
+from django.http import JsonResponse
 
 from app.products.views import CategoryByGroupAPIView, SellerProductsListAPIView
 
@@ -44,3 +45,8 @@ urlpatterns = [
     # Redoc UI
     path("redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
 ]
+
+def health(request):
+    return JsonResponse({"status":"ok"})
+
+urlpatterns += [path("health/", health, name="health")]
