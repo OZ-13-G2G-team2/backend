@@ -1,6 +1,9 @@
 name: Deploy to EC2
 
 on:
+  push:
+    branches:
+      - main
   workflow_run:
     workflows: ["Build Docker Image"]
     types:
@@ -40,7 +43,6 @@ jobs:
 
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $EC2_USER@$EC2_HOST << EOF
-          set -euo pipefail
           cd /home/ec2-user/app || exit 1
           WEB_CONTAINER=${WEB_CONTAINER:-web}
           IMAGE_NAME=${DOCKER_USERNAME:-lusieda}/django-app:latest
