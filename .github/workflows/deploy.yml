@@ -43,11 +43,11 @@ jobs:
           IMAGE_NAME=${DOCKER_USERNAME}/django-app:latest
           
           # 기존 컨테이너 중지/삭제
-          docker stop \$WEB_CONTAINER 2>/dev/null || true
-          docker rm \$WEB_CONTAINER 2>/dev/null || true
+          docker stop $WEB_CONTAINER || true
+          docker rm $WEB_CONTAINER || true
 
             # 최신 이미지 pull
-          docker pull \$IMAGE_NAME 
+          docker pull $IMAGE_NAME 
           
           # EC2에 .env 파일 자동 생성
             
@@ -63,7 +63,7 @@ jobs:
 
 
           # 컨테이너 실행
-          docker run -d -p 8000:8000 --name "\$WEB_CONTAINER" --env-file ./.env "\$IMAGE_NAME"
+          docker run -d -p 8000:8000 --name WEB --env-file /home/ec2-user/app/.env lusieda/django-app:latest
 
           # Django migration & static collect
           sleep 5

@@ -3,6 +3,7 @@ version: '3.9'
 services:
   web:
     container_name: web
+    build: .
     image: lusieda/django-app:latest
     env_file:
       - /home/ec2-user/app/.env

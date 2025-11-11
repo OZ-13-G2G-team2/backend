@@ -14,7 +14,9 @@ ENV PYTHONUNBUFFERED=1 \
     PATH="$HOME/.local/bin:$PATH" \
     POETRY_VIRTUALENVS_IN_PROJECT=False \
     POETRY_NO_INTERACTION=1 \
-    POETRY_HOME="$HOME/.local"
+    POETRY_HOME="$HOME/.local" \
+    POETRY_BIN=$HOME/.local/bin/poetry
+    DJANGO_SETTINGS_MODULE=config.settings.prod
 
 # 시스템 필수 패키지 설치 (Poetry 설치 및 빌드 도구)
 # 시스템 패키지는 root 권한으로 설치
@@ -39,9 +41,8 @@ RUN curl -sSL https://install.python-poetry.org | python3 - \
 COPY --chown=ec2-user:ec2-user pyproject.toml poetry.lock* ./
 
 # Poetry 의존성 설치 (루트 패키지는 설치하지 않음)
-RUN poetry config virtualenvs.create false \
-    && poetry install --no-interaction --no-ansi --no-root \
-    && poetry add gunicorn
+RUN $POETRY_BIN config virtualenvs.create false \
+    && $POETRY_BIN install --no-interaction --no-ansi --no-root
 
 # 앱 코드 및 실행 스크립트 복사
 COPY --chown=ec2-user:ec2-user . /app
