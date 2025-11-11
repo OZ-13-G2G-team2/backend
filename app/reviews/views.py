@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 from .models import Review
-from .serializers import ReviewSerializer
+from .serializers import ReviewSerializer, ReviewImageSerializer
 from drf_spectacular.utils import extend_schema
 
 
