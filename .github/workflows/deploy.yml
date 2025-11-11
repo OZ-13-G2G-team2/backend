@@ -37,16 +37,17 @@ jobs:
 
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $EC2_USER@$EC2_HOST << EOF
-          cd /home/ec2-user/app
+          set -euo pipefail
+          cd /home/ec2-user/app || exit 1
           WEB_CONTAINER=web
-          IMAGE_NAME=$DOCKER_USERNAME/django-app:latest
+          IMAGE_NAME=${DOCKER_USERNAME}/django-app:latest
           
           # 기존 컨테이너 중지/삭제
-          docker stop $WEB_CONTAINER || true
-          docker rm $WEB_CONTAINER || true
+          docker stop \$WEB_CONTAINER 2>/dev/null || true
+          docker rm \$WEB_CONTAINER 2>/dev/null || true
 
             # 최신 이미지 pull
-          docker pull $IMAGE_NAME
+          docker pull \$IMAGE_NAME 
           
           # EC2에 .env 파일 자동 생성
             
@@ -62,15 +63,16 @@ jobs:
 
 
           # 컨테이너 실행
-          docker run -d --name $WEB_CONTAINER -p 8000:8000 --env-file ./.env $IMAGE_NAME
+          docker run -d -p 8000:8000 --name "\$WEB_CONTAINER" --env-file ./.env "\$IMAGE_NAME"
 
           # Django migration & static collect
-          docker exec $WEB_CONTAINER poetry run python manage.py migrate
-          docker exec $WEB_CONTAINER poetry run python manage.py collectstatic --noinput
+          sleep 5
+          docker exec \$WEB_CONTAINER poetry run python manage.py migrate
+          docker exec \$WEB_CONTAINER poetry run python manage.py collectstatic --noinput
 
           # 불필요한 이미지 정리
-          docker image prune -af
+          docker system prune -af
 
           # 확인
-          docker ps
+          docker ps -a
           EOF
