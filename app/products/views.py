@@ -150,10 +150,11 @@ class CategoryByGroupAPIView(generics.ListAPIView):
 
         return Category.objects.filter(group_id=group_id).order_by("id")
 
+
 @extend_schema(
     tags=["카테고리별 상품 조회"],
     summary="카테고리별 상품 조회",
-    description="특정 카테고리 아이디를 기준으로 상품을 조회합니다."
+    description="특정 카테고리 아이디를 기준으로 상품을 조회합니다.",
 )
 class ProductsByCategoryAPIView(generics.ListAPIView):
     serializer_class = ProductSerializer
@@ -162,7 +163,9 @@ class ProductsByCategoryAPIView(generics.ListAPIView):
         category_id = self.kwargs["category_id"]
         if not Category.objects.filter(id=category_id).exists():
             raise Http404("해당 카테고리는 존재하지 않습니다.")
-        return Product.objects.filter(categories__id=category_id, sold_out=False).order_by("-created_at")
+        return Product.objects.filter(
+            categories__id=category_id, sold_out=False
+        ).order_by("-created_at")
 
 
 @extend_schema(tags=["상품 재고 업데이트"], summary="상품 재고 업데이트")
