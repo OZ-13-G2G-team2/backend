@@ -135,8 +135,8 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
 
 
 @extend_schema(
-    tags=["카테고리"],
-    summary="카테고리 관련",
+    tags=["카테고리를 확인"],
+    summary="카테고리 리스트 확인",
     description="1: 시즌(1-4) / 2: 테마(5-14) / 3: 색상(15-19) / 4: 사이즈(20-23) / 5: kg(24-32) / 카테고리 실제 사용시 입력 예시: 1,2 = 시즌-여름",
 )
 class CategoryByGroupAPIView(generics.ListAPIView):
@@ -149,6 +149,20 @@ class CategoryByGroupAPIView(generics.ListAPIView):
             raise Http404("해당 카테고리는 존재하지 않습니다.")
 
         return Category.objects.filter(group_id=group_id).order_by("id")
+
+@extend_schema(
+    tags=["카테고리별 상품 조회"],
+    summary="카테고리별 상품 조회",
+    description="특정 카테고리 아이디를 기준으로 상품을 조회합니다."
+)
+class ProductsByCategoryAPIView(generics.ListAPIView):
+    serializer_class = ProductSerializer
+
+    def get_queryset(self):
+        category_id = self.kwargs["category_id"]
+        if not Category.objects.filter(id=category_id).exists():
+            raise Http404("해당 카테고리는 존재하지 않습니다.")
+        return Product.objects.filter(categories__id=category_id, sold_out=False).order_by("-created_at")
 
 
 @extend_schema(tags=["상품 재고 업데이트"], summary="상품 재고 업데이트")

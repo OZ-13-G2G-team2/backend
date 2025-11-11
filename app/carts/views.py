@@ -8,7 +8,11 @@ from app.products.models import Product
 from drf_spectacular.utils import extend_schema
 
 
-@extend_schema(tags=["장바구니 관리"])
+@extend_schema(
+    tags=["장바구니 관리"],
+    summary = "장바구니 추가",
+    description = "상품을 장바구니에 담고 보관 조회하는 기능",
+)
 class CartViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = CartSerializer
@@ -31,6 +35,11 @@ class CartViewSet(viewsets.ViewSet):
         CartItem.objects.create(cart=cart, product_id=product_id, quantity=quantity)
         return Response({"message": "상품이 장바구니에 추가되었습니다."}, status=200)
 
+    @extend_schema(
+        tags=["장바구니 관리"],
+        summary="장바구니 조회",
+        description="장바구니에 있는 상품목록 조회",
+    )
     # GET /api/carts/?user_id={id} : 장바구니 조회
     def list(self, request):
         user_id = request.query_params.get("user_id")
@@ -45,6 +54,11 @@ class CartViewSet(viewsets.ViewSet):
         serializer = CartSerializer(cart)
         return Response({"data": serializer.data}, status=200)
 
+    @extend_schema(
+        tags=["장바구니 관리"],
+        summary="장바구니 변경",
+        description="장바구니에 있는 상품 수량 변경",
+    )
     # PUT /api/carts/{cart_item_id}/ : 수량 변경
     def update(self, request, pk=None):
         try:
@@ -56,6 +70,11 @@ class CartViewSet(viewsets.ViewSet):
         item.save()
         return Response({"message": "수정이 완료되었습니다."}, status=200)
 
+    @extend_schema(
+        tags=["장바구니 관리"],
+        summary="장바구니 삭제 ",
+        description="장바구니에 있는 상품 삭제",
+    )
     # DELETE /api/carts/{cart_item_id}/ : 장바구니 상품 삭제
     def destroy(self, request, pk=None):
         try:
@@ -66,6 +85,11 @@ class CartViewSet(viewsets.ViewSet):
         item.delete()
         return Response({"message": "상품이 삭제되었습니다."}, status=200)
 
+    @extend_schema(
+        tags=["장바구니 관리"],
+        summary="여러상품 추가",
+        description="여러상품을 장바구니에 추가",
+    )
     # POST /api/carts/bulk/ : 여러 상품 추가
     @action(detail=False, methods=["post"], url_path="bulk")
     def bulk_add(self, request):

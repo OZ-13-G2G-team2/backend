@@ -144,17 +144,6 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
             raise PermissionDenied("본인 계정만 접근할 수 있습니다.")
         return user
 
-    # def get(self, request, *args, **kwargs):
-    #     try:
-    #         user = self.get_object()
-    #         serializer = self.get_serializer(user)
-    #         return Response(serializer.data)
-    #     except User.DoesNotExist:
-    #         return Response(
-    #             {"detail":"해당 유저를 찾을 수 없습니다."},
-    #             status=status.HTTP_404_NOT_FOUND
-    #         )
-
 
 # 비밀번호 변경
 @extend_schema(tags=["비밀번호 변경"])

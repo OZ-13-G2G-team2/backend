@@ -4,7 +4,6 @@ from app.products.models import Product
 from django.db.models import F
 
 
-
 class OrderItemService:
     @staticmethod
     @transaction.atomic
@@ -14,7 +13,7 @@ class OrderItemService:
         if product.stock < quantity:
             raise ValueError(f"재고 부족: {product.name}")
 
-        product.stock = F('stock') - quantity
+        product.stock = F("stock") - quantity
         product.save(update_fields=["stock"])
 
         price_at_purchase = price_at_purchase or product.price
@@ -38,7 +37,7 @@ class OrderItemService:
         if diff > 0 and product.stock < diff:
             raise ValueError(f"재고 부족: {product.name}")
 
-        product.stock = F('stock') - diff
+        product.stock = F("stock") - diff
         product.save(update_fields=["stock"])
 
         item.quantity = new_quantity
@@ -51,7 +50,7 @@ class OrderItemService:
     @transaction.atomic
     def delete_item(item):
         product = item.product
-        product.stock = F('stock') + item.quantity
+        product.stock = F("stock") + item.quantity
         product.save(update_fields=["stock"])
 
         order = item.order
