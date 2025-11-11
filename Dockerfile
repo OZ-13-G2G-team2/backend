@@ -12,7 +12,7 @@ WORKDIR /app
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PATH="$HOME/.local/bin:$PATH" \
-    POETRY_VIRTUALENVS_IN_PROJECT=true \
+    POETRY_VIRTUALENVS_IN_PROJECT=False \
     POETRY_NO_INTERACTION=1 \
     POETRY_HOME="$HOME/.local"
 
@@ -39,7 +39,9 @@ RUN curl -sSL https://install.python-poetry.org | python3 - \
 COPY --chown=ec2-user:ec2-user pyproject.toml poetry.lock* ./
 
 # Poetry 의존성 설치 (루트 패키지는 설치하지 않음)
-RUN poetry install --no-interaction --no-ansi --no-root
+RUN poetry config virtualenvs.create false \
+    && poetry install --no-interaction --no-ansi --no-root \
+    && poetry add gunicorn
 
 # 앱 코드 및 실행 스크립트 복사
 COPY --chown=ec2-user:ec2-user . /app
