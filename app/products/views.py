@@ -8,6 +8,7 @@ from .serializers import (
     ProductStockSerializer,
     ProductImagesSerializer,
     ProductForSellerSerializer,
+    ProductDetailWithSellerSerializer,
 )
 from .models import Product, Category, CategoryGroup
 from django.http.response import Http404
@@ -62,7 +63,7 @@ class ProductListCreateAPIView(generics.ListCreateAPIView):
 class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     http_method_names = ["get", "put", "delete"]
     queryset = Product.objects.all()
-    serializer_class = ProductSerializer
+    serializer_class = ProductDetailWithSellerSerializer
     lookup_field = "product_id"
 
     def get_permissions(self):
