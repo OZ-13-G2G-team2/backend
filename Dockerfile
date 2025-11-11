@@ -12,7 +12,7 @@ WORKDIR /app
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PATH="$HOME/.local/bin:$PATH" \
-    POETRY_VIRTUALENVS_IN_PROJECT=true \
+    POETRY_VIRTUALENVS_IN_PROJECT=False \
     POETRY_NO_INTERACTION=1 \
     POETRY_HOME="$HOME/.local"
 
@@ -39,7 +39,9 @@ RUN curl -sSL https://install.python-poetry.org | python3 - \
 COPY --chown=ec2-user:ec2-user pyproject.toml poetry.lock* ./
 
 # Poetry 의존성 설치 (루트 패키지는 설치하지 않음)
-RUN poetry install --no-interaction --no-ansi --no-root
+RUN poetry config virtualenvs.create false \
+    && poetry install --no-interaction --no-ansi --no-root \
+    && poetry add gunicorn
 
 # 앱 코드 및 실행 스크립트 복사
 COPY --chown=ec2-user:ec2-user . /app
@@ -48,8 +50,8 @@ COPY --chown=ec2-user:ec2-user . /app
 RUN chmod +x /app/scripts/run.sh
 
 # 정적 파일 저장용 디렉토리 (collectstatic용)
-RUN mkdir -p /vol/web/static /vol/web/media \
-    && chmod 755 /vol/web
+RUN mkdir -p /home/ec2-user/vol/web/static /home/ec2-user/vol/web/media \
+    && chmod 755 /home/ec2-user/vol/web
 
 # 포트 설정
 EXPOSE 8000
