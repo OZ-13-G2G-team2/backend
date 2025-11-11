@@ -65,7 +65,9 @@ class OrdersAPITest(APITestCase):
 @patch("app.carts.models.CartItem.objects.filter")
 @patch("app.orders.services.order_item_service.OrderItemService.create_item")
 @patch("app.orders.models.Order.save")
-def test_create_order_from_cart_mock(self, mock_order_save, mock_create_item, mock_cart_filter):
+def test_create_order_from_cart_mock(
+    self, mock_order_save, mock_create_item, mock_cart_filter
+):
     mock_cart_item = MagicMock()
     mock_cart_item.product = self.product
     mock_cart_item.quantity = 2
@@ -86,5 +88,5 @@ def test_create_order_from_cart_mock(self, mock_order_save, mock_create_item, mo
         order=self.order,
         product_id=self.product.id,
         quantity=2,
-        price_at_purchase=self.product.price
+        price_at_purchase=self.product.price,
     )

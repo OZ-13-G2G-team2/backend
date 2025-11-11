@@ -84,6 +84,7 @@ class ProductForSellerSerializer(serializers.ModelSerializer):
             "seller_business_number",
         ]
 
+
 class ProductDetailWithSellerSerializer(ProductSerializer):
     seller_username = serializers.CharField(
         source="seller.user.username", read_only=True
@@ -94,12 +95,27 @@ class ProductDetailWithSellerSerializer(ProductSerializer):
     seller_business_number = serializers.CharField(
         source="seller.business_number", read_only=True
     )
+
     class Meta:
         model = Product
         fields = [
-            "product_id", "seller", "name", "origin", "stock", "price",
-            "overseas_shipping", "delivery_fee", "description", "sold_out",
-            "created_at", "updated_at", "categories", "images", "option_values",
-            "seller_username", "seller_business_name", "seller_business_number",
+            "product_id",
+            "seller",
+            "name",
+            "origin",
+            "stock",
+            "price",
+            "overseas_shipping",
+            "delivery_fee",
+            "description",
+            "sold_out",
+            "created_at",
+            "updated_at",
+            "categories",
+            "images",
+            "option_values",
+            "seller_username",
+            "seller_business_name",
+            "seller_business_number",
         ]
         read_only_fields = ("seller",)

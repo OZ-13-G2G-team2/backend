@@ -15,6 +15,7 @@ from app.carts.models import CartItem
 
 from drf_spectacular.utils import extend_schema, extend_schema_view
 
+
 @extend_schema_view(
     list=extend_schema(summary="주문 목록 조회", tags=["주문"]),
     create=extend_schema(summary="주문 등록", tags=["주문"]),
@@ -24,8 +25,6 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
     update_status=extend_schema(summary="주문 상태 변경", tags=["주문"]),
     items=extend_schema(summary="주문 상품 조회", tags=["주문"]),
 )
-
-
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all().order_by("-order_date")
 
@@ -59,8 +58,11 @@ class OrderViewSet(viewsets.ModelViewSet):
         order = self.get_object()
 
         if order.user != request.user:
-            return Response({"error": "이 주문에 접근할 권한이 없습니다."},
-                            status=status.HTTP_403_FORBIDDEN)
+
+            return Response(
+                {"error": "이 주문에 접근할 권한이 없습니다."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         items = order.items.select_related("product").all()
         serializer = OrderItemSerializer(items, many=True)
@@ -71,8 +73,10 @@ class OrderViewSet(viewsets.ModelViewSet):
         order = self.get_object()
 
         if order.user != request.user:
-            return Response({"error": "이 주문의 상태를 변경할 권한이 없습니다."},
-                            status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"error": "이 주문의 상태를 변경할 권한이 없습니다."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         new_status = request.data.get("status")
         update_note = request.data.get("update_note", "")
@@ -81,13 +85,20 @@ class OrderViewSet(viewsets.ModelViewSet):
                 order.id, new_status, user=request.user
             )
         except OrderNotFound:
-            return Response({"error": "주문을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "주문을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND
+            )
         except InvalidOrderStatus:
-            return Response({"error": "잘못된 주문 상태입니다."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "잘못된 주문 상태입니다."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
-        return Response({
-            "order_id": updated_order.id,
-            "status": updated_order.status,
-            "updated_at": updated_order.updated_at,
-            "update_note": update_note,
-        }, status=status.HTTP_200_OK)
+        return Response(
+            {
+                "order_id": updated_order.id,
+                "status": updated_order.status,
+                "updated_at": updated_order.updated_at,
+                "update_note": update_note,
+            },
+            status=status.HTTP_200_OK,
+        )
