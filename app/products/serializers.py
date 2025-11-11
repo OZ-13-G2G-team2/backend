@@ -35,8 +35,8 @@ class ProductOptionValueSerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    categories = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=Category.objects.all()
+    categories = serializers.SlugRelatedField(
+        many=True, read_only=True, slug_field="name"
     )
     images = ProductImagesSerializer(
         many=True,
@@ -83,3 +83,23 @@ class ProductForSellerSerializer(serializers.ModelSerializer):
             "seller_business_name",
             "seller_business_number",
         ]
+
+class ProductDetailWithSellerSerializer(ProductSerializer):
+    seller_username = serializers.CharField(
+        source="seller.user.username", read_only=True
+    )
+    seller_business_name = serializers.CharField(
+        source="seller.business_name", read_only=True
+    )
+    seller_business_number = serializers.CharField(
+        source="seller.business_number", read_only=True
+    )
+    class Meta:
+        model = Product
+        fields = [
+            "product_id", "seller", "name", "origin", "stock", "price",
+            "overseas_shipping", "delivery_fee", "description", "sold_out",
+            "created_at", "updated_at", "categories", "images", "option_values",
+            "seller_username", "seller_business_name", "seller_business_number",
+        ]
+        read_only_fields = ("seller",)
