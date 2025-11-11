@@ -16,11 +16,8 @@ def send_activation_email(user):
     # 텍스트 버전
     text_content = f"""
 안녕하세요 {user.username}님,
-
 아래 링크를 클릭하여 이메일 인증을 완료해주세요:
-
 {activation_link}
-
 감사합니다.
     """
 
