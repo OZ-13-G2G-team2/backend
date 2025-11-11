@@ -93,12 +93,9 @@ class OrderItemViewSet(viewsets.ModelViewSet):
             return Response({"error": "quantity는 1 이상이어야 합니다."}, status=400)
 
         new_quantity = int(quantity)
-        change_reason = request.data.get("change_reason")
+
 
         item = OrderItemService.update_quantity(item, new_quantity)
-        item.change_reason = change_reason
-        item.save(update_fields=["change_reason"])
-
         return Response(self.get_serializer(item).data)
 
     def destroy(self, request, *args, **kwargs):
