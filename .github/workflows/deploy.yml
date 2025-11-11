@@ -1,9 +1,6 @@
 name: Deploy to EC2
 
 on:
-  push:
-    branches:
-      - main
   workflow_run:
     workflows: ["Build Docker Image"]
     types:
@@ -38,7 +35,7 @@ jobs:
 
       - name: Deploy to EC2
         env:
-          DOCKER_USERNAME: ${{ secret.DOCKER_USERNAME }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           WEB_CONTAINER: web
 
         run: |
