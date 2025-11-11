@@ -162,7 +162,7 @@ class ProductsByCategoryAPIView(generics.ListAPIView):
         category_id = self.kwargs["category_id"]
         if not Category.objects.filter(id=category_id).exists():
             raise Http404("해당 카테고리는 존재하지 않습니다.")
-        return Product.objects.filter(category__id=category_id, sold_out=False).order_by("-created_at")
+        return Product.objects.filter(categories__id=category_id, sold_out=False).order_by("-created_at")
 
 
 @extend_schema(tags=["상품 재고 업데이트"], summary="상품 재고 업데이트")
