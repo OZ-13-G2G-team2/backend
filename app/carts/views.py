@@ -10,8 +10,8 @@ from drf_spectacular.utils import extend_schema
 
 @extend_schema(
     tags=["장바구니 관리"],
-    summary = "장바구니 추가",
-    description = "상품을 장바구니에 담고 보관 조회하는 기능",
+    summary="장바구니 추가",
+    description="상품을 장바구니에 담고 보관 조회하는 기능",
 )
 class CartViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]

@@ -11,8 +11,8 @@ from drf_spectacular.utils import extend_schema
 # 리뷰 등록
 @extend_schema(
     tags=["리뷰 관리"],
-    summary = "리뷰 관리 ",
-    description = "상품에 대한 리뷰 기능",
+    summary="리뷰 관리 ",
+    description="상품에 대한 리뷰 기능",
 )
 class ReviewCreateView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
@@ -25,8 +25,8 @@ class ReviewCreateView(generics.CreateAPIView):
 # 상품별 리뷰 조회
 @extend_schema(
     tags=["리뷰 관리"],
-    summary = "리뷰 조회 ",
-    description = "상품에 대한 리뷰 조회 기능",
+    summary="리뷰 조회 ",
+    description="상품에 대한 리뷰 조회 기능",
 )
 class ReviewListView(generics.ListAPIView):
     serializer_class = ReviewSerializer
@@ -38,8 +38,8 @@ class ReviewListView(generics.ListAPIView):
 
 @extend_schema(
     tags=["리뷰 관리"],
-    summary = "리뷰 수정 ",
-    description = "상품에 대한 리뷰 수정 기능",
+    summary="리뷰 수정 ",
+    description="상품에 대한 리뷰 수정 기능",
 )
 # 리뷰 수정
 @extend_schema(tags=["리뷰 수정"])
@@ -48,10 +48,11 @@ class ReviewUpdateView(generics.UpdateAPIView):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
 
+
 @extend_schema(
     tags=["리뷰 관리"],
-    summary = "리뷰 삭제 ",
-    description = "상품에 대한 리뷰 삭제기능",
+    summary="리뷰 삭제 ",
+    description="상품에 대한 리뷰 삭제기능",
 )
 # 리뷰 삭제
 @extend_schema(tags=["리뷰 삭제"])
@@ -60,10 +61,11 @@ class ReviewDeleteView(generics.DestroyAPIView):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
 
+
 @extend_schema(
     tags=["리뷰 관리"],
-    summary = "리뷰 좋아요 ",
-    description = "상품에 대한 리뷰 좋아요 기능",
+    summary="리뷰 좋아요 ",
+    description="상품에 대한 리뷰 좋아요 기능",
 )
 # 리뷰 좋아요 추가
 @extend_schema(tags=["리뷰 좋아요"])
@@ -79,10 +81,11 @@ class ReviewLikeView(APIView):
         review.save()
         return Response({"message": "좋아요 +1"}, status=200)
 
+
 @extend_schema(
     tags=["리뷰 관리"],
-    summary = "리뷰 상품이미지 ",
-    description = "상품에 대한 이미지 리뷰 기능",
+    summary="리뷰 상품이미지 ",
+    description="상품에 대한 이미지 리뷰 기능",
 )
 # 리뷰 사진 업로드
 @extend_schema(tags=["리뷰 사진"])
