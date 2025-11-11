@@ -3,7 +3,6 @@ from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 class IsOwner(BasePermission):
 
-
     def has_permission(self, request, view):
 
         if request.method in SAFE_METHODS:
@@ -16,9 +15,7 @@ class IsOwner(BasePermission):
         if hasattr(obj, "user"):
             return obj.user == request.user
 
-
         if hasattr(obj, "order") and hasattr(obj.order, "user"):
             return obj.order.user == request.user
-
 
         return False

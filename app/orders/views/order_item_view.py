@@ -83,7 +83,6 @@ class OrderItemViewSet(viewsets.ModelViewSet):
             price_at_purchase=price_at_purchase,
         )
 
-
         return Response(self.get_serializer(item).data, status=status.HTTP_201_CREATED)
 
     def partial_update(self, request, *args, **kwargs):
@@ -93,7 +92,6 @@ class OrderItemViewSet(viewsets.ModelViewSet):
             return Response({"error": "quantity는 1 이상이어야 합니다."}, status=400)
 
         new_quantity = int(quantity)
-
 
         item = OrderItemService.update_quantity(item, new_quantity)
         return Response(self.get_serializer(item).data)

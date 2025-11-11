@@ -53,7 +53,9 @@ urlpatterns = [
     path("redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
 ]
 
+
 def health(request):
-    return JsonResponse({"status":"ok"})
+    return JsonResponse({"status": "ok"})
+
 
 urlpatterns += [path("health/", health, name="health")]

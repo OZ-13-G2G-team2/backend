@@ -3,7 +3,6 @@ from app.orders.models import Order
 from app.products.models import Product
 
 
-
 class OrderItem(models.Model):
     order = models.ForeignKey(
         Order, on_delete=models.CASCADE, related_name="items", verbose_name="주문"
