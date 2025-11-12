@@ -24,6 +24,7 @@ jobs:
       DB_PORT: ${{ secrets.DB_PORT }}
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
       ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
+      IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/django-app:latest
     steps:
       - name: Prepare SSH key
 
@@ -36,12 +37,12 @@ jobs:
       - name: Deploy to EC2
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          WEB_CONTAINER: web
+          WEB_CONTAINER: WEB
 
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $EC2_USER@$EC2_HOST << EOF
           cd /home/ec2-user/app || exit 1
-          WEB_CONTAINER=${WEB_CONTAINER:-web}
+          WEB_CONTAINER=${WEB_CONTAINER:-WEB}
           IMAGE_NAME=${DOCKER_USERNAME:-lusieda}/django-app:latest
           
           echo "WEB_CONTAINER=$WEB_CONTAINER"
@@ -64,6 +65,7 @@ jobs:
           DB_PORT=${DB_PORT}
           SECRET_KEY=${SECRET_KEY}
           ALLOWED_HOSTS=${ALLOWED_HOSTS}
+          IMAGE_NAME: ${DOCKER_USERNAME}/django-app:latest
           EOT
 
 

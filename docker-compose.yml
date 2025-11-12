@@ -2,18 +2,15 @@ version: '3.9'
 
 services:
   web:
-    container_name: web
-    build: .
+    container_name: WEB
     image: lusieda/django-app:latest
     env_file:
       - /home/ec2-user/app/.env
-    environment:
-      - DJANGO_SETTINGS_MODULE=config.settings.prod
     ports:
       - "8000:8000"
 
-    command: /app/scripts/run.sh
-    restart: on-failure
+    command: bash -c "poetry run gunicorn config.wsgi:application --bind 0.0.0.0:8000"
+    restart: always
     networks:
       - ws
     healthcheck:
@@ -22,7 +19,3 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
-
-networks:
-  ws:
-    driver: bridge
