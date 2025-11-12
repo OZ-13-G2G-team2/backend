@@ -59,8 +59,8 @@ class ProductSerializer(serializers.ModelSerializer):
 
 class ProductCreateSerializer(serializers.ModelSerializer):
     categories = serializers.PrimaryKeyRelatedField(
-        many=True,
-        queryset=Category.objects.all()
+        queryset=Category.objects.all(),
+        many=True
     )
     seller_username = serializers.CharField(
         source="seller.user.username", read_only=True
@@ -74,14 +74,14 @@ class ProductCreateSerializer(serializers.ModelSerializer):
     seller_business_address = serializers.CharField(
         source="seller.business_address", read_only=True
     )
-    images = ProductImagesSerializer(many=True, write_only=True)
+    images = ProductImagesSerializer(many=True, write_only=True, required=False)
 
     class Meta:
         model = Product
         fields = [
             "product_id", "seller", "name", "origin", "stock", "price",
             "overseas_shipping", "delivery_fee", "description", "sold_out",
-            "created_at", "updated_at", "categories", "images", "seller_username",
+            "created_at", "updated_at", "images", 'categories',"seller_username",
             "seller_business_name", "seller_business_number", "seller_business_address",
         ]
         read_only_fields = ("seller",)
@@ -175,3 +175,4 @@ class ProductDetailWithSellerSerializer(ProductSerializer):
             "seller_business_number",
         ]
         read_only_fields = ("seller",)
+
