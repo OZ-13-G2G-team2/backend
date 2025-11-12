@@ -96,6 +96,7 @@ class ProductStats(models.Model):
     def __str__(self):
         return f"{self.product.name} 통계 (판매 {self.sales_count}회)"
 
+
 class ProductImages(models.Model):
     image_id = models.AutoField(primary_key=True)
     product = models.ForeignKey(

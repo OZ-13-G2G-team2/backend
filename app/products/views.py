@@ -13,34 +13,36 @@ from .serializers import (
 )
 from .models import Product, Category, CategoryGroup
 from django.http.response import Http404
-from django.db.models import Q, Count, F, ExpressionWrapper, FloatField
+from django.db.models import Q, Count, F, ExpressionWrapper, FloatField, Case, When, Value
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from app.sellers.models import Seller
 
 
-
-# 상품 목록 조회 + 등록
+# 상품 목록 조회
 @extend_schema(
     tags=["상품 목록 조회"],
     summary="목록 조회",
     description="상품 전체 목록을 간략히 조회",
 )
 class ProductListAPIView(generics.ListAPIView):
-    queryset = Product.objects.prefetch_related("stats").all()
     serializer_class = ProductSerializer
     filter_backends = [filters.OrderingFilter]
     ordering_fields = [
         "price",
-        "created_at",
-        "sales_count",
-        "review_count",
-        "wish_count",
         "discount_rate",
+        "stats__review_count",
+        "stats__sales_count",
+        "stats__wish_count",
+        "created_at",
     ]
-    ordering = ("-sales_count", "-created_at",)
+    ordering = ("-stats__review_count")
     permission_classes = [permissions.AllowAny]
 
+    def get_queryset(self):
+        return Product.objects.select_related("stats").all()
 
+
+# 상품 등록
 @extend_schema(
     tags=["상품 등록"],
     summary="상품 등록",
@@ -319,6 +321,7 @@ class ProductSearchAPIView(generics.ListAPIView):
         "wish_count", "discount_rate", "created_at"
     ]
     ordering = ["-sales_count", "-created_at"]
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         queryset = Product.objects.all()
@@ -387,7 +390,11 @@ class ProductSearchAPIView(generics.ListAPIView):
             wish_count=Count('wishlists', distinct=True),
             sale_price=F('price') - F('discount_price'),
             discount_rate=ExpressionWrapper(
-                100 * (F('discount_price') / F('price')),
+                Case(
+                    When(price__gt=0, then=100 * (F('discount_price') / F('price'))),
+                    default=Value(0),
+                    output_field=FloatField()
+                ),
                 output_field=FloatField()
             )
         )
@@ -408,6 +415,7 @@ class SellerProductsListAPIView(generics.ListAPIView):
         "wish_count", "discount_rate", "created_at"
     ]
     ordering = ["-sales_count", "-created_at"]
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         seller_id = self.kwargs.get("id")
@@ -416,14 +424,20 @@ class SellerProductsListAPIView(generics.ListAPIView):
         except Seller.DoesNotExist:
             raise Http404("요청한 판매자가 존재하지 않습니다.")
 
-        queryset = Product.objects.filter(seller_id=seller_id).annotate(
+        queryset = (Product.objects.filter(seller_id=seller_id).annotate(
             sales_count=Count('order_items', distinct=True),
             review_count=Count('review', distinct=True),
             wish_count=Count('wishlists', distinct=True),
             sale_price=F('price') - F('discount_price'),
             discount_rate=ExpressionWrapper(
-                100 * (F('discount_price') / F('price')),
+                Case(
+                    When(price__gt=0, then=100 * (F('discount_price') / F('price'))),
+                    default=Value(0),
+                    output_field=FloatField()
+                ),
                 output_field=FloatField()
             )
         )
+                    .order_by('-sales_count', '-created_at'))
+
         return queryset
