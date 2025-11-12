@@ -90,7 +90,7 @@ class CartViewSet(viewsets.ViewSet):
         summary="여러상품 추가",
         description="여러상품을 장바구니에 추가",
     )
-    # POST /api/carts/bulk/ : 여러 상품 추가
+    # POST /api/carts/bulk_add/ : 여러 상품 추가
     @action(detail=False, methods=["post"], url_path="bulk")
     def bulk_add(self, request):
         user = request.user

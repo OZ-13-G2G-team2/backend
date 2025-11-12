@@ -51,5 +51,5 @@ class WishlistToggleView(APIView):
         wishlist.is_active = not wishlist.is_active
         wishlist.save()
         return Response(
-            {"message": "상태가 변경되었습니다."}, status=status.HTTP_200_OK
+            {"message": "상태가 추가되었습니다."}, status=status.HTTP_200_OK
         )

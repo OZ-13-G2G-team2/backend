@@ -21,7 +21,7 @@ class Wishlist(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.product.name}"
 
-    # ✅ 추가 기능들
+    #추가 기능들
     def toggle(self):
         """활성화 상태 토글"""
         self.is_active = not self.is_active
