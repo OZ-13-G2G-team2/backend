@@ -1,14 +1,17 @@
 from django.db import transaction
+from django.db.models import F
 from app.orders.models import OrderItem
 from app.products.models import Product
-from django.db.models import F
 
 
 class OrderItemService:
     @staticmethod
     @transaction.atomic
     def create_item(order, product_id, quantity, price_at_purchase=None):
-        product = Product.objects.select_for_update().get(id=product_id)
+        try:
+            product = Product.objects.select_for_update().get(id=product_id)
+        except Product.DoesNotExist:
+            raise ValueError("존재하지 않는 상품입니다.")
 
         if product.stock < quantity:
             raise ValueError(f"재고 부족: {product.name}")
@@ -26,11 +29,15 @@ class OrderItemService:
         )
 
         order.calculate_total()
+        order.save(update_fields=["total_amount"])
         return item
 
     @staticmethod
     @transaction.atomic
     def update_quantity(item, new_quantity):
+        if new_quantity <= 0:
+            raise ValueError("수량은 1개 이상이어야 합니다.")
+
         diff = new_quantity - item.quantity
         product = item.product
 
@@ -44,6 +51,7 @@ class OrderItemService:
         item.save(update_fields=["quantity"])
 
         item.order.calculate_total()
+        item.order.save(update_fields=["total_amount"])
         return item
 
     @staticmethod
@@ -55,4 +63,10 @@ class OrderItemService:
 
         order = item.order
         item.delete()
-        order.calculate_total()
+
+        if not order.items.exists():
+            order.delete()
+        else:
+            order.calculate_total()
+            order.save(update_fields=["total_amount"])
+        return True
