@@ -34,6 +34,3 @@ DATABASES = {
 
 STATIC_ROOT = BASE_DIR / "static"  # noqa: F405
 MEDIA_ROOT = BASE_DIR / "media"  # noqa: F405
-
-
-
