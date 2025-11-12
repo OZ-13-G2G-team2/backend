@@ -29,6 +29,9 @@ class WishlistView(APIView):
     def get(self, request):
         user = request.user
         wishlists = Wishlist.objects.filter(user=user)
+        if not wishlists.exists():
+            return Response({"error": "위시리스트 없음"}, status=status.HTTP_400_BAD_REQUEST)
+
         serializer = WishlistSerializer(wishlists, many=True)
         return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
