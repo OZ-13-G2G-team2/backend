@@ -12,6 +12,15 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = False
 ALLOWED_HOSTS = ["*"]
 
+# CORS 관련
+CSRF_TRUSTED_ORIGINS = [
+    "http://13.124.51.27:8000",
+    "http://13.124.51.27",
+]
+
+# axios 등에서 credentials(쿠키) 포함 요청을 할 경우
+CORS_ALLOW_CREDENTIALS = True
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -26,7 +35,5 @@ DATABASES = {
 STATIC_ROOT = BASE_DIR / "static"  # noqa: F405
 MEDIA_ROOT = BASE_DIR / "media"  # noqa: F405
 
-# 실제 우리 서비스의 도메인을 넣으면 된다.
-# CSRF_TRUSTED_ORIGINS = [
-#     "https://우리 도메인",
-# ]
+
+
