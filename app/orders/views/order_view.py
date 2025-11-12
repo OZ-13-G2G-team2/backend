@@ -36,7 +36,8 @@ class OrderViewSet(viewsets.ModelViewSet):
         user = self.request.user
         return (
             Order.objects.filter(user=user)
-            .select_related()  # user 등 외래키만 select_related로
+            .select_related()
+            .prefetch_related("items__product")
             .order_by("-order_date")
         )
 
@@ -88,19 +89,17 @@ class OrderViewSet(viewsets.ModelViewSet):
             return Response(
                 {"error": "재고가 부족합니다."}, status=status.HTTP_400_BAD_REQUEST
             )
-        order, created = Order.objects.get_or_create(
+        order = Order.objects.create(
             user=user,
+            address=address,
+            payment_method=payment_method,
             status="pending",
-            defaults={
-                "address": address,
-                "payment_method": payment_method,
-                "total_amount": 0,
-            },
+            total_amount=0,
         )
 
         OrderItemService.create_item(
             order=order,
-            product_id=product_id,
+            product_id=product.id,
             quantity=quantity,
             price_at_purchase=product.price,
         )
