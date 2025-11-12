@@ -51,10 +51,8 @@ class ProductListAPIView(generics.ListAPIView):
                 "sold_out": {"type": "boolean"},
                 "categories": {
                     "type": "array",
-                    "items": {
-                        "type": "string",
-                        "enum": [cat.name for cat in Category.objects.all()]
-                    }
+                    "items": {"type": "integer"},
+                    "description": "카테고리 ID 리스트"
                 },
                 "images": {
                     "type": "array",
@@ -67,7 +65,7 @@ class ProductListAPIView(generics.ListAPIView):
                 "seller_business_name": {"type": "string", "readOnly": True},
                 "seller_business_number": {"type": "string", "readOnly": True},
                     },
-            "required": ["name", "price", "categories"],
+            "required": ["name", "price"],
         }
     },
     responses=ProductCreateSerializer
