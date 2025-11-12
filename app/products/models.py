@@ -1,4 +1,6 @@
 from django.db import models
+from app.sellers.models import Seller
+from app.users.models import User
 
 
 class CategoryGroup(models.Model):
@@ -32,7 +34,7 @@ class Category(models.Model):
 class Product(models.Model):
     product_id = models.AutoField(primary_key=True)
     seller = models.ForeignKey(
-        "sellers.Seller", verbose_name="판매자", on_delete=models.CASCADE
+        Seller, verbose_name="판매자", on_delete=models.CASCADE
     )
     categories = models.ManyToManyField(
         "Category", verbose_name="카테고리", related_name="products", blank=True
@@ -42,6 +44,9 @@ class Product(models.Model):
     stock = models.PositiveIntegerField(default=0, verbose_name="재고")
     price = models.DecimalField(
         verbose_name="가격", max_digits=10, decimal_places=2, null=False
+    )
+    discount_price = models.DecimalField(
+        verbose_name="할인 가격", max_digits=10, decimal_places=2, default=0, null=True
     )
     overseas_shipping = models.BooleanField(verbose_name="해외배송 여부", default=False)
     delivery_fee = models.DecimalField(
@@ -73,13 +78,31 @@ class Product(models.Model):
         super().save(*args, **kwargs)
 
 
+class ProductStats(models.Model):
+    product = models.OneToOneField(Product, on_delete=models.CASCADE, related_name="stats")
+    review_count = models.PositiveIntegerField(verbose_name="리뷰 수", default=0)
+    sales_count = models.PositiveIntegerField(verbose_name="판매 수", default=0)
+    wish_count = models.PositiveIntegerField(verbose_name="위시 수", default=0)
+
+    class Meta:
+        verbose_name = "상품 통계"
+        verbose_name_plural = "상품 통계들"
+        ordering = ["-sales_count", "-review_count"]
+        indexes = [
+            models.Index(fields=["sales_count"]),
+            models.Index(fields=["review_count"]),
+            models.Index(fields=["wish_count"]),
+        ]
+    def __str__(self):
+        return f"{self.product.name} 통계 (판매 {self.sales_count}회)"
+
 class ProductImages(models.Model):
     image_id = models.AutoField(primary_key=True)
     product = models.ForeignKey(
         "Product", on_delete=models.CASCADE, related_name="images"
     )
     user = models.ForeignKey(
-        "users.User", on_delete=models.CASCADE, null=True, blank=True, default=1
+        User, on_delete=models.CASCADE, null=True, blank=True, default=1
     )
     image_url = models.ImageField(upload_to="product_images/")
     created_at = models.DateTimeField(auto_now_add=True)
