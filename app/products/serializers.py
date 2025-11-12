@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
-from .models import Product, ProductImages, Category, ProductOptionValue
-
+from .models import Product, ProductImages, Category, ProductOptionValue, ProductStats
+from drf_spectacular.utils import extend_schema_field
 
 class CategorySerializer(serializers.ModelSerializer):
     group_name = serializers.CharField(source="group.name", read_only=True)
@@ -33,6 +33,12 @@ class ProductOptionValueSerializer(serializers.ModelSerializer):
         model = ProductOptionValue
         fields = ["id", "category", "extra_price"]
 
+# 상품 통계
+class ProductStatsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductStats
+        fields = ["sales_count", "review_count", "wish_count"]
+
 
 class ProductSerializer(serializers.ModelSerializer):
     thumbnail = serializers.SerializerMethodField()
@@ -40,16 +46,50 @@ class ProductSerializer(serializers.ModelSerializer):
     seller_business_name = serializers.CharField(source="seller.business_name", read_only=True)
     seller_business_address = serializers.CharField(source="seller.business_address", read_only=True)
     seller_business_number = serializers.CharField(source="seller.business_number", read_only=True)
+    discount_rate = serializers.SerializerMethodField()
+
+    review_count = serializers.SerializerMethodField()
+    sales_count = serializers.SerializerMethodField()
+    wish_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
         fields = [
-            "product_id", "name", "price", "thumbnail",
-            "seller_name", "seller_name", "seller_business_name",
-            "seller_business_address", "seller_business_number","created_at"
+            "product_id",
+            "name",
+            "origin",
+            "price",
+            "discount_price",
+            "discount_rate",
+            "thumbnail",
+            "review_count",
+            "sales_count",
+            "wish_count",
+            "seller_name",
+            "seller_business_name",
+            "seller_business_address",
+            "seller_business_number",
+            "sold_out",
+            "created_at",
         ]
         read_only_fields = ("seller",)
 
+    def get_discount_rate(self, obj):
+        if obj.price and obj.discount_price:
+            total_price = float(obj.price) + float(obj.discount_price)
+            return round(obj.discount_price / total_price * 100, 2)
+        return 0
+
+    def get_review_count(self, obj):
+        return obj.stats.review_count if obj.stats else 0
+
+    def get_sales_count(self, obj):
+        return obj.stats.sales_count if obj.stats else 0
+
+    def get_wish_count(self, obj):
+        return obj.stats.wish_count if obj.stats else 0
+
+    @extend_schema_field(serializers.CharField())
     def get_thumbnail(self, obj):
         first_image = obj.images.first()
         if not first_image:
@@ -58,9 +98,9 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 class ProductCreateSerializer(serializers.ModelSerializer):
-    categories = serializers.PrimaryKeyRelatedField(
-        queryset=Category.objects.all(),
-        many=True
+    categories = serializers.ListField(
+        child=serializers.IntegerField(),
+        write_only=True,
     )
     seller_username = serializers.CharField(
         source="seller.user.username", read_only=True

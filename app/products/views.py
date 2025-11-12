@@ -13,9 +13,10 @@ from .serializers import (
 )
 from .models import Product, Category, CategoryGroup
 from django.http.response import Http404
-from django.db.models import Q
+from django.db.models import Q, Count, F, ExpressionWrapper, FloatField
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from app.sellers.models import Seller
+
 
 
 # 상품 목록 조회 + 등록
@@ -25,11 +26,18 @@ from app.sellers.models import Seller
     description="상품 전체 목록을 간략히 조회",
 )
 class ProductListAPIView(generics.ListAPIView):
-    queryset = Product.objects.all()
+    queryset = Product.objects.prefetch_related("stats").all()
     serializer_class = ProductSerializer
     filter_backends = [filters.OrderingFilter]
-    ordering_fields = ["price", "created_at"]
-    ordering = ("-created_at",)
+    ordering_fields = [
+        "price",
+        "created_at",
+        "sales_count",
+        "review_count",
+        "wish_count",
+        "discount_rate",
+    ]
+    ordering = ("-sales_count", "-created_at",)
     permission_classes = [permissions.AllowAny]
 
 
@@ -73,6 +81,7 @@ class ProductListAPIView(generics.ListAPIView):
 class ProductCreateAPIView(generics.CreateAPIView):
      queryset = Product.objects.all()
      serializer_class = ProductCreateSerializer
+     parser_classes = [MultiPartParser, FormParser]
      permission_classes = [permissions.IsAuthenticated]
 
      def post(self, request, *args, **kwargs):
@@ -304,6 +313,12 @@ class ProductImageUploadAPIView(generics.CreateAPIView):
 )
 class ProductSearchAPIView(generics.ListAPIView):
     serializer_class = ProductSerializer
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = [
+        "sale_price", "sales_count", "review_count",
+        "wish_count", "discount_rate", "created_at"
+    ]
+    ordering = ["-sales_count", "-created_at"]
 
     def get_queryset(self):
         queryset = Product.objects.all()
@@ -364,8 +379,21 @@ class ProductSearchAPIView(generics.ListAPIView):
             overseas_shipping_value = str(overseas_shipping).lower() == "true"
             my_filters &= Q(overseas_shipping=overseas_shipping_value)
 
-        return queryset.filter(my_filters).distinct()
+        queryset = queryset.filter(my_filters).distinct()
 
+        queryset = queryset.annotate(
+            sales_count=Count('order_items', distinct=True),
+            review_count=Count('review', distinct=True),
+            wish_count=Count('wishlists', distinct=True),
+            sale_price=F('price') - F('discount_price'),
+            discount_rate=ExpressionWrapper(
+                100 * (F('discount_price') / F('price')),
+                output_field=FloatField()
+            )
+        )
+
+        queryset = queryset.order_by('-sales_count', '-created_at')
+        return queryset
 
 # 판매자 상품 목록
 @extend_schema(
@@ -374,6 +402,12 @@ class ProductSearchAPIView(generics.ListAPIView):
 )
 class SellerProductsListAPIView(generics.ListAPIView):
     serializer_class = ProductForSellerSerializer
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = [
+        "sale_price", "sales_count", "review_count",
+        "wish_count", "discount_rate", "created_at"
+    ]
+    ordering = ["-sales_count", "-created_at"]
 
     def get_queryset(self):
         seller_id = self.kwargs.get("id")
@@ -381,4 +415,15 @@ class SellerProductsListAPIView(generics.ListAPIView):
             seller = Seller.objects.get(id=seller_id) # noqa: F841
         except Seller.DoesNotExist:
             raise Http404("요청한 판매자가 존재하지 않습니다.")
-        return Product.objects.filter(seller_id=seller_id)
+
+        queryset = Product.objects.filter(seller_id=seller_id).annotate(
+            sales_count=Count('order_items', distinct=True),
+            review_count=Count('review', distinct=True),
+            wish_count=Count('wishlists', distinct=True),
+            sale_price=F('price') - F('discount_price'),
+            discount_rate=ExpressionWrapper(
+                100 * (F('discount_price') / F('price')),
+                output_field=FloatField()
+            )
+        )
+        return queryset
