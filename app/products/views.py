@@ -9,7 +9,7 @@ from .serializers import (
     ProductImagesSerializer,
     ProductForSellerSerializer,
     ProductDetailWithSellerSerializer,
-    ProductCreateSerializer,
+    ProductCreateSerializer, ProductUpdateSerializer,
 )
 from .models import Product, Category, CategoryGroup
 from django.http.response import Http404
@@ -29,7 +29,6 @@ class ProductListAPIView(generics.ListAPIView):
     filter_backends = [filters.OrderingFilter]
     ordering_fields = [
         "price",
-        "discount_rate",
         "stats__review_count",
         "stats__sales_count",
         "stats__wish_count",
@@ -117,13 +116,17 @@ class ProductCreateAPIView(generics.CreateAPIView):
 class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     http_method_names = ["get", "put", "delete"]
     queryset = Product.objects.all()
-    serializer_class = ProductDetailWithSellerSerializer
     lookup_field = "product_id"
 
     def get_permissions(self):
         if self.request.method in ["PUT", "PATCH", "DELETE"]:
             return [permissions.IsAuthenticated()]
         return [permissions.AllowAny()]
+
+    def get_serializer_class(self):
+        if self.request.method in ["PUT", "PATCH"]:
+            return ProductUpdateSerializer
+        return ProductDetailWithSellerSerializer
 
 
     @extend_schema(
@@ -144,6 +147,37 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
     @extend_schema(
         summary="상품 수정",
         description="상품의 아이디를 입력하고 그 상품의 상세 데이터 수정 가능",
+        request={
+            "multipart/form-data": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string", "description": "상품명"},
+                    "origin": {"type": "string", "description": "원산지"},
+                    "stock": {"type": "integer", "description": "재고 수량"},
+                    "price": {"type": "number", "description": "정상가"},
+                    "discount_price": {"type": "number", "description": "할인가"},
+                    "overseas_shipping": {"type": "boolean", "description": "해외 배송 여부"},
+                    "delivery_fee": {"type": "number", "description": "배송비"},
+                    "description": {"type": "string", "description": "상품 설명"},
+                    "sold_out": {"type": "boolean", "description": "품절 여부"},
+                    "categories": {
+                        "type": "array",
+                        "items": {"type": "integer"},
+                        "description": "카테고리 ID 리스트",
+                    },
+                    "images": {
+                        "type": "array",
+                        "items": {"type": "string", "format": "binary"},
+                        "description": "상품 이미지 파일들",
+                    },
+                    "seller_username": {"type": "string", "readOnly": True},
+                    "seller_business_name": {"type": "string", "readOnly": True},
+                    "seller_business_number": {"type": "string", "readOnly": True},
+                },
+                "required": ["name", "price"],
+            }
+        },
+        responses=ProductUpdateSerializer,
     )
     def put(self, request, *args, **kwargs):
         try:
