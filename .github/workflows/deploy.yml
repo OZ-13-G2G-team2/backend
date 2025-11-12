@@ -37,12 +37,12 @@ jobs:
       - name: Deploy to EC2
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          WEB_CONTAINER: WEB
+          WEB_CONTAINER: web
 
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $EC2_USER@$EC2_HOST << EOF
           cd /home/ec2-user/app || exit 1
-          WEB_CONTAINER=${WEB_CONTAINER:-WEB}
+          WEB_CONTAINER=${WEB_CONTAINER:-web}
           IMAGE_NAME=${DOCKER_USERNAME:-lusieda}/django-app:latest
           
           echo "WEB_CONTAINER=$WEB_CONTAINER"
@@ -65,13 +65,13 @@ jobs:
           DB_PORT=${DB_PORT}
           SECRET_KEY=${SECRET_KEY}
           ALLOWED_HOSTS=${ALLOWED_HOSTS}
-          IMAGE_NAME: ${DOCKER_USERNAME}/django-app:latest
+          IMAGE_NAME=${DOCKER_USERNAME}/django-app:latest
           EOT
 
 
           # 컨테이너 실행
           docker run -d \
-          --name WEB \
+          --name web \
           --env-file /home/ec2-user/app/.env \
           -p 8000:8000 \
           lusieda/django-app:latest \
