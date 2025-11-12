@@ -16,7 +16,6 @@ from django.http.response import Http404
 from django.db.models import Q, Count, F, ExpressionWrapper, FloatField, Case, When, Value
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from app.sellers.models import Seller
-from django.db.models.functions import Coalesce
 
 
 # 상품 목록 조회
