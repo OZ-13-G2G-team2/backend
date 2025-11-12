@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
-from .models import Product, ProductImages, Category, ProductOptionValue
-
+from .models import Product, ProductImages, Category, ProductOptionValue, ProductStats
+from drf_spectacular.utils import extend_schema_field
 
 class CategorySerializer(serializers.ModelSerializer):
     group_name = serializers.CharField(source="group.name", read_only=True)
@@ -33,6 +33,12 @@ class ProductOptionValueSerializer(serializers.ModelSerializer):
         model = ProductOptionValue
         fields = ["id", "category", "extra_price"]
 
+# 상품 통계
+class ProductStatsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductStats
+        fields = ["sales_count", "review_count", "wish_count"]
+
 
 class ProductSerializer(serializers.ModelSerializer):
     thumbnail = serializers.SerializerMethodField()
@@ -40,16 +46,49 @@ class ProductSerializer(serializers.ModelSerializer):
     seller_business_name = serializers.CharField(source="seller.business_name", read_only=True)
     seller_business_address = serializers.CharField(source="seller.business_address", read_only=True)
     seller_business_number = serializers.CharField(source="seller.business_number", read_only=True)
+    discount_rate = serializers.SerializerMethodField()
+
+    review_count = serializers.SerializerMethodField()
+    sales_count = serializers.SerializerMethodField()
+    wish_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
         fields = [
-            "product_id", "name", "price", "thumbnail",
-            "seller_name", "seller_name", "seller_business_name",
-            "seller_business_address", "seller_business_number","created_at"
+            "product_id",
+            "name",
+            "origin",
+            "price",
+            "discount_price",
+            "discount_rate",
+            "thumbnail",
+            "review_count",
+            "sales_count",
+            "wish_count",
+            "seller_name",
+            "seller_business_name",
+            "seller_business_address",
+            "seller_business_number",
+            "sold_out",
+            "created_at",
         ]
         read_only_fields = ("seller",)
 
+    def get_discount_rate(self, obj):
+        if obj.price and obj.discount_price and obj.discount_price < obj.price:
+            return round((float(obj.price) - float(obj.discount_price)) / float(obj.price) * 100, 2)
+        return 0
+
+    def get_review_count(self, obj):
+        return getattr(obj.stats, "review_count", 0) if hasattr(obj, "stats") else 0
+
+    def get_sales_count(self, obj):
+        return getattr(obj.stats, "sales_count", 0) if hasattr(obj, "stats") else 0
+
+    def get_wish_count(self, obj):
+        return getattr(obj.stats, "wish_count", 0) if hasattr(obj, "stats") else 0
+
+    @extend_schema_field(serializers.CharField())
     def get_thumbnail(self, obj):
         first_image = obj.images.first()
         if not first_image:
@@ -58,9 +97,9 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 class ProductCreateSerializer(serializers.ModelSerializer):
-    categories = serializers.PrimaryKeyRelatedField(
-        queryset=Category.objects.all(),
-        many=True
+    categories = serializers.ListField(
+        child=serializers.IntegerField(),
+        write_only=True,
     )
     seller_username = serializers.CharField(
         source="seller.user.username", read_only=True
@@ -129,6 +168,11 @@ class ProductForSellerSerializer(serializers.ModelSerializer):
     seller_business_number = serializers.CharField(
         source="seller.business_number", read_only=True
     )
+    discount_rate = serializers.SerializerMethodField()
+
+    sales_count = serializers.IntegerField(source="stats.sales_count", read_only=True)
+    review_count = serializers.IntegerField(source="stats.review_count", read_only=True)
+    wish_count = serializers.IntegerField(source="stats.wish_count", read_only=True)
 
     class Meta:
         model = Product
@@ -137,11 +181,30 @@ class ProductForSellerSerializer(serializers.ModelSerializer):
             "name",
             "origin",
             "price",
+            "discount_price",
+            "discount_rate",
+            "review_count",
+            "sales_count",
+            "wish_count",
             "seller_username",
             "seller_business_name",
             "seller_business_address",
             "seller_business_number",
         ]
+
+    def get_discount_rate(self, obj):
+        if obj.price and obj.discount_price and obj.discount_price < obj.price:
+            return round((float(obj.price) - float(obj.discount_price)) / float(obj.price) * 100, 2)
+        return 0
+
+    def get_review_count(self, obj):
+        return getattr(obj.stats, "review_count", 0) if hasattr(obj, "stats") else 0
+
+    def get_sales_count(self, obj):
+        return getattr(obj.stats, "sales_count", 0) if hasattr(obj, "stats") else 0
+
+    def get_wish_count(self, obj):
+        return getattr(obj.stats, "wish_count", 0) if hasattr(obj, "stats") else 0
 
 class ProductDetailWithSellerSerializer(ProductSerializer):
     categories = serializers.SlugRelatedField(
@@ -165,14 +228,54 @@ class ProductDetailWithSellerSerializer(ProductSerializer):
     seller_business_number = serializers.CharField(
         source="seller.business_number", read_only=True
     )
+    discount_rate = serializers.SerializerMethodField()
+
+    sales_count = serializers.IntegerField(source="stats.sales_count", read_only=True)
+    review_count = serializers.IntegerField(source="stats.review_count", read_only=True)
+    wish_count = serializers.IntegerField(source="stats.wish_count", read_only=True)
+
     class Meta:
         model = Product
         fields = [
-            "product_id", "seller", "name", "origin", "stock", "price",
-            "overseas_shipping", "delivery_fee", "description", "sold_out",
-            "created_at", "updated_at", "categories", "images", "option_values",
-            "seller_username", "seller_business_name", "seller_business_address",
+            "product_id",
+            "seller",
+            "name",
+            "origin",
+            "stock",
+            "price",
+            "discount_price",
+            "discount_rate",
+            "review_count",
+            "sales_count",
+            "wish_count",
+            "overseas_shipping",
+            "delivery_fee",
+            "description",
+            "sold_out",
+            "created_at",
+            "updated_at",
+            "categories",
+            "images",
+            "option_values",
+            "seller_username",
+            "seller_business_name",
+            "seller_business_address",
             "seller_business_number",
         ]
         read_only_fields = ("seller",)
+
+        def get_discount_rate(self, obj):
+            if obj.price and obj.discount_price and obj.discount_price < obj.price:
+                return round((float(obj.price) - float(obj.discount_price)) / float(obj.price) * 100, 2)
+            return 0
+
+        def get_review_count(self, obj):
+            return getattr(obj.stats, "review_count", 0) if hasattr(obj, "stats") else 0
+
+        def get_sales_count(self, obj):
+            return getattr(obj.stats, "sales_count", 0) if hasattr(obj, "stats") else 0
+
+        def get_wish_count(self, obj):
+            return getattr(obj.stats, "wish_count", 0) if hasattr(obj, "stats") else 0
+
 
