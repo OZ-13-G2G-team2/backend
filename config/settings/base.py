@@ -62,9 +62,9 @@ INSTALLED_APPS = [
     "app.reviews",
     "app.carts",
     "app.wishlists",
-    # # Django allauth
-    # "allauth",
-    # "allauth.account",
+    # Django allauth
+    "allauth",
+    "allauth.account",
     # "allauth.socialaccount",
     # # Providers (소셜로그인)
     # "allauth.socialaccount.providers.naver",
