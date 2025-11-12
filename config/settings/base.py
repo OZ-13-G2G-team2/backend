@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "django_filters",
     "dj_rest_auth",
     "dj_rest_auth.registration",
+    "corsheaders",
     # OWN apps
     "app.users",
     "app.products",
@@ -64,14 +65,15 @@ INSTALLED_APPS = [
     # Django allauth
     "allauth",
     "allauth.account",
-    "allauth.socialaccount",
-    # Providers (소셜로그인)
-    "allauth.socialaccount.providers.naver",
-    "allauth.socialaccount.providers.kakao",
-    "allauth.socialaccount.providers.google",
+    # "allauth.socialaccount",
+    # # Providers (소셜로그인)
+    # "allauth.socialaccount.providers.naver",
+    # "allauth.socialaccount.providers.kakao",
+    # "allauth.socialaccount.providers.google",
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -170,6 +172,15 @@ SIMPLE_JWT = {
 
 # Auth
 AUTH_USER_MODEL = "users.User"
+
+# CORS 관련
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://13.124.51.27",
+]
+
+CORS_ALLOW_CREDENTIALS = True  # 인증 요청 허용
 
 # Email_login
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@myapp.com")
