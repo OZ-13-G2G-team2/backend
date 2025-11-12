@@ -49,7 +49,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         if not cart_items.exists():
             raise ValidationError("장바구니가 비어 있습니다.")
 
-
         for cart_item in cart_items:
             OrderItemService.create_item(
                 order=order,
@@ -60,10 +59,8 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         cart_items.delete()
 
-
         order.calculate_total()
         order.save()
-
 
     @action(detail=False, methods=["post"], url_path="buy-now")
     @transaction.atomic
@@ -101,7 +98,6 @@ class OrderViewSet(viewsets.ModelViewSet):
             },
         )
 
-
         OrderItemService.create_item(
             order=order,
             product_id=product_id,
@@ -109,12 +105,8 @@ class OrderViewSet(viewsets.ModelViewSet):
             price_at_purchase=product.price,
         )
 
-
         order.calculate_total()
         order.save()
-
-
-
 
         serializer = self.get_serializer(order)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -180,3 +172,4 @@ class OrderViewSet(viewsets.ModelViewSet):
         order.status = "cancelled"
         order.save(update_fields=["status"])
         return Response({"message": "주문이 취소되었습니다.", "status": order.status})
+
