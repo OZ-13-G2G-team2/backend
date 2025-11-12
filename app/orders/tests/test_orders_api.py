@@ -71,5 +71,6 @@ class OrdersAPITest(APITestCase):
         response = self.client.post(
             "/api/orders/",
             {"address": "장바구니 주문 주소", "payment_method": "card"},
-            format="json",
         )
+        assert response.status_code == 201
+        assert response.data["address"] == "장바구니 주문 주소"
