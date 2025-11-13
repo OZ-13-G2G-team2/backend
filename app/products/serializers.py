@@ -329,11 +329,11 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
         required=False,
     )
 
-    images = serializers.ListField(
-        child=serializers.ImageField(),
-        required=False,
-        write_only=True,
-    )
+    # images = serializers.ListField(
+    #     child=serializers.ImageField(),
+    #     required=False,
+    #     write_only=True,
+    # )
     discount_rate = serializers.SerializerMethodField()
 
     class Meta:
