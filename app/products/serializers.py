@@ -3,6 +3,9 @@ from rest_framework import serializers
 from .models import Product, ProductImages, Category, ProductOptionValue, ProductStats
 from drf_spectacular.utils import extend_schema_field
 
+from ..sellers.models import Seller
+
+
 class CategorySerializer(serializers.ModelSerializer):
     group_name = serializers.CharField(source="group.name", read_only=True)
 
@@ -118,7 +121,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = [
-            "product_id", "seller", "name", "origin", "stock", "price",
+            "product_id", "seller", "name", "origin", "stock", "price", "discount_price",
             "overseas_shipping", "delivery_fee", "description", "sold_out",
             "created_at", "updated_at", "images", 'categories',"seller_username",
             "seller_business_name", "seller_business_number", "seller_business_address",
@@ -130,8 +133,10 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         images_data = validated_data.pop("images", [])  # 이미지 데이터 분리
         categories_data = validated_data.pop("categories", []) # 카테고리 분리
 
-        request_user = self.context['request'].user
-        seller = getattr(request_user, "seller", None)
+        seller = validated_data.pop("seller")
+        if seller is None or not Seller.objects.filter(id=seller.id).exists():
+            raise serializers.ValidationError("판매자 계정이 존재하지 않습니다.")
+
         if seller is None:
             raise serializers.ValidationError("판매자 계정이 아닙니다.")
 
@@ -143,7 +148,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         for image_data in images_data:
             ProductImages.objects.create(
                 product=product,
-                user=request_user,
+                user=seller.user,
                 **image_data
             )
         return product
