@@ -73,7 +73,7 @@ jobs:
           EMAIL_USE_TLS=True
           EMAIL_HOST_USER=ggcompany82@gmail.com
           EMAIL_HOST_PASSWORD=nijkgseojotcxpnr
-          DEFAULT_FROM_EMAIL="G2G Company <ggcompany82@gmail.com>"
+          DEFAULT_FROM_EMAIL="G2G Company <ggcompany82@gmail.com>
           
           EOT
 

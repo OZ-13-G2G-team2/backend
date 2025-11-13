@@ -42,10 +42,7 @@ class CartViewSet(viewsets.ViewSet):
     )
     # GET /api/carts/?user_id={id} : 장바구니 조회
     def list(self, request):
-        user_id = request.query_params.get("user_id")
-        if not user_id:
-            return Response({"error": "user_id 필요"}, status=400)
-
+        user_id = request.user
         try:
             cart = Cart.objects.get(user_id=user_id)
         except Cart.DoesNotExist:
@@ -61,10 +58,14 @@ class CartViewSet(viewsets.ViewSet):
     )
     # PUT /api/carts/{cart_item_id}/ : 수량 변경
     def update(self, request, pk=None):
+        user = request.user
         try:
             item = CartItem.objects.get(id=pk)
         except CartItem.DoesNotExist:
             return Response({"error": "잘못된 수량"}, status=400)
+
+        if item.cart.user != user:
+            return Response({"error": "권한이 없습니다."}, status=403)
 
         item.quantity = request.data.get("quantity", item.quantity)
         item.save()
@@ -77,10 +78,14 @@ class CartViewSet(viewsets.ViewSet):
     )
     # DELETE /api/carts/{cart_item_id}/ : 장바구니 상품 삭제
     def destroy(self, request, pk=None):
+        user = request.user
         try:
             item = CartItem.objects.get(id=pk)
         except CartItem.DoesNotExist:
             return Response({"error": "항목 없음"}, status=404)
+
+        if item.cart.user != user:
+            return Response({"error": "권한이 없습니다."}, status=403)
 
         item.delete()
         return Response({"message": "상품이 삭제되었습니다."}, status=200)
@@ -91,7 +96,7 @@ class CartViewSet(viewsets.ViewSet):
         description="여러상품을 장바구니에 추가",
     )
     # POST /api/carts/bulk/ : 여러 상품 추가
-    @action(detail=False, methods=["post"], url_path="bulk")
+    @action(detail=False, methods=["post"], url_path="bulk_add")
     def bulk_add(self, request):
         user = request.user
         items = request.data.get("items", [])
