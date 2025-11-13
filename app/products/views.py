@@ -9,40 +9,30 @@ from .serializers import (
     ProductImagesSerializer,
     ProductForSellerSerializer,
     ProductDetailWithSellerSerializer,
-    ProductCreateSerializer, ProductUpdateSerializer,
+    ProductCreateSerializer,
 )
 from .models import Product, Category, CategoryGroup
 from django.http.response import Http404
-from django.db.models import Q, Count, F, ExpressionWrapper, FloatField, Case, When, Value
+from django.db.models import Q
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from app.sellers.models import Seller
 
 
-# 상품 목록 조회
+# 상품 목록 조회 + 등록
 @extend_schema(
     tags=["상품 목록 조회"],
     summary="목록 조회",
-    description=
-    "정렬 키워드: price, stats__review_count,stats__sales_count,stats__wish_count, created_at",
+    description="상품 전체 목록을 간략히 조회",
 )
 class ProductListAPIView(generics.ListAPIView):
+    queryset = Product.objects.all()
     serializer_class = ProductSerializer
     filter_backends = [filters.OrderingFilter]
-    ordering_fields = [
-        "price",
-        "stats__review_count",
-        "stats__sales_count",
-        "stats__wish_count",
-        "created_at",
-    ]
-    ordering = ("-stats__review_count")
+    ordering_fields = ["price", "created_at"]
+    ordering = ("-created_at",)
     permission_classes = [permissions.AllowAny]
 
-    def get_queryset(self):
-        return Product.objects.select_related("stats").all()
 
-
-# 상품 등록
 @extend_schema(
     tags=["상품 등록"],
     summary="상품 등록",
@@ -55,69 +45,57 @@ class ProductListAPIView(generics.ListAPIView):
                 "origin": {"type": "string"},
                 "stock": {"type": "integer"},
                 "price": {"type": "number"},
-                "discount_price": {"type": "number"},
                 "overseas_shipping": {"type": "boolean"},
                 "delivery_fee": {"type": "number"},
                 "description": {"type": "string"},
                 "sold_out": {"type": "boolean"},
                 "categories": {
                     "type": "array",
-                    "items": {"type": "integer"},
-                    "description": "1: 시즌(1-4) / 2: 테마(5-14) / 3: 색상(15-19) / 4: 사이즈(20-23) / 5: kg(24-32) "
+                    "items": {
+                        "type": "string",
+                        "enum": [cat.name for cat in Category.objects.all()],
+                    },
                 },
                 "images": {
                     "type": "array",
-                    "items": {
-                        "type": "string",
-                        "format": "binary"
-                    }
-                        },
+                    "items": {"type": "string", "format": "binary"},
+                },
                 "seller_username": {"type": "string", "readOnly": True},
                 "seller_business_name": {"type": "string", "readOnly": True},
                 "seller_business_number": {"type": "string", "readOnly": True},
-                    },
-            "required": ["name", "price"],
+            },
+            "required": ["name", "price", "categories"],
         }
     },
-    responses=ProductCreateSerializer
+    responses=ProductCreateSerializer,
 )
 class ProductCreateAPIView(generics.CreateAPIView):
-     queryset = Product.objects.all()
-     serializer_class = ProductCreateSerializer
-     parser_classes = [MultiPartParser, FormParser]
-     permission_classes = [permissions.IsAuthenticated]
+    queryset = Product.objects.all()
+    serializer_class = ProductCreateSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-     def post(self, request, *args, **kwargs):
-         user = request.user
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
 
-         if not user.is_authenticated:
-             return Response(
-                 {"error": "인증이 필요합니다."},
-                 status=status.HTTP_403_FORBIDDEN,
-             )
-         try:
-             seller = Seller.objects.get(user=user)
-         except Seller.DoesNotExist:
-             return Response(
-                 {"error": "판매자 계정이 아닙니다."},
-                 status=status.HTTP_403_FORBIDDEN,
-             )
-         serializer = self.get_serializer(data=request.data)
-         try:
+        if not request.user.is_authenticated:
+            return Response(
+                {"error": "인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN
+            )
+        try:
             serializer.is_valid(raise_exception=True)
-            _ = serializer.save(seller=seller)
+            serializer.save(seller=request.user)
 
-         except serializers.ValidationError as e:
-             return Response(
-                 {"error": "잘못된 입력입니다.", "details": e.detail},
+        except serializers.ValidationError as e:
+            return Response(
+                {"error": "잘못된 입력입니다.", "details": e.detail},
                 status=status.HTTP_400_BAD_REQUEST,
-             )
+            )
 
-         except Exception as e:
-             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-         headers = self.get_success_headers(serializer.data)
-         return Response(
+        headers = self.get_success_headers(serializer.data)
+        return Response(
             serializer.data, status=status.HTTP_201_CREATED, headers=headers
         )
 
@@ -126,20 +104,14 @@ class ProductCreateAPIView(generics.CreateAPIView):
 # 상품 상세페이지 / 수정 / 삭제
 class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     http_method_names = ["get", "put", "delete"]
-    parser_classes = [MultiPartParser, FormParser]
     queryset = Product.objects.all()
+    serializer_class = ProductDetailWithSellerSerializer
     lookup_field = "product_id"
 
     def get_permissions(self):
         if self.request.method in ["PUT", "PATCH", "DELETE"]:
             return [permissions.IsAuthenticated()]
         return [permissions.AllowAny()]
-
-    def get_serializer_class(self):
-        if self.request.method in ["PUT", "PATCH"]:
-            return ProductUpdateSerializer
-        return ProductDetailWithSellerSerializer
-
 
     @extend_schema(
         summary="상품 상세 조회",
@@ -159,37 +131,6 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
     @extend_schema(
         summary="상품 수정",
         description="상품의 아이디를 입력하고 그 상품의 상세 데이터 수정 가능",
-        request={
-            "multipart/form-data": {
-                "type": "object",
-                "properties": {
-                    "name": {"type": "string", "description": "상품명"},
-                    "origin": {"type": "string", "description": "원산지"},
-                    "stock": {"type": "integer", "description": "재고 수량"},
-                    "price": {"type": "number", "description": "정상가"},
-                    "discount_price": {"type": "number", "description": "할인가"},
-                    "overseas_shipping": {"type": "boolean", "description": "해외 배송 여부"},
-                    "delivery_fee": {"type": "number", "description": "배송비"},
-                    "description": {"type": "string", "description": "상품 설명"},
-                    "sold_out": {"type": "boolean", "description": "품절 여부"},
-                    "categories": {
-                        "type": "array",
-                        "items": {"type": "integer"},
-                        "description": "1: 시즌(1-4) / 2: 테마(5-14) / 3: 색상(15-19) / 4: 사이즈(20-23) / 5: kg(24-32)",
-                    },
-                    "images": {
-                        "type": "array",
-                        "items": {"type": "string", "format": "binary"},
-                        "description": "상품 이미지 파일들",
-                    },
-                    "seller_username": {"type": "string", "readOnly": True},
-                    "seller_business_name": {"type": "string", "readOnly": True},
-                    "seller_business_number": {"type": "string", "readOnly": True},
-                },
-                "required": ["name", "price"],
-            }
-        },
-        responses=ProductUpdateSerializer,
     )
     def put(self, request, *args, **kwargs):
         try:
@@ -356,18 +297,13 @@ class ProductImageUploadAPIView(generics.CreateAPIView):
         OpenApiParameter("max_price", float, description="최대 가격"),
         OpenApiParameter("sold_out", str, description="품절 여부 (true/false)"),
         OpenApiParameter("seller", int, description="판매자 ID"),
-        OpenApiParameter("overseas_shipping", str, description="해외배송 여부 (true/false)"),
+        OpenApiParameter(
+            "overseas_shipping", str, description="해외배송 여부 (true/false)"
+        ),
     ],
 )
 class ProductSearchAPIView(generics.ListAPIView):
     serializer_class = ProductSerializer
-    filter_backends = [filters.OrderingFilter]
-    ordering_fields = [
-        "sale_price", "sales_count", "review_count",
-        "wish_count", "discount_rate", "created_at"
-    ]
-    ordering = ["-sales_count", "-created_at"]
-    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         queryset = Product.objects.all()
@@ -428,63 +364,21 @@ class ProductSearchAPIView(generics.ListAPIView):
             overseas_shipping_value = str(overseas_shipping).lower() == "true"
             my_filters &= Q(overseas_shipping=overseas_shipping_value)
 
-        queryset = queryset.filter(my_filters).distinct()
+        return queryset.filter(my_filters).distinct()
 
-        queryset = queryset.annotate(
-            sales_count=Count('order_items', distinct=True),
-            review_count=Count('review', distinct=True),
-            wish_count=Count('wishlists', distinct=True),
-            sale_price=F('price') - F('discount_price'),
-            discount_rate=ExpressionWrapper(
-                Case(
-                    When(price__gt=0, then=100 * (F('discount_price') / F('price'))),
-                    default=Value(0),
-                    output_field=FloatField()
-                ),
-                output_field=FloatField()
-            )
-        )
-
-        queryset = queryset.order_by('-sales_count', '-created_at')
-        return queryset
 
 # 판매자 상품 목록
 @extend_schema(
     tags=["판매자별 상품 목록 조회"],
     summary="판매자별 상품 목록 조회",
-    description="정렬 키워드 : sale_price, sales_count, review_count, wish_count, created_at"
 )
 class SellerProductsListAPIView(generics.ListAPIView):
     serializer_class = ProductForSellerSerializer
-    filter_backends = [filters.OrderingFilter]
-    ordering_fields = [
-        "sale_price", "sales_count", "review_count",
-        "wish_count", "discount_rate", "created_at"
-    ]
-    ordering = ["-sales_count", "-created_at"]
-    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         seller_id = self.kwargs.get("id")
         try:
-            seller = Seller.objects.get(id=seller_id) # noqa: F841
+            seller = Seller.objects.get(id=seller_id)  # noqa: F841
         except Seller.DoesNotExist:
             raise Http404("요청한 판매자가 존재하지 않습니다.")
-
-        queryset = (Product.objects.filter(seller_id=seller_id).annotate(
-            sales_count=Count('order_items', distinct=True),
-            review_count=Count('review', distinct=True),
-            wish_count=Count('wishlists', distinct=True),
-            sale_price=F('price') - F('discount_price'),
-            discount_rate=ExpressionWrapper(
-                Case(
-                    When(price__gt=0, then=100 * (F('discount_price') / F('price'))),
-                    default=Value(0),
-                    output_field=FloatField()
-                ),
-                output_field=FloatField()
-            )
-        )
-                    .order_by('-sales_count', '-created_at'))
-
-        return queryset
+        return Product.objects.filter(seller_id=seller_id)

@@ -25,20 +25,16 @@ class OrdersAPITest(APITestCase):
             business_number="1234567890",
         )
 
-
         self.product = Product.objects.create(
             name="Sample Product", price=12000, stock=10, seller=self.seller
         )
 
-
         self.cart = Cart.objects.create(user=self.user)
         CartItem.objects.create(cart=self.cart, product=self.product, quantity=2)
-
 
         self.order = Order.objects.create(
             user=self.user, address="주소", payment_method="card", total_amount=24000
         )
-
 
     def test_get_order_list(self):
         response = self.client.get("/api/orders/")
@@ -66,12 +62,12 @@ class OrdersAPITest(APITestCase):
             response.status_code, [status.HTTP_200_OK, status.HTTP_204_NO_CONTENT]
         )
 
-    #
-    # def test_create_order_from_cart(self):
-    #     response = self.client.post(
-    #         "/api/orders/",
-    #         {"address": "장바구니 주문 주소", "payment_method": "card"},
-    #     )
-    #     assert response.status_code == 201
-    #     assert response.data["address"] == "장바구니 주문 주소"
-        assert True   # 테스트 실패합니다. ci 걸려요 ㅠㅠ
+        #
+        # def test_create_order_from_cart(self):
+        #     response = self.client.post(
+        #         "/api/orders/",
+        #         {"address": "장바구니 주문 주소", "payment_method": "card"},
+        #     )
+        #     assert response.status_code == 201
+        #     assert response.data["address"] == "장바구니 주문 주소"
+        assert True  # 테스트 실패합니다. ci 걸려요 ㅠㅠ

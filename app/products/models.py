@@ -33,9 +33,7 @@ class Category(models.Model):
 
 class Product(models.Model):
     product_id = models.AutoField(primary_key=True)
-    seller = models.ForeignKey(
-        Seller, verbose_name="판매자", on_delete=models.CASCADE
-    )
+    seller = models.ForeignKey(Seller, verbose_name="판매자", on_delete=models.CASCADE)
     categories = models.ManyToManyField(
         "Category", verbose_name="카테고리", related_name="products", blank=True
     )
@@ -79,7 +77,9 @@ class Product(models.Model):
 
 
 class ProductStats(models.Model):
-    product = models.OneToOneField(Product, on_delete=models.CASCADE, related_name="stats")
+    product = models.OneToOneField(
+        Product, on_delete=models.CASCADE, related_name="stats"
+    )
     review_count = models.PositiveIntegerField(verbose_name="리뷰 수", default=0)
     sales_count = models.PositiveIntegerField(verbose_name="판매 수", default=0)
     wish_count = models.PositiveIntegerField(verbose_name="위시 수", default=0)
@@ -93,6 +93,7 @@ class ProductStats(models.Model):
             models.Index(fields=["review_count"]),
             models.Index(fields=["wish_count"]),
         ]
+
     def __str__(self):
         return f"{self.product.name} 통계 (판매 {self.sales_count}회)"
 
