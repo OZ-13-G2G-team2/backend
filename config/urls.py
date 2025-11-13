@@ -9,7 +9,6 @@ from django.http import JsonResponse
 
 from app.products.views import (
     CategoryByGroupAPIView,
-    SellerProductsListAPIView,
     ProductsByCategoryAPIView,
 )
 
@@ -43,12 +42,7 @@ urlpatterns = [
         ProductsByCategoryAPIView.as_view(),
         name="products-by-category",
     ),
-    # 판매자 별 상품 목록 조회
-    path(
-        "api/sellers/<int:id>/products/",
-        SellerProductsListAPIView.as_view(),
-        name="seller-products-list",
-    ),
+
     # 스키마 자동 생성
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     # Swagger UI
