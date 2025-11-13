@@ -1,13 +1,15 @@
+
+from django.conf import settings
+from django.shortcuts import redirect
 from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
-from django.utils.http import urlsafe_base64_decode
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth import get_user_model
 
+from django.db import transaction
 from app.user_auth.serializers import (
     UserRegisterSerializer,
     SellerRegisterSerializer,
@@ -18,81 +20,61 @@ from app.user_auth.utils import send_activation_email
 User = get_user_model()
 
 
-# 이메일 인증 링크 발송
-@extend_schema(tags=["이메일 인증"], summary="이메일 인증후 활성화")
-class UserActivateView(APIView):
+class EmailSendView(APIView):
     permission_classes = [permissions.AllowAny]
 
-    def get(self, request, uidb64, token):
-        try:
-            uid = urlsafe_base64_decode(uidb64).decode()
-            user = User.objects.get(pk=uid)
-        except (User.DoesNotExist, ValueError, TypeError, OverflowError):
-            return Response({"error": "유효하지 않은 링크입니다."}, status=400)
-
-        if default_token_generator.check_token(user, token):
-            user.is_active = True
-            user.save()
-            return Response({"message": "이메일 인증이 완료되었습니다."}, status=200)
-
-        return Response({"error": "토큰이 유효하지 않습니다."}, status=400)
-
-
-# 이메일 인증 재전송
-@extend_schema(tags=["이메일 인증"], summary="이메일 인증 재전송")
-class ResendActivationEmailView(APIView):
+    # 이메일 발송
+    @transaction.atomic
     def post(self, request):
         email = request.data.get("email")
+
         if not email:
             return Response(
                 {"error": "이메일이 필요합니다."}, status=status.HTTP_400_BAD_REQUEST
             )
 
         try:
-            user = User.objects.get(email=email)
+            user = User.objects.select_for_update().get(email=email)
         except User.DoesNotExist:
             return Response(
-                {"error": "해당 이메일의 사용자가 존재하지 않습니다."},
+                {"error": "해당 이메일의 사용자가 없습니다."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        if user.is_active:
-            return Response(
-                {"message": "이미 인증이 완료된 계정입니다."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        link = send_activation_email(user)
+        print("Activation link:", link)
 
-        # 이메일 재전송
-        send_activation_email(user)
         return Response(
-            {"message": "인증 메일을 다시 발송했습니다."}, status=status.HTTP_200_OK
+            {"message": "인증 메일이 발송되었습니다."}, status=status.HTTP_200_OK
         )
 
-
-# user is_active 확인
-class CheckUserActiveView(APIView):
+    # 활성화 및 프론트 리디렉션
     def get(self, request):
-        email = request.query_params.get("email")
+        token = request.query_params.get("token")
 
-        if not email:
+        # token 없을 때
+        if not token:
             return Response(
-                {"error": "email parameter is required"}, status.HTTP_400_BAD_REQUEST
+                {"error": "token이 필요합니다."}, status=status.HTTP_400_BAD_REQUEST
             )
+
+        # token으로 유저 조회
         try:
-            user = User.objects.get(email=email)
-            return Response(
-                {"email": user.email, "is_active ": user.is_active}, status.HTTP_200_OK
-            )
-
+            user = User.objects.get(email_token=token)
         except User.DoesNotExist:
-            return Response(
-                {
-                    "email": email,
-                    "is_active ": False,
-                    "message": "해당 유저를 찾을 수 없습니다",
-                },
-                status.HTTP_404_NOT_FOUND,
-            )
+            redirect_url = f"{settings.FRONTEND_URL}/email/certification?status=invalid"
+            return redirect(redirect_url)
+
+        # 인증 완료 처리
+        user.is_active = True
+        user.email_token = None  # 토큰 1회성
+        user.save()
+
+        # 프론트엔드로 리다이렉트
+        redirect_url = (
+            f"{settings.FRONTEND_URL}/email/certification/{user.email}?status=success"
+        )
+        return redirect(redirect_url)
 
 
 # user/signup

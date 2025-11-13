@@ -42,7 +42,6 @@ urlpatterns = [
         ProductsByCategoryAPIView.as_view(),
         name="products-by-category",
     ),
-
     # 스키마 자동 생성
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     # Swagger UI
