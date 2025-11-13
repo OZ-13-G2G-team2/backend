@@ -1,15 +1,14 @@
 name: Build Docker Image
 
 on:
-  pull_request:
-    types: [closed]
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: ["Code Quality Checks"]
+    types:
+      - completed
 
 jobs:
   build:
-    if: ${{ github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     env:
       DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
