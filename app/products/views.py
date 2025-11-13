@@ -11,9 +11,9 @@ from .serializers import (
     ProductDetailWithSellerSerializer,
     ProductCreateSerializer, ProductUpdateSerializer,
 )
-from .models import Product, Category, CategoryGroup
+from .models import Product, Category, CategoryGroup, ProductImages
 from django.http.response import Http404
-from django.db.models import Q, Count, F, ExpressionWrapper, FloatField, Case, When, Value
+from django.db.models import Q, Count
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from app.sellers.models import Seller
 
@@ -72,9 +72,6 @@ class ProductListAPIView(generics.ListAPIView):
                         "format": "binary"
                     }
                         },
-                "seller_username": {"type": "string", "readOnly": True},
-                "seller_business_name": {"type": "string", "readOnly": True},
-                "seller_business_number": {"type": "string", "readOnly": True},
                     },
             "required": ["name", "price"],
         }
@@ -82,46 +79,64 @@ class ProductListAPIView(generics.ListAPIView):
     responses=ProductCreateSerializer
 )
 class ProductCreateAPIView(generics.CreateAPIView):
-     queryset = Product.objects.all()
-     serializer_class = ProductCreateSerializer
-     parser_classes = [MultiPartParser, FormParser]
-     permission_classes = [permissions.IsAuthenticated]
+    queryset = Product.objects.all()
+    serializer_class = ProductCreateSerializer
+    parser_classes = [MultiPartParser, FormParser]
+    permission_classes = [permissions.IsAuthenticated]
 
-     def post(self, request, *args, **kwargs):
-         user = request.user
+    def post(self, request, *args, **kwargs):
+        user = request.user
 
-         if not user.is_authenticated:
-             return Response(
-                 {"error": "인증이 필요합니다."},
-                 status=status.HTTP_403_FORBIDDEN,
-             )
-         try:
-             seller = Seller.objects.get(user=user)
-         except Seller.DoesNotExist:
-             return Response(
-                 {"error": "판매자 계정이 아닙니다."},
-                 status=status.HTTP_403_FORBIDDEN,
-             )
-         serializer = self.get_serializer(data=request.data)
-         try:
+        if not user.is_authenticated:
+            return Response(
+                {"error": "인증이 필요합니다."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        try:
+            seller = Seller.objects.get(user=user)
+        except Seller.DoesNotExist:
+            return Response(
+                {"error": "판매자 계정이 아닙니다."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = self.get_serializer(data=request.data)
+        try:
             serializer.is_valid(raise_exception=True)
-            _ = serializer.save(seller=seller)
-
-         except serializers.ValidationError as e:
-             return Response(
-                 {"error": "잘못된 입력입니다.", "details": e.detail},
+            product = serializer.save(seller=seller)
+        except serializers.ValidationError as e:
+            return Response(
+                {"error": "잘못된 입력입니다.", "details": e.detail},
                 status=status.HTTP_400_BAD_REQUEST,
-             )
+            )
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-         except Exception as e:
-             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        image_files = request.FILES.getlist("images")
+        if image_files:
+            valid_extensions = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
+            for image in image_files:
+                if not image or not hasattr(image, "name"):
+                    return Response(
+                        {"error": "유효하지 않은 이미지 파일입니다."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
 
-         headers = self.get_success_headers(serializer.data)
-         return Response(
-            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+                if not any(image.name.lower().endswith(ext) for ext in valid_extensions):
+                    return Response(
+                        {"error": f"{image.name}은(는) 올바르지 않은 확장자입니다."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                ProductImages.objects.create(product=product, user=user, image_url=image)
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED,
+            headers=headers,
         )
-
-
 @extend_schema(tags=["상품 상세 / 수정 / 삭제"])
 # 상품 상세페이지 / 수정 / 삭제
 class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
@@ -208,11 +223,33 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
         serializer = self.get_serializer(product, data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
+
+            image_files = request.FILES.getlist("images")
+            if image_files:
+                product.images.all().delete()
+
+                valid_extensions = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
+
+                for image in image_files:
+                    if not any(image.name.lower().endswith(ext) for ext in valid_extensions):
+                        return Response(
+                            {"error": f"{image.name}은(는) 올바르지 않은 확장자입니다."},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+                    ProductImages.objects.create(
+                        product=product,
+                        user=user,
+                        image_url=image
+                    )
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
         else:
             return Response(
                 {"error": "잘못된 입력입니다."}, status.HTTP_400_BAD_REQUEST
             )
+
+
 
     @extend_schema(
         summary="상품 삭제", description="상품의 아이디를 입력하고 그 상품을 삭제"
@@ -347,7 +384,7 @@ class ProductImageUploadAPIView(generics.CreateAPIView):
 @extend_schema(
     tags=["검색 기능"],
     summary="상품 검색",
-    description="범위: 검색어,원산지,카테고리,최소금액&최대금액 필터,품절아닌 상품,판매자",
+    description="범위: 검색어,원산지,카테고리,최소금액&최대금액 필터,품절아닌 상품,업체명 / 정렬 키워드 : sale_price, sales_count, review_count, wish_count, discount_rate, created_at",
     parameters=[
         OpenApiParameter("q", str, description="검색어"),
         OpenApiParameter("origin", str, description="원산지"),
@@ -360,7 +397,7 @@ class ProductImageUploadAPIView(generics.CreateAPIView):
     ],
 )
 class ProductSearchAPIView(generics.ListAPIView):
-    serializer_class = ProductSerializer
+    serializer_class = ProductDetailWithSellerSerializer
     filter_backends = [filters.OrderingFilter]
     ordering_fields = [
         "sale_price", "sales_count", "review_count",
@@ -373,11 +410,11 @@ class ProductSearchAPIView(generics.ListAPIView):
         queryset = Product.objects.all()
         params = self.request.query_params
 
-        q = params.get("q", "")
+        q = params.get("q", "").strip()
         origin = params.get("origin")
-        category_id = params.get("category_id", 0)
+        category_name = params.get("category_name")
         sold_out = params.get("sold_out")
-        seller = params.get("seller")
+        seller_business_name = params.get("seller_business_name")
         overseas_shipping = params.get("overseas_shipping")
 
         try:
@@ -397,7 +434,7 @@ class ProductSearchAPIView(generics.ListAPIView):
                 Q(name__icontains=q)
                 | Q(description__icontains=q)
                 | Q(origin__icontains=q)
-                | Q(categories__name__icontains=q)
+                | Q(categories__icontains=q)
             )
 
         # 원산지 필터
@@ -405,8 +442,8 @@ class ProductSearchAPIView(generics.ListAPIView):
             my_filters &= Q(origin__iexact=origin)
 
         # 카테고리 필터
-        if category_id and int(category_id) != 0:
-            my_filters &= Q(categories__id=category_id, categories__group=2)
+        if category_name:
+            my_filters &= Q(categories__name__iexact=category_name, categories__group=2)
 
         # 가격 범위 필터
         if min_price:
@@ -420,8 +457,8 @@ class ProductSearchAPIView(generics.ListAPIView):
             my_filters &= Q(sold_out=sold_out_value)
 
         # 판매자 필터
-        if seller:
-            my_filters &= Q(seller_id=seller)
+        if seller_business_name:
+            my_filters &= Q(seller__business_name__icontains=seller_business_name)
 
         # 해외배송 여부 필터
         if overseas_shipping is not None:
@@ -434,19 +471,10 @@ class ProductSearchAPIView(generics.ListAPIView):
             sales_count=Count('order_items', distinct=True),
             review_count=Count('review', distinct=True),
             wish_count=Count('wishlists', distinct=True),
-            sale_price=F('price') - F('discount_price'),
-            discount_rate=ExpressionWrapper(
-                Case(
-                    When(price__gt=0, then=100 * (F('discount_price') / F('price'))),
-                    default=Value(0),
-                    output_field=FloatField()
-                ),
-                output_field=FloatField()
-            )
+
         )
 
-        queryset = queryset.order_by('-sales_count', '-created_at')
-        return queryset
+        return queryset.order_by('-sales_count', '-created_at')
 
 # 판매자 상품 목록
 @extend_schema(
@@ -465,26 +493,17 @@ class SellerProductsListAPIView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        seller_id = self.kwargs.get("id")
+        user_id = self.kwargs.get("user_id")
         try:
-            seller = Seller.objects.get(id=seller_id) # noqa: F841
+            seller = Seller.objects.get(user_id=user_id) # noqa: F841
         except Seller.DoesNotExist:
             raise Http404("요청한 판매자가 존재하지 않습니다.")
 
-        queryset = (Product.objects.filter(seller_id=seller_id).annotate(
+        queryset = (Product.objects.filter(seller=seller).annotate(
             sales_count=Count('order_items', distinct=True),
             review_count=Count('review', distinct=True),
             wish_count=Count('wishlists', distinct=True),
-            sale_price=F('price') - F('discount_price'),
-            discount_rate=ExpressionWrapper(
-                Case(
-                    When(price__gt=0, then=100 * (F('discount_price') / F('price'))),
-                    default=Value(0),
-                    output_field=FloatField()
-                ),
-                output_field=FloatField()
-            )
-        )
-                    .order_by('-sales_count', '-created_at'))
+
+        ).order_by('-sales_count', '-created_at'))
 
         return queryset

@@ -22,4 +22,5 @@ urlpatterns = [
         views.ProductImageUploadAPIView.as_view(),
         name="product-image-upload",
     ),
+
 ]

@@ -149,7 +149,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             ProductImages.objects.create(
                 product=product,
                 user=seller.user,
-                **image_data
+                image=image_data
             )
         return product
 
@@ -273,26 +273,32 @@ class ProductDetailWithSellerSerializer(ProductSerializer):
         ]
         read_only_fields = ("seller",)
 
-        def get_discount_rate(self, obj):
-            if obj.price and obj.discount_price and obj.discount_price < obj.price:
-                return round((float(obj.price) - float(obj.discount_price)) / float(obj.price) * 100, 2)
-            return 0
+    def get_discount_rate(self, obj):
+        if obj.price and obj.discount_price and obj.discount_price < obj.price:
+            return round((float(obj.price) - float(obj.discount_price)) / float(obj.price) * 100, 2)
+        return 0
 
-        def get_review_count(self, obj):
-            return getattr(obj.stats, "review_count", 0) if hasattr(obj, "stats") else 0
+    def get_review_count(self, obj):
+        return getattr(obj.stats, "review_count", 0) if hasattr(obj, "stats") else 0
 
-        def get_sales_count(self, obj):
-            return getattr(obj.stats, "sales_count", 0) if hasattr(obj, "stats") else 0
+    def get_sales_count(self, obj):
+        return getattr(obj.stats, "sales_count", 0) if hasattr(obj, "stats") else 0
 
-        def get_wish_count(self, obj):
-            return getattr(obj.stats, "wish_count", 0) if hasattr(obj, "stats") else 0
+    def get_wish_count(self, obj):
+        return getattr(obj.stats, "wish_count", 0) if hasattr(obj, "stats") else 0
 
 class ProductUpdateSerializer(serializers.ModelSerializer):
     categories = serializers.ListField(
         child=serializers.IntegerField(),
         required=False,
     )
-    images = ProductImagesSerializer(many=True, required=False)
+
+    images = serializers.ListField(
+        child=serializers.ImageField(),
+        required=False,
+        write_only=True,
+    )
+    discount_rate = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -302,6 +308,7 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
             "stock",
             "price",
             "discount_price",
+            "discount_rate",
             "overseas_shipping",
             "delivery_fee",
             "description",
@@ -309,6 +316,10 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
             "categories",
             "images",
         ]
+    def get_discount_rate(self, obj):
+        if obj.price and obj.discount_price and obj.discount_price < obj.price:
+            return round((float(obj.price) - float(obj.discount_price)) / float(obj.price) * 100, 2)
+        return 0
 
     def update(self, instance, validated_data):
         categories_data = validated_data.pop("categories", None)
@@ -316,14 +327,15 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
             instance.categories.set(categories_data)
 
         images_data = validated_data.pop("images", None)
-        if images_data is not None:
-            # 기존 이미지 전부 삭제 후 다시 생성
-            instance.images.all().delete()
-            for image_data in images_data:
-                ProductImages.objects.create(product=instance, **image_data)
-
+        # 나머지 필드 업데이트
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
 
+        #이미지 처리
+        if images_data is not None:
+            # 기존 이미지 전부 삭제 후 추가
+            instance.images.all().delete()
+            for image_data in images_data:
+                ProductImages.objects.create(product=instance, image=image_data)
         instance.save()
         return instance

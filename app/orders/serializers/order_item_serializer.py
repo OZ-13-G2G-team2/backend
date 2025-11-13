@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from app.orders.models import OrderItem
 
+
 class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source="product.name", read_only=True)
     product_image = serializers.ImageField(source="product.image", read_only=True)
@@ -37,4 +38,3 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
     def get_subtotal(self, obj):
         return obj.quantity * obj.price_at_purchase
-

@@ -9,7 +9,6 @@ from django.http import JsonResponse
 
 from app.products.views import (
     CategoryByGroupAPIView,
-    SellerProductsListAPIView,
     ProductsByCategoryAPIView,
 )
 
@@ -20,6 +19,8 @@ urlpatterns = [
     path("api/users/", include("app.users.urls", namespace="users")),
     # sellers 앱 include
     path("api/sellers/", include("app.sellers.urls", namespace="sellers")),
+    # auth 앱 include
+    path("api/auth/", include("app.user_auth.urls", namespace="auth")),
     # products 앱 include
     path("api/products/", include("app.products.urls", namespace="products")),
     # carts 앱 include
@@ -41,12 +42,7 @@ urlpatterns = [
         ProductsByCategoryAPIView.as_view(),
         name="products-by-category",
     ),
-    # 판매자 별 상품 목록 조회
-    path(
-        "api/sellers/<int:id>/products/",
-        SellerProductsListAPIView.as_view(),
-        name="seller-products-list",
-    ),
+
     # 스키마 자동 생성
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     # Swagger UI
