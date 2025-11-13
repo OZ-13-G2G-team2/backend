@@ -8,7 +8,11 @@ from .serializers import WishlistSerializer
 from drf_spectacular.utils import extend_schema
 
 
-@extend_schema(tags=["찜목록 조회"])
+@extend_schema(
+    tags=["찜목록 관리"],
+    summary="찜목록 조회",
+    description="상품을 찜목록에 담고 보관 조회하는 기능",
+)
 class WishlistView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = WishlistSerializer
@@ -36,6 +40,11 @@ class WishlistView(APIView):
         return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
 
+@extend_schema(
+    tags=["찜목록 삭제"],
+    summary="찜목록 삭제",
+    description="상품을 찜목록에 삭제하는 기능",
+)
 class WishlistDeleteView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = WishlistSerializer
@@ -49,7 +58,11 @@ class WishlistDeleteView(APIView):
         wishlist.delete()
         return Response({"message": "삭제 완료"}, status=status.HTTP_200_OK)
 
-
+@extend_schema(
+    tags=["찜목록 추가"],
+    summary="찜목록 추가",
+    description="상품을 찜목록에 추가하는 기능",
+)
 class WishlistToggleView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = WishlistSerializer
