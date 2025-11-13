@@ -9,8 +9,7 @@ from .serializers import (
     ProductImagesSerializer,
     ProductForSellerSerializer,
     ProductDetailWithSellerSerializer,
-    ProductCreateSerializer,
-    ProductUpdateSerializer,
+    ProductCreateSerializer, ProductUpdateSerializer,
 )
 from .models import Product, Category, CategoryGroup, ProductImages
 from django.http.response import Http404
@@ -19,27 +18,102 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 from app.sellers.models import Seller
 
 
-# 상품 목록 조회
+# 상품 목록 조회 및 검색
 @extend_schema(
-    tags=["상품 목록 조회"],
-    summary="목록 조회",
-    description="정렬 키워드: price, stats__review_count,stats__sales_count,stats__wish_count, created_at",
+    tags=["상품 목록 / 검색"],
+    summary="목록 조회 및 검색",
+    description="검색 필터 : 검색어, 원산지, 카테고리, 가격 범위, 품절 여부, 판매자, 해외배송 여부 등을 필터링 가능. "
+                "정렬 키워드 : sale_price, sales_count, review_count, wish_count, discount_price, created_at",
+    parameters=[
+        OpenApiParameter("q", str, description="검색어"),
+        OpenApiParameter("origin", str, description="원산지"),
+        OpenApiParameter("category_id", int, description="카테고리 ID"),
+        OpenApiParameter("min_price", float, description="최소 가격"),
+        OpenApiParameter("max_price", float, description="최대 가격"),
+        OpenApiParameter("sold_out", str, description="품절 여부 (true/false)"),
+        OpenApiParameter("seller", int, description="판매자 ID"),
+        OpenApiParameter("overseas_shipping", str, description="해외배송 여부 (true/false)"),
+    ],
 )
 class ProductListAPIView(generics.ListAPIView):
     serializer_class = ProductSerializer
     filter_backends = [filters.OrderingFilter]
     ordering_fields = [
-        "price",
-        "stats__review_count",
-        "stats__sales_count",
-        "stats__wish_count",
-        "created_at",
+        "price", "discount_price", "stats__review_count",
+        "stats__sales_count", "stats__wish_count", "created_at",
     ]
-    ordering = "-stats__review_count"
+    ordering = ("-stats__review_count")
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        return Product.objects.select_related("stats").all()
+        queryset = Product.objects.select_related("stats").all()
+        params = self.request.query_params
+
+        q = params.get("q", "").strip()
+        origin = params.get("origin")
+        category_name = params.get("category_name")
+        sold_out = params.get("sold_out")
+        seller_business_name = params.get("seller_business_name")
+        overseas_shipping = params.get("overseas_shipping")
+
+        try:
+            min_price = float(params.get("min_price", 0))
+        except ValueError:
+            min_price = 0
+        try:
+            max_price = float(params.get("max_price", 0))
+        except ValueError:
+            max_price = 0
+
+        my_filters = Q()
+
+        # 검색어 기반
+        if q:
+            my_filters &= (
+                Q(name__icontains=q)
+                | Q(description__icontains=q)
+                | Q(origin__icontains=q)
+                | Q(categories__name__icontains=q)
+            )
+
+        # 원산지 필터
+        if origin:
+            my_filters &= Q(origin__iexact=origin)
+
+        # 카테고리 필터
+        if category_name:
+            my_filters &= Q(categories__name__icontains=q, categories__group=2)
+
+        # 가격 범위 필터
+        if min_price:
+            my_filters &= Q(price__gte=min_price)
+        if max_price:
+            my_filters &= Q(price__lte=max_price)
+
+        # 품절 여부 필터
+        if sold_out is not None:
+            sold_out_value = sold_out.lower() == "true"
+            my_filters &= Q(sold_out=sold_out_value)
+
+        # 판매자 필터
+        if seller_business_name:
+            my_filters &= Q(seller__business_name__icontains=seller_business_name)
+
+        # 해외배송 여부 필터
+        if overseas_shipping is not None:
+            overseas_shipping_value = str(overseas_shipping).lower() == "true"
+            my_filters &= Q(overseas_shipping=overseas_shipping_value)
+
+        queryset = queryset.filter(my_filters).distinct()
+
+        queryset = queryset.annotate(
+            sales_count=Count('order_items', distinct=True),
+            review_count=Count('review', distinct=True),
+            wish_count=Count('wishlists', distinct=True),
+
+        )
+
+        return queryset.order_by('-sales_count', '-created_at')
 
 
 # 상품 등록
@@ -63,17 +137,20 @@ class ProductListAPIView(generics.ListAPIView):
                 "categories": {
                     "type": "array",
                     "items": {"type": "integer"},
-                    "description": "1: 시즌(1-4) / 2: 테마(5-14) / 3: 색상(15-19) / 4: 사이즈(20-23) / 5: kg(24-32) ",
+                    "description": "1: 시즌(1-4) / 2: 테마(5-14) / 3: 색상(15-19) / 4: 사이즈(20-23) / 5: kg(24-32) "
                 },
                 "images": {
                     "type": "array",
-                    "items": {"type": "string", "format": "binary"},
-                },
-            },
+                    "items": {
+                        "type": "string",
+                        "format": "binary"
+                    }
+                        },
+                    },
             "required": ["name", "price"],
         }
     },
-    responses=ProductCreateSerializer,
+    responses=ProductCreateSerializer
 )
 class ProductCreateAPIView(generics.CreateAPIView):
     queryset = Product.objects.all()
@@ -120,17 +197,13 @@ class ProductCreateAPIView(generics.CreateAPIView):
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
-                if not any(
-                    image.name.lower().endswith(ext) for ext in valid_extensions
-                ):
+                if not any(image.name.lower().endswith(ext) for ext in valid_extensions):
                     return Response(
                         {"error": f"{image.name}은(는) 올바르지 않은 확장자입니다."},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
-                ProductImages.objects.create(
-                    product=product, user=user, image_url=image
-                )
+                ProductImages.objects.create(product=product, user=user, image_url=image)
 
         headers = self.get_success_headers(serializer.data)
         return Response(
@@ -138,8 +211,6 @@ class ProductCreateAPIView(generics.CreateAPIView):
             status=status.HTTP_201_CREATED,
             headers=headers,
         )
-
-
 @extend_schema(tags=["상품 상세 / 수정 / 삭제"])
 # 상품 상세페이지 / 수정 / 삭제
 class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
@@ -157,6 +228,7 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
         if self.request.method in ["PUT", "PATCH"]:
             return ProductUpdateSerializer
         return ProductDetailWithSellerSerializer
+
 
     @extend_schema(
         summary="상품 상세 조회",
@@ -185,10 +257,7 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
                     "stock": {"type": "integer", "description": "재고 수량"},
                     "price": {"type": "number", "description": "정상가"},
                     "discount_price": {"type": "number", "description": "할인가"},
-                    "overseas_shipping": {
-                        "type": "boolean",
-                        "description": "해외 배송 여부",
-                    },
+                    "overseas_shipping": {"type": "boolean", "description": "해외 배송 여부"},
                     "delivery_fee": {"type": "number", "description": "배송비"},
                     "description": {"type": "string", "description": "상품 설명"},
                     "sold_out": {"type": "boolean", "description": "품절 여부"},
@@ -225,36 +294,31 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
                 {"error": "인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN
             )
 
-        serializer = self.get_serializer(product, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-
-            image_files = request.FILES.getlist("images")
-            if image_files:
-                product.images.all().delete()
-
-                valid_extensions = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
-
-                for image in image_files:
-                    if not any(
-                        image.name.lower().endswith(ext) for ext in valid_extensions
-                    ):
-                        return Response(
-                            {
-                                "error": f"{image.name}은(는) 올바르지 않은 확장자입니다."
-                            },
-                            status=status.HTTP_400_BAD_REQUEST,
-                        )
-                    ProductImages.objects.create(
-                        product=product, user=user, image_url=image
-                    )
-
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-        else:
+        serializer = self.get_serializer(product, data=request.data, partial=True)
+        if not serializer.is_valid():
             return Response(
-                {"error": "잘못된 입력입니다."}, status.HTTP_400_BAD_REQUEST
+                {"error": "잘못된 입력입니다.", "detail": serializer.errors},
             )
+
+        product = serializer.save()
+
+        image_files = request.FILES.getlist("images")
+        if image_files:
+            product.images.all().delete()
+            valid_extensions = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
+
+            for image in image_files:
+                if not any(image.name.lower().endswith(ext) for ext in valid_extensions):
+                    return Response(
+                        {"error": f"{image.name}은(는) 올바르지 않은 확장자입니다."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                ProductImages.objects.create(
+                    product=product,
+                    user=request.user,
+                    image_url=image
+                )
+        return Response(ProductDetailWithSellerSerializer(product).data, status=status.HTTP_200_OK)
 
     @extend_schema(
         summary="상품 삭제", description="상품의 아이디를 입력하고 그 상품을 삭제"
@@ -269,7 +333,7 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
             )
 
         user = self.request.user
-        if product.seller.user.email != user.email:
+        if not product.seller.user.email == user.email:
             return Response(
                 {"error": "인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN
             )
@@ -385,124 +449,18 @@ class ProductImageUploadAPIView(generics.CreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-# 검색
-@extend_schema(
-    tags=["검색 기능"],
-    summary="상품 검색",
-    description="범위: 검색어,원산지,카테고리,최소금액&최대금액 필터,품절아닌 상품,업체명 / 정렬 키워드 : sale_price, sales_count, review_count, wish_count, discount_rate, created_at",
-    parameters=[
-        OpenApiParameter("q", str, description="검색어"),
-        OpenApiParameter("origin", str, description="원산지"),
-        OpenApiParameter("category_id", int, description="카테고리 ID"),
-        OpenApiParameter("min_price", float, description="최소 가격"),
-        OpenApiParameter("max_price", float, description="최대 가격"),
-        OpenApiParameter("sold_out", str, description="품절 여부 (true/false)"),
-        OpenApiParameter("seller", int, description="판매자 ID"),
-        OpenApiParameter(
-            "overseas_shipping", str, description="해외배송 여부 (true/false)"
-        ),
-    ],
-)
-class ProductSearchAPIView(generics.ListAPIView):
-    serializer_class = ProductDetailWithSellerSerializer
-    filter_backends = [filters.OrderingFilter]
-    ordering_fields = [
-        "sale_price",
-        "sales_count",
-        "review_count",
-        "wish_count",
-        "discount_rate",
-        "created_at",
-    ]
-    ordering = ["-sales_count", "-created_at"]
-    permission_classes = [permissions.AllowAny]
-
-    def get_queryset(self):
-        queryset = Product.objects.all()
-        params = self.request.query_params
-
-        q = params.get("q", "").strip()
-        origin = params.get("origin")
-        category_name = params.get("category_name")
-        sold_out = params.get("sold_out")
-        seller_business_name = params.get("seller_business_name")
-        overseas_shipping = params.get("overseas_shipping")
-
-        try:
-            min_price = float(params.get("min_price", 0))
-        except ValueError:
-            min_price = 0
-        try:
-            max_price = float(params.get("max_price", 0))
-        except ValueError:
-            max_price = 0
-
-        my_filters = Q()
-
-        # 검색어 기반
-        if q:
-            my_filters &= (
-                Q(name__icontains=q)
-                | Q(description__icontains=q)
-                | Q(origin__icontains=q)
-                | Q(categories__icontains=q)
-            )
-
-        # 원산지 필터
-        if origin:
-            my_filters &= Q(origin__iexact=origin)
-
-        # 카테고리 필터
-        if category_name:
-            my_filters &= Q(categories__name__iexact=category_name, categories__group=2)
-
-        # 가격 범위 필터
-        if min_price:
-            my_filters &= Q(price__gte=min_price)
-        if max_price:
-            my_filters &= Q(price__lte=max_price)
-
-        # 품절 여부 필터
-        if sold_out is not None:
-            sold_out_value = sold_out.lower() == "true"
-            my_filters &= Q(sold_out=sold_out_value)
-
-        # 판매자 필터
-        if seller_business_name:
-            my_filters &= Q(seller__business_name__icontains=seller_business_name)
-
-        # 해외배송 여부 필터
-        if overseas_shipping is not None:
-            overseas_shipping_value = str(overseas_shipping).lower() == "true"
-            my_filters &= Q(overseas_shipping=overseas_shipping_value)
-
-        queryset = queryset.filter(my_filters).distinct()
-
-        queryset = queryset.annotate(
-            sales_count=Count("order_items", distinct=True),
-            review_count=Count("review", distinct=True),
-            wish_count=Count("wishlists", distinct=True),
-        )
-
-        return queryset.order_by("-sales_count", "-created_at")
-
-
 # 판매자 상품 목록
 @extend_schema(
     tags=["판매자별 상품 목록 조회"],
     summary="판매자별 상품 목록 조회",
-    description="정렬 키워드 : sale_price, sales_count, review_count, wish_count, created_at",
+    description="정렬 키워드 : sale_price, sales_count, review_count, wish_count, created_at"
 )
 class SellerProductsListAPIView(generics.ListAPIView):
     serializer_class = ProductForSellerSerializer
     filter_backends = [filters.OrderingFilter]
     ordering_fields = [
-        "sale_price",
-        "sales_count",
-        "review_count",
-        "wish_count",
-        "discount_rate",
-        "created_at",
+        "sale_price", "sales_count", "review_count",
+        "wish_count", "discount_rate", "created_at"
     ]
     ordering = ["-sales_count", "-created_at"]
     permission_classes = [permissions.AllowAny]
@@ -510,18 +468,15 @@ class SellerProductsListAPIView(generics.ListAPIView):
     def get_queryset(self):
         user_id = self.kwargs.get("user_id")
         try:
-            seller = Seller.objects.get(user_id=user_id)  # noqa: F841
+            seller = Seller.objects.get(user_id=user_id) # noqa: F841
         except Seller.DoesNotExist:
             raise Http404("요청한 판매자가 존재하지 않습니다.")
 
-        queryset = (
-            Product.objects.filter(seller=seller)
-            .annotate(
-                sales_count=Count("order_items", distinct=True),
-                review_count=Count("review", distinct=True),
-                wish_count=Count("wishlists", distinct=True),
-            )
-            .order_by("-sales_count", "-created_at")
-        )
+        queryset = (Product.objects.filter(seller=seller).annotate(
+            sales_count=Count('order_items', distinct=True),
+            review_count=Count('review', distinct=True),
+            wish_count=Count('wishlists', distinct=True),
+
+        ).order_by('-sales_count', '-created_at'))
 
         return queryset

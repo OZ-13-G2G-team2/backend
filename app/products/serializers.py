@@ -57,6 +57,9 @@ class ProductSerializer(serializers.ModelSerializer):
         source="seller.business_number", read_only=True
     )
     discount_rate = serializers.SerializerMethodField()
+    categories = serializers.SlugRelatedField(
+        many=True, read_only=True, slug_field="name"
+    )
 
     review_count = serializers.SerializerMethodField()
     sales_count = serializers.SerializerMethodField()
@@ -67,6 +70,7 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = [
             "product_id",
             "name",
+            "categories",
             "origin",
             "price",
             "discount_price",
@@ -249,6 +253,7 @@ class ProductDetailWithSellerSerializer(ProductSerializer):
     images = ProductImagesSerializer(
         many=True,
         read_only=True,
+        required=False
     )
     option_values = ProductOptionValueSerializer(many=True, read_only=True)
 
@@ -371,6 +376,6 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
             # 기존 이미지 전부 삭제 후 추가
             instance.images.all().delete()
             for image_data in images_data:
-                ProductImages.objects.create(product=instance, image=image_data)
+                ProductImages.objects.create(product=instance, image_url=image_data)
         instance.save()
         return instance
