@@ -26,7 +26,7 @@ urlpatterns = [
     # --- 회원가입 ---
     path("signup/", UserRegisterView.as_view(), name="user-signup"),  # 일반 유저
     path(
-        "signup-seller/", SellerRegisterView.as_view(), name="seller-signup"
+        "seller-signup/", SellerRegisterView.as_view(), name="seller-signup"
     ),  # 판매자
     # --- 로그인 / 토큰 ---
     path("login/", UserLoginView.as_view(), name="login"),  # JWT 발급
