@@ -195,7 +195,7 @@ EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 
 # 프론트엔드 주소 (로컬 개발용 기본값)
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
-
+BACKEND_URL = "http://127.0.0.1:8000"
 # social login
 SITE_ID = 1
 

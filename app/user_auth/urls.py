@@ -15,9 +15,7 @@ app_name = "user_auth"
 urlpatterns = [
     # --- 인증 ---
     path("activate/", UserActivateView.as_view(), name="user-activate"),
-    path(
-        "is_active/", CheckUserActiveView.as_view(), name="is_active"
-    ),  # 유저가 is_active인지 확인 해줌
+    # path("is_active/", CheckUserActiveView.as_view(), name="is_active"),  # 유저가 is_active인지 확인 해줌
     path(
         "email-send/",
         ResendActivationEmailView.as_view(),

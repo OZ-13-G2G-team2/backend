@@ -9,7 +9,7 @@ def send_activation_email(user):
     token = default_token_generator.make_token(user)
     uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
 
-    activation_link = f"{settings.FRONTEND_URL}/api/users/activate/{uidb64}/{token}/"
+    activation_link = f"{settings.BACKEND_URL}/api/auth/activate/{uidb64}/{token}/"
 
     subject = "회원가입 이메일 인증"
 

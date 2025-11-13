@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.shortcuts import redirect
 from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -33,9 +35,13 @@ class UserActivateView(APIView):
         if default_token_generator.check_token(user, token):
             user.is_active = True
             user.save()
-            return Response({"message": "이메일 인증이 완료되었습니다."}, status=200)
 
-        return Response({"error": "토큰이 유효하지 않습니다."}, status=400)
+            redirect_uri = f"{settings.FRONTEND_URL}/email/certification/{user.email}?status=success"
+            return redirect(redirect_uri)
+
+        # 토큰이 유효하지 않으면 실패 페이지로 이동
+        redirect_url = f"{settings.FRONTEND_URL}/email/certification/{user.email}?status=invalid"
+        return redirect(redirect_url)
 
 
 # 이메일 인증 재전송
