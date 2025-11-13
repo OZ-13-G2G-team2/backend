@@ -1,26 +1,19 @@
 from django.urls import path
 from .views import (
-    UserActivateView,
-    CheckUserActiveView,
-    ResendActivationEmailView,
     UserRegisterView,
     SellerRegisterView,
     UserTokenRefreshView,
     UserLoginView,
-    UserLogoutView,
+    UserLogoutView, EmailSendView,
 )
 
 app_name = "user_auth"
 
 urlpatterns = [
     # --- 인증 ---
-    path("activate/", UserActivateView.as_view(), name="user-activate"),
+    path("email-send/", EmailSendView.as_view(), name="email-send"),
     # path("is_active/", CheckUserActiveView.as_view(), name="is_active"),  # 유저가 is_active인지 확인 해줌
-    path(
-        "email-send/",
-        ResendActivationEmailView.as_view(),
-        name="email-send",
-    ),  # 이메일 재전송
+    # path("email-send/",ResendActivationEmailView.as_view(),name="email-send"),  # 이메일 재전송
     # --- 회원가입 ---
     path("signup/", UserRegisterView.as_view(), name="user-signup"),  # 일반 유저
     path(
