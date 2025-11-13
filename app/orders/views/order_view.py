@@ -34,7 +34,6 @@ class OrderViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Order.objects.filter(user=self.request.user).order_by("-order_date")
 
-
     @transaction.atomic
     def perform_create(self, serializer):
         user = self.request.user
@@ -43,7 +42,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         cart_items = CartItem.objects.filter(cart__user=user)
         if not cart_items.exists():
             raise ValidationError("장바구니가 비어 있습니다.")
-
 
         for cart_item in cart_items:
             OrderItemService.create_item(
@@ -55,10 +53,8 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         cart_items.delete()
 
-
         order.calculate_total()
         order.save()
-
 
     @action(detail=False, methods=["post"], url_path="buy-now")
     @transaction.atomic
@@ -87,7 +83,6 @@ class OrderViewSet(viewsets.ModelViewSet):
                 {"error": "재고가 부족합니다."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-
         order = Order.objects.create(
             user=user,
             address=address,
@@ -96,7 +91,6 @@ class OrderViewSet(viewsets.ModelViewSet):
             status="pending",
         )
 
-
         OrderItemService.create_item(
             order=order,
             product_id=product_id,
@@ -104,13 +98,11 @@ class OrderViewSet(viewsets.ModelViewSet):
             price_at_purchase=product.price,
         )
 
-
         order.calculate_total()
         order.save()
 
         serializer = self.get_serializer(order)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
 
     @action(detail=True, methods=["get"])
     def items(self, request, pk=None):
@@ -124,7 +116,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         items = order.items.select_related("product").all()
         serializer = OrderItemSerializer(items, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
 
     @action(detail=True, methods=["patch"], url_path="status")
     def update_status(self, request, pk=None):

@@ -53,54 +53,51 @@ class ProductListAPIView(generics.ListAPIView):
                     "type": "array",
                     "items": {
                         "type": "string",
-                        "enum": [cat.name for cat in Category.objects.all()]
-                    }
+                        "enum": [cat.name for cat in Category.objects.all()],
+                    },
                 },
                 "images": {
                     "type": "array",
-                    "items": {
-                        "type": "string",
-                        "format": "binary"
-                    }
-                        },
+                    "items": {"type": "string", "format": "binary"},
+                },
                 "seller_username": {"type": "string", "readOnly": True},
                 "seller_business_name": {"type": "string", "readOnly": True},
                 "seller_business_number": {"type": "string", "readOnly": True},
-                    },
+            },
             "required": ["name", "price", "categories"],
         }
     },
-    responses=ProductCreateSerializer
+    responses=ProductCreateSerializer,
 )
 class ProductCreateAPIView(generics.CreateAPIView):
-     queryset = Product.objects.all()
-     serializer_class = ProductCreateSerializer
-     permission_classes = [permissions.IsAuthenticated]
+    queryset = Product.objects.all()
+    serializer_class = ProductCreateSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-     def post(self, request, *args, **kwargs):
-         serializer = self.get_serializer(data=request.data)
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
 
-         if not request.user.is_authenticated:
-             return Response(
-                 {"error": "인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN
-             )
-         try:
-             serializer.is_valid(raise_exception=True)
-             serializer.save(seller=request.user)
+        if not request.user.is_authenticated:
+            return Response(
+                {"error": "인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN
+            )
+        try:
+            serializer.is_valid(raise_exception=True)
+            serializer.save(seller=request.user)
 
-         except serializers.ValidationError as e:
-             return Response(
-                 {"error": "잘못된 입력입니다.", "details": e.detail},
+        except serializers.ValidationError as e:
+            return Response(
+                {"error": "잘못된 입력입니다.", "details": e.detail},
                 status=status.HTTP_400_BAD_REQUEST,
-             )
+            )
 
-         except Exception as e:
-             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-         headers = self.get_success_headers(serializer.data)
-         return Response(
-             serializer.data, status=status.HTTP_201_CREATED, headers=headers
-         )
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )
 
 
 @extend_schema(tags=["상품 상세 / 수정 / 삭제"])
@@ -115,7 +112,6 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
         if self.request.method in ["PUT", "PATCH", "DELETE"]:
             return [permissions.IsAuthenticated()]
         return [permissions.AllowAny()]
-
 
     @extend_schema(
         summary="상품 상세 조회",
@@ -301,7 +297,9 @@ class ProductImageUploadAPIView(generics.CreateAPIView):
         OpenApiParameter("max_price", float, description="최대 가격"),
         OpenApiParameter("sold_out", str, description="품절 여부 (true/false)"),
         OpenApiParameter("seller", int, description="판매자 ID"),
-        OpenApiParameter("overseas_shipping", str, description="해외배송 여부 (true/false)"),
+        OpenApiParameter(
+            "overseas_shipping", str, description="해외배송 여부 (true/false)"
+        ),
     ],
 )
 class ProductSearchAPIView(generics.ListAPIView):
@@ -380,7 +378,7 @@ class SellerProductsListAPIView(generics.ListAPIView):
     def get_queryset(self):
         seller_id = self.kwargs.get("id")
         try:
-            seller = Seller.objects.get(id=seller_id) # noqa: F841
+            seller = Seller.objects.get(id=seller_id)  # noqa: F841
         except Seller.DoesNotExist:
             raise Http404("요청한 판매자가 존재하지 않습니다.")
         return Product.objects.filter(seller_id=seller_id)

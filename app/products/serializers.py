@@ -37,16 +37,29 @@ class ProductOptionValueSerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
     thumbnail = serializers.SerializerMethodField()
     seller_name = serializers.CharField(source="seller.user.username", read_only=True)
-    seller_business_name = serializers.CharField(source="seller.business_name", read_only=True)
-    seller_business_address = serializers.CharField(source="seller.business_address", read_only=True)
-    seller_business_number = serializers.CharField(source="seller.business_number", read_only=True)
+    seller_business_name = serializers.CharField(
+        source="seller.business_name", read_only=True
+    )
+    seller_business_address = serializers.CharField(
+        source="seller.business_address", read_only=True
+    )
+    seller_business_number = serializers.CharField(
+        source="seller.business_number", read_only=True
+    )
 
     class Meta:
         model = Product
         fields = [
-            "product_id", "name", "price", "thumbnail",
-            "seller_name", "seller_name", "seller_business_name",
-            "seller_business_address", "seller_business_number","created_at"
+            "product_id",
+            "name",
+            "price",
+            "thumbnail",
+            "seller_name",
+            "seller_name",
+            "seller_business_name",
+            "seller_business_address",
+            "seller_business_number",
+            "created_at",
         ]
         read_only_fields = ("seller",)
 
@@ -54,13 +67,12 @@ class ProductSerializer(serializers.ModelSerializer):
         first_image = obj.images.first()
         if not first_image:
             return None
-        return self.context['request'].build_absolute_uri(first_image.image_url)
+        return self.context["request"].build_absolute_uri(first_image.image_url)
 
 
 class ProductCreateSerializer(serializers.ModelSerializer):
     categories = serializers.PrimaryKeyRelatedField(
-        many=True,
-        queryset=Category.objects.all()
+        many=True, queryset=Category.objects.all()
     )
     seller_username = serializers.CharField(
         source="seller.user.username", read_only=True
@@ -79,31 +91,43 @@ class ProductCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = [
-            "product_id", "seller", "name", "origin", "stock", "price",
-            "overseas_shipping", "delivery_fee", "description", "sold_out",
-            "created_at", "updated_at", "categories", "images", "seller_username",
-            "seller_business_name", "seller_business_number", "seller_business_address",
+            "product_id",
+            "seller",
+            "name",
+            "origin",
+            "stock",
+            "price",
+            "overseas_shipping",
+            "delivery_fee",
+            "description",
+            "sold_out",
+            "created_at",
+            "updated_at",
+            "categories",
+            "images",
+            "seller_username",
+            "seller_business_name",
+            "seller_business_number",
+            "seller_business_address",
         ]
         read_only_fields = ("seller",)
 
-
     def create(self, validated_data):
         images_data = validated_data.pop("images", [])  # 이미지 데이터 분리
-        categories_data = validated_data.pop("categories", []) # 카테고리 분리
+        categories_data = validated_data.pop("categories", [])  # 카테고리 분리
         product = Product.objects.create(**validated_data)
 
         product.categories.set(categories_data)
 
-        request_user = self.context['request'].user
+        request_user = self.context["request"].user
         validated_data["seller"] = request_user
 
         for image_data in images_data:
             ProductImages.objects.create(
-                product=product,
-                user=request_user,
-                **image_data
+                product=product, user=request_user, **image_data
             )
         return product
+
 
 class ProductStockSerializer(serializers.ModelSerializer):
     class Meta:
@@ -143,6 +167,7 @@ class ProductForSellerSerializer(serializers.ModelSerializer):
             "seller_business_number",
         ]
 
+
 class ProductDetailWithSellerSerializer(ProductSerializer):
     categories = serializers.SlugRelatedField(
         many=True, read_only=True, slug_field="name"
@@ -165,13 +190,28 @@ class ProductDetailWithSellerSerializer(ProductSerializer):
     seller_business_number = serializers.CharField(
         source="seller.business_number", read_only=True
     )
+
     class Meta:
         model = Product
         fields = [
-            "product_id", "seller", "name", "origin", "stock", "price",
-            "overseas_shipping", "delivery_fee", "description", "sold_out",
-            "created_at", "updated_at", "categories", "images", "option_values",
-            "seller_username", "seller_business_name", "seller_business_address",
+            "product_id",
+            "seller",
+            "name",
+            "origin",
+            "stock",
+            "price",
+            "overseas_shipping",
+            "delivery_fee",
+            "description",
+            "sold_out",
+            "created_at",
+            "updated_at",
+            "categories",
+            "images",
+            "option_values",
+            "seller_username",
+            "seller_business_name",
+            "seller_business_address",
             "seller_business_number",
         ]
         read_only_fields = ("seller",)

@@ -32,7 +32,6 @@ class OrderService:
         order.delete()
         return True
 
-
     @staticmethod
     @transaction.atomic
     def create_order_from_cart(user, serializer):
@@ -52,7 +51,6 @@ class OrderService:
         cart_items.delete()
         order.calculate_total()
         return order
-
 
     @staticmethod
     @transaction.atomic
