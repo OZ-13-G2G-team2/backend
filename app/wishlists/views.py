@@ -1,3 +1,4 @@
+from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
@@ -28,6 +29,9 @@ class WishlistView(APIView):
     def get(self, request):
         user = request.user
         wishlists = Wishlist.objects.filter(user=user)
+        if not wishlists.exists():
+            return Response({"error": "위시리스트 없음"}, status=status.HTTP_400_BAD_REQUEST)
+
         serializer = WishlistSerializer(wishlists, many=True)
         return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
@@ -37,7 +41,11 @@ class WishlistDeleteView(APIView):
     serializer_class = WishlistSerializer
 
     def delete(self, request, wish_id):
-        wishlist = get_object_or_404(Wishlist, id=wish_id, user=request.user)
+        try:
+            wishlist = get_object_or_404(Wishlist, id=wish_id, user=request.user)
+        except Http404:
+            return Response({"error": "해당 항목 없음"}, status=status.HTTP_404_NOT_FOUND)
+
         wishlist.delete()
         return Response({"message": "삭제 완료"}, status=status.HTTP_200_OK)
 
@@ -47,9 +55,15 @@ class WishlistToggleView(APIView):
     serializer_class = WishlistSerializer
 
     def patch(self, request, wish_id):
-        wishlist = get_object_or_404(Wishlist, id=wish_id, user=request.user)
-        wishlist.is_active = not wishlist.is_active
-        wishlist.save()
-        return Response(
-            {"message": "상태가 변경되었습니다."}, status=status.HTTP_200_OK
-        )
+        try:
+            wishlist = get_object_or_404(Wishlist, id=wish_id, user=request.user)
+        except Http404:
+            return Response({"error": "해당 항목 없음"}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            wishlist.is_active = not wishlist.is_active
+            wishlist.save()
+        except Exception:
+            return Response({"error": "상태 변경 실패"}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"message": "상태가 변경되었습니다."}, status=status.HTTP_200_OK)

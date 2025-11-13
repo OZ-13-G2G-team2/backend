@@ -129,12 +129,16 @@ class ProductCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         images_data = validated_data.pop("images", [])  # 이미지 데이터 분리
         categories_data = validated_data.pop("categories", []) # 카테고리 분리
-        product = Product.objects.create(**validated_data)
-
-        product.categories.set(categories_data)
 
         request_user = self.context['request'].user
-        validated_data["seller"] = request_user
+        seller = getattr(request_user, "seller", None)
+        if seller is None:
+            raise serializers.ValidationError("판매자 계정이 아닙니다.")
+
+        product = Product.objects.create(seller=seller, **validated_data)
+
+        if categories_data:
+            product.categories.set(categories_data)
 
         for image_data in images_data:
             ProductImages.objects.create(
@@ -278,4 +282,43 @@ class ProductDetailWithSellerSerializer(ProductSerializer):
         def get_wish_count(self, obj):
             return getattr(obj.stats, "wish_count", 0) if hasattr(obj, "stats") else 0
 
+class ProductUpdateSerializer(serializers.ModelSerializer):
+    categories = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=False,
+    )
+    images = ProductImagesSerializer(many=True, required=False)
 
+    class Meta:
+        model = Product
+        fields = [
+            "name",
+            "origin",
+            "stock",
+            "price",
+            "discount_price",
+            "overseas_shipping",
+            "delivery_fee",
+            "description",
+            "sold_out",
+            "categories",
+            "images",
+        ]
+
+    def update(self, instance, validated_data):
+        categories_data = validated_data.pop("categories", None)
+        if categories_data is not None:
+            instance.categories.set(categories_data)
+
+        images_data = validated_data.pop("images", None)
+        if images_data is not None:
+            # 기존 이미지 전부 삭제 후 다시 생성
+            instance.images.all().delete()
+            for image_data in images_data:
+                ProductImages.objects.create(product=instance, **image_data)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+        return instance
