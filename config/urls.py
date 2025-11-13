@@ -21,7 +21,7 @@ urlpatterns = [
     # sellers 앱 include
     path("api/sellers/", include("app.sellers.urls", namespace="sellers")),
     # auth 앱 include
-    path("api/auth/", include("app.auth.urls", namespace="auth")),
+    path("api/auth/", include("app.user_auth.urls", namespace="auth")),
     # products 앱 include
     path("api/products/", include("app.products.urls", namespace="products")),
     # carts 앱 include

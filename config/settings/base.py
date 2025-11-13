@@ -60,7 +60,7 @@ INSTALLED_APPS = [
     "app.reviews",
     "app.carts",
     "app.wishlists",
-    "app.auth",
+    "app.user_auth",
     # Django allauth
     "allauth",
     "allauth.account",
