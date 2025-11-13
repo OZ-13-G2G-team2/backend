@@ -1,4 +1,3 @@
-import uuid
 
 from django.conf import settings
 from django.shortcuts import redirect
@@ -30,18 +29,24 @@ class EmailSendView(APIView):
         email = request.data.get("email")
 
         if not email:
-            return Response({"error": "이메일이 필요합니다."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "이메일이 필요합니다."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         try:
             user = User.objects.select_for_update().get(email=email)
         except User.DoesNotExist:
-            return Response({"error": "해당 이메일의 사용자가 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "해당 이메일의 사용자가 없습니다."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         link = send_activation_email(user)
         print("Activation link:", link)
 
-        return Response({"message": "인증 메일이 발송되었습니다."}, status=status.HTTP_200_OK)
-
+        return Response(
+            {"message": "인증 메일이 발송되었습니다."}, status=status.HTTP_200_OK
+        )
 
     # 활성화 및 프론트 리디렉션
     def get(self, request):
@@ -49,7 +54,9 @@ class EmailSendView(APIView):
 
         # token 없을 때
         if not token:
-            return Response({"error": "token이 필요합니다."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "token이 필요합니다."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         # token으로 유저 조회
         try:
@@ -64,8 +71,11 @@ class EmailSendView(APIView):
         user.save()
 
         # 프론트엔드로 리다이렉트
-        redirect_url = f"{settings.FRONTEND_URL}/email/certification/{user.email}?status=success"
+        redirect_url = (
+            f"{settings.FRONTEND_URL}/email/certification/{user.email}?status=success"
+        )
         return redirect(redirect_url)
+
 
 # user/signup
 @extend_schema(tags=["유저 회원가입"])

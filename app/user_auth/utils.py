@@ -8,7 +8,9 @@ def send_activation_email(user):
     user.email_token = str(uuid.uuid4())
     user.save()
 
-    activation_link = f"{settings.BACKEND_URL}/api/auth/email-send/?token={user.email_token}"
+    activation_link = (
+        f"{settings.BACKEND_URL}/api/auth/email-send/?token={user.email_token}"
+    )
 
     subject = "회원가입 이메일 인증"
     text_content = f"안녕하세요 {user.username}님,\n아래 링크를 클릭하여 이메일 인증을 완료해주세요:\n{activation_link}"

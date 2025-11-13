@@ -4,7 +4,8 @@ from .views import (
     SellerRegisterView,
     UserTokenRefreshView,
     UserLoginView,
-    UserLogoutView, EmailSendView,
+    UserLogoutView,
+    EmailSendView,
 )
 
 app_name = "user_auth"
