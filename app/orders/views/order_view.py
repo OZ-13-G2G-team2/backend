@@ -5,7 +5,6 @@ from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
 from app.products.models import Product
-from rest_framework.permissions import IsAdminUser
 
 from app.orders.models import Order
 from app.orders.serializers.order_serializer import OrderSerializer
@@ -33,13 +32,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        return (
-            Order.objects.filter(user=user)
-            .select_related()
-            .prefetch_related("items__product")
-            .order_by("-order_date")
-        )
+        return Order.objects.filter(user=self.request.user).order_by("-order_date")
 
     @transaction.atomic
     def perform_create(self, serializer):
@@ -89,17 +82,18 @@ class OrderViewSet(viewsets.ModelViewSet):
             return Response(
                 {"error": "재고가 부족합니다."}, status=status.HTTP_400_BAD_REQUEST
             )
+
         order = Order.objects.create(
             user=user,
             address=address,
             payment_method=payment_method,
+            total_amount=product.price * quantity,
             status="pending",
-            total_amount=0,
         )
 
         OrderItemService.create_item(
             order=order,
-            product_id=product.id,
+            product_id=product_id,
             quantity=quantity,
             price_at_purchase=product.price,
         )
@@ -123,52 +117,37 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer = OrderItemSerializer(items, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(
-        detail=True,
-        methods=["patch"],
-        url_path="status",
-        permission_classes=[IsAdminUser]
-    )
+    @action(detail=True, methods=["patch"], url_path="status")
     def update_status(self, request, pk=None):
-
         order = self.get_object()
+
+        if order.user != request.user:
+            return Response(
+                {"error": "이 주문의 상태를 변경할 권한이 없습니다."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         new_status = request.data.get("status")
         update_note = request.data.get("update_note", "")
-
         try:
-            updated_order = OrderService.update_status(order.id, new_status, user=request.user)
+            updated_order = OrderService.update_status(
+                order.id, new_status, user=request.user
+            )
         except OrderNotFound:
             return Response(
-                {"error": "주문을 찾을 수 없습니다."},
-                status=status.HTTP_404_NOT_FOUND,
+                {"error": "주문을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND
             )
         except InvalidOrderStatus:
             return Response(
-                {"error": "잘못된 주문 상태입니다."},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"error": "잘못된 주문 상태입니다."}, status=status.HTTP_400_BAD_REQUEST
             )
 
         return Response(
             {
                 "order_id": updated_order.id,
                 "status": updated_order.status,
-                "status_display": updated_order.get_status_display(),
                 "updated_at": updated_order.updated_at,
                 "update_note": update_note,
             },
             status=status.HTTP_200_OK,
         )
-
-    @action(detail=True, methods=["post"], url_path="cancel")
-    def cancel_order(self, request, pk=None):
-
-        order = self.get_object()
-        if order.user != request.user:
-            return Response({"error": "권한이 없습니다."}, status=403)
-        if order.status not in ["pending", "completed"]:
-            return Response({"error": "취소할 수 없는 상태입니다."}, status=400)
-
-        order.status = "cancelled"
-        order.save(update_fields=["status"])
-        return Response({"message": "주문이 취소되었습니다.", "status": order.status})
-

@@ -9,7 +9,7 @@ from .views import (
     UserList,
     UserActivateView,
     ResendActivationEmailView,
-    UserLogoutView,
+    UserLogoutView, CheckUserActiveView,
 )
 
 app_name = "users"
@@ -19,17 +19,20 @@ urlpatterns = [
     path("list/", UserList.as_view(), name="user-list"),  # 전체 유저 조회
     # --- 인증 ---
     path(
-        "activate/<uidb64>/<token>/", UserActivateView.as_view(), name="user-activate"
+        "activate/", UserActivateView.as_view(), name="user-activate"
     ),
     path(
-        "activate/resend/",
+        "is_active/", CheckUserActiveView.as_view(), name="is_active"
+    ),  # 유저가 is_active인지 확인 해줌
+    path(
+        "email-send/",
         ResendActivationEmailView.as_view(),
-        name="resend-activation",
+        name="email-send",
     ),  # 이메일 재전송
     # --- 회원가입 ---
     path("signup/", UserRegisterView.as_view(), name="user-signup"),  # 일반 유저
     path(
-        "signup/seller/", SellerRegisterView.as_view(), name="seller-signup"
+        "signup-seller/", SellerRegisterView.as_view(), name="seller-signup"
     ),  # 판매자
     # --- 로그인 / 토큰 ---
     path("login/", UserLoginView.as_view(), name="login"),  # JWT 발급

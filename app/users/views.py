@@ -7,7 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import User
+from django.contrib.auth import get_user_model
 from .serializers import (
     UserSerializer,
     UserRegisterSerializer,
@@ -19,6 +19,7 @@ from drf_spectacular.utils import extend_schema
 
 from .utils import send_activation_email
 
+User = get_user_model()
 
 # 유저 전체 조회
 @extend_schema(tags=["유저 전체 조회"])
@@ -77,6 +78,32 @@ class ResendActivationEmailView(APIView):
         return Response(
             {"message": "인증 메일을 다시 발송했습니다."}, status=status.HTTP_200_OK
         )
+
+
+# user is_active 확인
+class CheckUserActiveView(APIView):
+    def get(self, request):
+        email = request.query_params.get("email")
+
+        if not email:
+            return Response(
+                {"error": "email parameter is required"}, status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            user = User.objects.get(email=email)
+            return Response(
+                {"email": user.email, "is_active ": user.is_active}, status.HTTP_200_OK
+            )
+
+        except User.DoesNotExist:
+            return Response(
+                {
+                    "email": email,
+                    "is_active ": False,
+                    "message": "해당 유저를 찾을 수 없습니다",
+                },
+                status.HTTP_404_NOT_FOUND,
+            )
 
 
 # user/signup
