@@ -11,7 +11,7 @@ from .serializers import (
     ProductDetailWithSellerSerializer,
     ProductCreateSerializer, ProductUpdateSerializer,
 )
-from .models import Product, Category, CategoryGroup
+from .models import Product, Category, CategoryGroup, ProductImages
 from django.http.response import Http404
 from django.db.models import Q, Count, F, ExpressionWrapper, FloatField, Case, When, Value
 from drf_spectacular.utils import extend_schema, OpenApiParameter
@@ -22,7 +22,8 @@ from app.sellers.models import Seller
 @extend_schema(
     tags=["상품 목록 조회"],
     summary="목록 조회",
-    description="상품 전체 목록을 간략히 조회",
+    description=
+    "정렬 키워드: price, stats__review_count,stats__sales_count,stats__wish_count, created_at",
 )
 class ProductListAPIView(generics.ListAPIView):
     serializer_class = ProductSerializer
@@ -54,6 +55,7 @@ class ProductListAPIView(generics.ListAPIView):
                 "origin": {"type": "string"},
                 "stock": {"type": "integer"},
                 "price": {"type": "number"},
+                "discount_price": {"type": "number"},
                 "overseas_shipping": {"type": "boolean"},
                 "delivery_fee": {"type": "number"},
                 "description": {"type": "string"},
@@ -61,7 +63,7 @@ class ProductListAPIView(generics.ListAPIView):
                 "categories": {
                     "type": "array",
                     "items": {"type": "integer"},
-                    "description": "카테고리 ID 리스트"
+                    "description": "1: 시즌(1-4) / 2: 테마(5-14) / 3: 색상(15-19) / 4: 사이즈(20-23) / 5: kg(24-32) "
                 },
                 "images": {
                     "type": "array",
@@ -86,15 +88,24 @@ class ProductCreateAPIView(generics.CreateAPIView):
      permission_classes = [permissions.IsAuthenticated]
 
      def post(self, request, *args, **kwargs):
-         serializer = self.get_serializer(data=request.data)
+         user = request.user
 
-         if not request.user.is_authenticated:
+         if not user.is_authenticated:
              return Response(
-                 {"error": "인증이 필요합니다."}, status=status.HTTP_403_FORBIDDEN
+                 {"error": "인증이 필요합니다."},
+                 status=status.HTTP_403_FORBIDDEN,
              )
          try:
-             serializer.is_valid(raise_exception=True)
-             serializer.save(seller=request.user)
+             seller = Seller.objects.get(user=user)
+         except Seller.DoesNotExist:
+             return Response(
+                 {"error": "판매자 계정이 아닙니다."},
+                 status=status.HTTP_403_FORBIDDEN,
+             )
+         serializer = self.get_serializer(data=request.data)
+         try:
+            serializer.is_valid(raise_exception=True)
+            product = serializer.save(seller=seller)
 
          except serializers.ValidationError as e:
              return Response(
@@ -107,14 +118,15 @@ class ProductCreateAPIView(generics.CreateAPIView):
 
          headers = self.get_success_headers(serializer.data)
          return Response(
-             serializer.data, status=status.HTTP_201_CREATED, headers=headers
-         )
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )
 
 
 @extend_schema(tags=["상품 상세 / 수정 / 삭제"])
 # 상품 상세페이지 / 수정 / 삭제
 class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     http_method_names = ["get", "put", "delete"]
+    parser_classes = [MultiPartParser, FormParser]
     queryset = Product.objects.all()
     lookup_field = "product_id"
 
@@ -163,7 +175,7 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
                     "categories": {
                         "type": "array",
                         "items": {"type": "integer"},
-                        "description": "카테고리 ID 리스트",
+                        "description": "1: 시즌(1-4) / 2: 테마(5-14) / 3: 색상(15-19) / 4: 사이즈(20-23) / 5: kg(24-32)",
                     },
                     "images": {
                         "type": "array",
@@ -440,6 +452,7 @@ class ProductSearchAPIView(generics.ListAPIView):
 @extend_schema(
     tags=["판매자별 상품 목록 조회"],
     summary="판매자별 상품 목록 조회",
+    description="정렬 키워드 : sale_price, sales_count, review_count, wish_count, created_at"
 )
 class SellerProductsListAPIView(generics.ListAPIView):
     serializer_class = ProductForSellerSerializer
