@@ -11,7 +11,7 @@ from .serializers import (
     ProductDetailWithSellerSerializer,
     ProductCreateSerializer, ProductUpdateSerializer,
 )
-from .models import Product, Category, CategoryGroup, ProductImages
+from .models import Product, Category, CategoryGroup
 from django.http.response import Http404
 from django.db.models import Q, Count, F, ExpressionWrapper, FloatField, Case, When, Value
 from drf_spectacular.utils import extend_schema, OpenApiParameter
@@ -105,7 +105,7 @@ class ProductCreateAPIView(generics.CreateAPIView):
          serializer = self.get_serializer(data=request.data)
          try:
             serializer.is_valid(raise_exception=True)
-            product = serializer.save(seller=seller)
+            _ = serializer.save(seller=seller)
 
          except serializers.ValidationError as e:
              return Response(
