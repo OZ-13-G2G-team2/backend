@@ -1,25 +1,27 @@
-from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.urls import reverse
 from .models import Address
 
 User = get_user_model()
 
+
 class AddressAPITestCase(APITestCase):
     def setUp(self):
+
         self.user = User.objects.create_user(
             username="testuser",
             email="testuser@example.com",
             password="testpass",
-            is_active = True
+            is_active=True
         )
-
-
         refresh = RefreshToken.for_user(self.user)
         self.access_token = str(refresh.access_token)
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.access_token}')
+
+
         self.address = Address.objects.create(
             user=self.user,
             recipient_name="홍길동",
@@ -34,19 +36,19 @@ class AddressAPITestCase(APITestCase):
         )
 
     def test_list_addresses(self):
-        url = reverse('address-list')
+        url = reverse('address:address-list')
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreaterEqual(len(response.data), 1)
 
     def test_retrieve_address(self):
-        url = reverse('address-detail', args=[self.address.id])
+        url = reverse('address:address-detail', args=[self.address.id])
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['recipient_name'], self.address.recipient_name)
 
     def test_create_address(self):
-        url = reverse('address-list')
+        url = reverse('address:address-list')
         data = {
             "recipient_name": "김철수",
             "phone_number": "010-9876-5432",
@@ -63,7 +65,7 @@ class AddressAPITestCase(APITestCase):
         self.assertEqual(response.data['recipient_name'], "김철수")
 
     def test_update_address(self):
-        url = reverse('address-detail', args=[self.address.id])
+        url = reverse('address:address-detail', args=[self.address.id])
         data = {
             "recipient_name": "홍길동 수정",
             "phone_number": self.address.phone_number,
@@ -80,7 +82,7 @@ class AddressAPITestCase(APITestCase):
         self.assertEqual(response.data['recipient_name'], "홍길동 수정")
 
     def test_delete_address(self):
-        url = reverse('address-detail', args=[self.address.id])
+        url = reverse('address:address-detail', args=[self.address.id])
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Address.objects.filter(id=self.address.id).exists())

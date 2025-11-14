@@ -1,9 +1,9 @@
 from django.db import transaction
+from django.db.models import F
 from app.orders.models import Order
-from app.orders.exceptions import OrderNotFound, InvalidOrderStatus
+from app.products.models import ProductStats, Product
 from app.carts.models import CartItem
 from app.orders.services.order_item_service import OrderItemService
-from app.products.models import Product
 
 
 class OrderService:
@@ -14,27 +14,19 @@ class OrderService:
                 return Order.objects.get(id=order_id, user=user)
             return Order.objects.get(id=order_id)
         except Order.DoesNotExist:
-            raise OrderNotFound(f"Order {order_id} not found")
+            raise ValueError(f"Order {order_id} not found")
 
     @staticmethod
     def update_status(order_id, new_status, user=None):
-        try:
-            order = Order.objects.get(id=order_id)
-        except Order.DoesNotExist:
-            raise OrderNotFound()
+        order = OrderService.get_order(order_id, user)
 
-        if new_status not in ["pending", "shipping", "completed", "cancelled","delivered"]:
-            raise InvalidOrderStatus()
+        if new_status not in ["pending", "shipping", "completed", "cancelled", "delivered"]:
+            raise ValueError("Invalid order status")
+
 
         order.status = new_status
         order.save(update_fields=["status", "updated_at"])
         return order
-
-    @staticmethod
-    def delete_order(order_id, user=None):
-        order = OrderService.get_order(order_id, user)
-        order.delete()
-        return True
 
     @staticmethod
     @transaction.atomic
@@ -47,20 +39,21 @@ class OrderService:
         for item in cart_items:
             OrderItemService.create_item(
                 order=order,
-                product_id=item.product.id,
+                product_id=item.product.product_id,
                 quantity=item.quantity,
                 price_at_purchase=item.product.price,
             )
 
         cart_items.delete()
         order.calculate_total()
+        order.save(update_fields=["total_amount"])
         return order
 
     @staticmethod
     @transaction.atomic
     def create_order_buy_now(user, product_id, quantity, address, payment_method):
         try:
-            product = Product.objects.select_for_update().get(id=product_id)
+            product = Product.objects.select_for_update().get(product_id=product_id)
         except Product.DoesNotExist:
             raise ValueError("존재하지 않는 상품입니다.")
 
@@ -77,10 +70,11 @@ class OrderService:
 
         OrderItemService.create_item(
             order=order,
-            product_id=product.id,
+            product_id=product.product_id,
             quantity=quantity,
             price_at_purchase=product.price,
         )
 
         order.calculate_total()
+        order.save(update_fields=["total_amount"])
         return order

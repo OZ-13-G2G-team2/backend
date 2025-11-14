@@ -31,6 +31,7 @@ urlpatterns = [
     path("api/wishlists/", include("app.wishlists.urls", namespace="wishlists")),
     # orders 앱 include
     path("api/orders/", include("app.orders.urls", namespace="orders")),
+    path("api/address/", include("app.address.urls", namespace="address")),
     # 카테고리 관련
     path(
         "api/categories/group/<int:group_id>/",
