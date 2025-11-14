@@ -75,6 +75,11 @@ jobs:
           EMAIL_HOST_USER=${{ secrets.EMAIL_HOST_USER }}
           EMAIL_HOST_PASSWORD=${{ secrets.EMAIL_HOST_PASSWORD }}
           DEFAULT_FROM_EMAIL=${{ secrets.DEFAULT_FROM_EMAIL }}
+          
+          # prod url
+          FRONTEND_URL=${{ secrets.FRONTEND_URL }}
+          BACKEND_URL=${{ secrets.BACKEND_URL }}
+          
           EOT
 
 
