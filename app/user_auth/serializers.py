@@ -145,36 +145,43 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
 
     def validate(self, attrs):
-        # 먼저 사용자 인증 (비밀번호 확인)
-        from django.contrib.auth import authenticate
 
-        email = attrs.get('email')
-        password = attrs.get('password')
+        # 필수 필드 확인
+        email = attrs.get("email")
+        password = attrs.get("password")
 
-        # 사용자 인증 (is_active 체크 없이)
-        user = authenticate(request=self.context.get('request'), username=email, password=password)
+        # 둘 다 비어있는 경우
+        if not email and not password:
+            raise serializers.ValidationError("이메일과 비밀번호를 모두 입력해주세요.")
 
-        if user is None:
+        # 이메일 누락
+        if not email:
+            raise serializers.ValidationError("이메일 확인해주세요.")
+
+        # 비밀번호 누락
+        if not password:
+            raise serializers.ValidationError("비밀번호를 확인해주세요.")
+
+        # 사용자 존재 여부 확인
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
             raise AuthenticationFailed("이메일 또는 비밀번호가 올바르지 않습니다.")
 
-        # 이메일 미인증(비활성) 체크 - 401 Unauthorized 반환
+        # 비밀번호 확인 (is_active 체크 없이)
+        if not user.check_password(password):
+            raise AuthenticationFailed("이메일 또는 비밀번호가 올바르지 않습니다.")
+
+        # 이메일 미인증(비활성) 체크
         if not user.is_active:
-            error = AuthenticationFailed()
-            error.detail = {
-                "code": "EMAIL_NOT_VERIFIED",
-                "detail": "이메일 인증이 필요합니다."
-            }
-            raise error
+            raise AuthenticationFailed("이메일 인증이 필요합니다.")
 
         self.user = user
 
         # 토큰 생성
         refresh = self.get_token(user)
 
-        data = {
-            "refresh": str(refresh),
-            "access": str(refresh.access_token)
-        }
+        data = {"refresh": str(refresh), "access": str(refresh.access_token)}
 
         return data
 
