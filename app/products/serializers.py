@@ -175,7 +175,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
 
         for image_data in images_data:
             ProductImages.objects.create(
-                product=product, user=seller.user, image=image_data
+                product=product, user=seller.user, image_url=image_data
             )
         return product
 
@@ -250,11 +250,7 @@ class ProductDetailWithSellerSerializer(ProductSerializer):
     categories = serializers.SlugRelatedField(
         many=True, read_only=True, slug_field="name"
     )
-    images = ProductImagesSerializer(
-        many=True,
-        read_only=True,
-        required=False
-    )
+    images = ProductImagesSerializer(many=True, read_only=True, required=False)
     option_values = ProductOptionValueSerializer(many=True, read_only=True)
 
     seller_username = serializers.CharField(
@@ -364,10 +360,11 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         categories_data = validated_data.pop("categories", None)
         if categories_data is not None:
-            valid_categories = Category.objects.filter(id__in=categories_data)
-            instance.categories.set(valid_categories)
-        else:
-            instance.categories.clear()
+            # 기존 카테고리 유지 + 새로운 것 추가 (중복 제거)
+            existing_ids = set(instance.categories.values_list("id", flat=True))
+            new_ids = set(categories_data)
+            all_ids = list(existing_ids | new_ids)  # 합집합
+            instance.categories.set(all_ids)
 
         images_data = validated_data.pop("images", None)
 

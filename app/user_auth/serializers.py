@@ -1,6 +1,7 @@
 import re
 
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import get_user_model
 from app.sellers.models import Seller
@@ -129,7 +130,29 @@ class SellerRegisterSerializer(BaseRegisterSerializer):
         return user
 
 
+# 로그인 토큰 발급 내용 개선 시리얼라이저
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        # user 일때
+        token['username'] = user.username
+
+        if Seller.objects.filter(user=user).exists():
+            token["is_seller"] = True
+        return token
+
+    def validate(self, attrs):
+        # 기본 JWT 토큰 발급
+        data = super().validate(attrs)
+
+        return data
+
+
+
+
+
 # 로그아웃 시리얼라이저
-# 로그아웃 요청에 필요한 데이터 구조를 정의
 class LogoutSerializer(serializers.Serializer):
     refresh = serializers.CharField(required=True)
