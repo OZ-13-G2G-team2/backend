@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from app.address.models import Address
 
 
 class Order(models.Model):
@@ -30,9 +31,7 @@ class Order(models.Model):
         max_digits=10, decimal_places=2, null=False, default=0
     )
 
-    address = models.CharField(
-        "주소", max_length=255, default="", null=False, blank=False
-    )
+    address = models.ForeignKey(Address, on_delete=models.PROTECT)
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,

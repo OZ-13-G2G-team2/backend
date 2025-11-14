@@ -1,10 +1,12 @@
+from django.db import transaction
+from django.db.models import F
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db import transaction
 from rest_framework.exceptions import ValidationError
-from app.products.models import Product
+from drf_spectacular.utils import extend_schema, extend_schema_view
+from app.address.models import Address
 
 from app.orders.models import Order
 from app.orders.serializers.order_serializer import OrderSerializer
@@ -13,8 +15,7 @@ from app.orders.services.order_item_service import OrderItemService
 from app.orders.services import OrderService
 from app.orders.exceptions import OrderNotFound, InvalidOrderStatus
 from app.carts.models import CartItem
-
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from app.products.models import Product, ProductStats
 
 
 @extend_schema_view(
@@ -36,6 +37,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     @transaction.atomic
     def perform_create(self, serializer):
+
         user = self.request.user
         order = serializer.save(user=user)
 
@@ -52,35 +54,43 @@ class OrderViewSet(viewsets.ModelViewSet):
             )
 
         cart_items.delete()
-
         order.calculate_total()
         order.save()
 
     @action(detail=False, methods=["post"], url_path="buy-now")
     @transaction.atomic
     def buy_now(self, request):
+
         user = request.user
         product_id = request.data.get("product_id")
         quantity = int(request.data.get("quantity", 1))
-        address = request.data.get("address")
+        address_id = request.data.get("address_id")
         payment_method = request.data.get("payment_method")
 
-        if not product_id or not address or not payment_method:
+        if not product_id or not address_id or not payment_method:
             return Response(
                 {"error": "상품 ID, 주소, 결제 수단은 필수입니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
+        try:
+            address = Address.objects.get(id=address_id, user=user)
+        except Address.DoesNotExist:
+            return Response(
+                {"error": "존재하지 않는 주소입니다."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
         try:
             product = Product.objects.select_for_update().get(id=product_id)
         except Product.DoesNotExist:
             return Response(
-                {"error": "존재하지 않는 상품입니다."}, status=status.HTTP_404_NOT_FOUND
+                {"error": "존재하지 않는 상품입니다."},
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         if product.stock < quantity:
             return Response(
-                {"error": "재고가 부족합니다."}, status=status.HTTP_400_BAD_REQUEST
+                {"error": "재고가 부족합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         order = Order.objects.create(
@@ -93,10 +103,13 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         OrderItemService.create_item(
             order=order,
-            product_id=product_id,
+            product_id=product.id,
             quantity=quantity,
             price_at_purchase=product.price,
         )
+
+        product.stock -= quantity
+        product.save()
 
         order.calculate_total()
         order.save()
@@ -106,6 +119,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["get"])
     def items(self, request, pk=None):
+
         order = self.get_object()
         if order.user != request.user:
             return Response(
@@ -141,6 +155,16 @@ class OrderViewSet(viewsets.ModelViewSet):
             return Response(
                 {"error": "잘못된 주문 상태입니다."}, status=status.HTTP_400_BAD_REQUEST
             )
+
+        if new_status == "completed":
+            for item in updated_order.items.all():
+                ProductStats.objects.update_or_create(
+                    product=item.product,
+                    defaults={"sales_count": F("sales_count") + item.quantity},
+                )
+
+            for item in updated_order.items.all():
+                item.product.stats.refresh_from_db()
 
         return Response(
             {

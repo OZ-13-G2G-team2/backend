@@ -1,18 +1,25 @@
 from django.contrib.auth import get_user_model
 from rest_framework.test import APITestCase
 from rest_framework import status
-
+from app.address.models import Address
 from app.orders.models import Order, OrderItem
 from app.products.models import Product
 from app.sellers.models import Seller
+import uuid
 
 User = get_user_model()
+
+
+def unique_email(base="user"):
+    return f"{base}_{uuid.uuid4().hex[:6]}@example.com"
 
 
 class OrderItemsAPITest(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(
-            username="testuser", email="testuser@example.com", password="testpass"
+            username="testuser_orderitemsapi",
+            email=unique_email("orderitemsapi"),
+            password="testpass",
         )
         self.client.force_authenticate(user=self.user)
 
@@ -26,8 +33,16 @@ class OrderItemsAPITest(APITestCase):
             name="티셔츠", price=12000, stock=10, seller=self.seller
         )
 
+        self.address = Address.objects.create(
+            user=self.user,
+            recipient_name="홍길동",
+            phone_number="010-1234-5678",
+            postal_code="12345",
+            street_address="테스트로 1길 1",
+        )
+
         self.order = Order.objects.create(
-            user=self.user, address="주소", payment_method="card"
+            user=self.user, address=self.address, payment_method="card"
         )
 
         self.order_item = OrderItem.objects.create(

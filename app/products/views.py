@@ -27,11 +27,12 @@ from app.sellers.models import Seller
     parameters=[
         OpenApiParameter("q", str, description="검색어"),
         OpenApiParameter("origin", str, description="원산지"),
-        OpenApiParameter("category_id", int, description="카테고리 ID"),
+        OpenApiParameter("category_name", str, description="카테고리(그룹2,ex.축산물)"),
         OpenApiParameter("min_price", float, description="최소 가격"),
         OpenApiParameter("max_price", float, description="최대 가격"),
         OpenApiParameter("sold_out", str, description="품절 여부 (true/false)"),
-        OpenApiParameter("seller_business_name", str, description="판매자 사업자 명"),
+        OpenApiParameter("id", int, description="판매자 id"),
+        OpenApiParameter("seller_business_name", str, description="사업자 명"),
         OpenApiParameter("overseas_shipping", str, description="해외배송 여부 (true/false)"),
     ],
 )
@@ -53,6 +54,7 @@ class ProductListAPIView(generics.ListAPIView):
         origin = params.get("origin")
         category_name = params.get("category_name")
         sold_out = params.get("sold_out")
+        seller_id = params.get("id")
         seller_business_name = params.get("seller_business_name")
         overseas_shipping = params.get("overseas_shipping")
 
@@ -94,6 +96,14 @@ class ProductListAPIView(generics.ListAPIView):
         if sold_out is not None:
             sold_out_value = sold_out.lower() == "true"
             my_filters &= Q(sold_out=sold_out_value)
+
+        # 판매자 아이디 필터
+        if seller_id:
+            try:
+                seller_id = int(seller_id)
+                my_filters &= Q(seller__id=seller_id)
+            except ValueError:
+                pass
 
         # 판매자 필터
         if seller_business_name:
