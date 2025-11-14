@@ -2,6 +2,7 @@ import re
 
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework.exceptions import AuthenticationFailed
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import get_user_model
 from app.sellers.models import Seller
@@ -144,8 +145,36 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
 
     def validate(self, attrs):
-        # 기본 JWT 토큰 발급
-        data = super().validate(attrs)
+        # 먼저 사용자 인증 (비밀번호 확인)
+        from django.contrib.auth import authenticate
+
+        email = attrs.get('email')
+        password = attrs.get('password')
+
+        # 사용자 인증 (is_active 체크 없이)
+        user = authenticate(request=self.context.get('request'), username=email, password=password)
+
+        if user is None:
+            raise AuthenticationFailed("이메일 또는 비밀번호가 올바르지 않습니다.")
+
+        # 이메일 미인증(비활성) 체크 - 401 Unauthorized 반환
+        if not user.is_active:
+            error = AuthenticationFailed()
+            error.detail = {
+                "code": "EMAIL_NOT_VERIFIED",
+                "detail": "이메일 인증이 필요합니다."
+            }
+            raise error
+
+        self.user = user
+
+        # 토큰 생성
+        refresh = self.get_token(user)
+
+        data = {
+            "refresh": str(refresh),
+            "access": str(refresh.access_token)
+        }
 
         return data
 
