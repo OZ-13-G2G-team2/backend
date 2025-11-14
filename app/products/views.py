@@ -496,7 +496,7 @@ class SellerProductsListAPIView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        user_id = self.kwargs.get("user_id")
+        user_id = self.kwargs.get("id")
         try:
             seller = Seller.objects.get(user_id=user_id)  # noqa: F841
         except Seller.DoesNotExist:
