@@ -99,11 +99,8 @@ class ProductListAPIView(generics.ListAPIView):
 
         # 판매자 아이디 필터
         if seller_id:
-            try:
                 seller_id = int(seller_id)
                 my_filters &= Q(seller__id=seller_id)
-            except ValueError:
-                pass
 
         # 판매자 필터
         if seller_business_name:
