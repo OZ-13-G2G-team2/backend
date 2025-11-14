@@ -250,11 +250,7 @@ class ProductDetailWithSellerSerializer(ProductSerializer):
     categories = serializers.SlugRelatedField(
         many=True, read_only=True, slug_field="name"
     )
-    images = ProductImagesSerializer(
-        many=True,
-        read_only=True,
-        required=False
-    )
+    images = ProductImagesSerializer(many=True, read_only=True, required=False)
     option_values = ProductOptionValueSerializer(many=True, read_only=True)
 
     seller_username = serializers.CharField(
