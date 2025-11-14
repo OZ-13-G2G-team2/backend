@@ -326,15 +326,15 @@ class ProductDetailWithSellerSerializer(ProductSerializer):
 class ProductUpdateSerializer(serializers.ModelSerializer):
     categories = serializers.ListField(
         child=serializers.IntegerField(),
+        write_only=True,
         required=False,
     )
-
-    # images = serializers.ListField(
-    #     child=serializers.ImageField(),
-    #     required=False,
-    #     write_only=True,
-    # )
     discount_rate = serializers.SerializerMethodField()
+
+    images = ProductImagesSerializer(
+        many=True,
+        write_only=True,
+        required=False)
 
     class Meta:
         model = Product
@@ -364,18 +364,30 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         categories_data = validated_data.pop("categories", None)
         if categories_data is not None:
-            instance.categories.set(categories_data)
+            valid_categories = Category.objects.filter(id__in=categories_data)
+            instance.categories.set(valid_categories)
+        else:
+            instance.categories.clear()
 
         images_data = validated_data.pop("images", None)
-        # 나머지 필드 업데이트
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
 
         # 이미지 처리
         if images_data is not None:
             # 기존 이미지 전부 삭제 후 추가
             instance.images.all().delete()
             for image_data in images_data:
-                ProductImages.objects.create(product=instance, image_url=image_data)
+                ProductImages.objects.create(
+                    product=instance, image_url=image_data
+                )
+
+        # stock sold_out 연동
+        new_stock = validated_data.get("stock", instance.stock)
+        instance.stock = new_stock
+        instance.sold_out = new_stock <= 0
+
+        # 나머지 필드 업데이트
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
         instance.save()
         return instance

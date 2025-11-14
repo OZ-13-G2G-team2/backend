@@ -31,7 +31,7 @@ from app.sellers.models import Seller
         OpenApiParameter("min_price", float, description="최소 가격"),
         OpenApiParameter("max_price", float, description="최대 가격"),
         OpenApiParameter("sold_out", str, description="품절 여부 (true/false)"),
-        OpenApiParameter("seller", int, description="판매자 ID"),
+        OpenApiParameter("seller_business_name", str, description="판매자 사업자 명"),
         OpenApiParameter("overseas_shipping", str, description="해외배송 여부 (true/false)"),
     ],
 )
@@ -125,15 +125,15 @@ class ProductListAPIView(generics.ListAPIView):
         "multipart/form-data": {
             "type": "object",
             "properties": {
-                "name": {"type": "string"},
-                "origin": {"type": "string"},
-                "stock": {"type": "integer"},
-                "price": {"type": "number"},
-                "discount_price": {"type": "number"},
-                "overseas_shipping": {"type": "boolean"},
-                "delivery_fee": {"type": "number"},
-                "description": {"type": "string"},
-                "sold_out": {"type": "boolean"},
+                "name": {"type": "string", "description": "상품명"},
+                "origin": {"type": "string", "description": "원산지"},
+                "stock": {"type": "integer", "description": "재고"},
+                "price": {"type": "number", "description": "가격"},
+                "discount_price": {"type": "number", "description": "할인 가격"},
+                "overseas_shipping": {"type": "boolean", "description": "해외 배송 여부", "default": False},
+                "delivery_fee": {"type": "number", "description": "운송비"},
+                "description": {"type": "string", "description": "상품 설명"},
+                "sold_out": {"type": "boolean", "description": "품절 여부", "default": False},
                 "categories": {
                     "type": "array",
                     "items": {"type": "integer"},
@@ -147,7 +147,7 @@ class ProductListAPIView(generics.ListAPIView):
                     }
                         },
                     },
-            "required": ["name", "price"],
+            "required": ["name", "origin", "price"],
         }
     },
     responses=ProductCreateSerializer
@@ -190,6 +190,7 @@ class ProductCreateAPIView(generics.CreateAPIView):
         image_files = request.FILES.getlist("images")
         if image_files:
             valid_extensions = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
+
             for image in image_files:
                 if not image or not hasattr(image, "name"):
                     return Response(
@@ -203,7 +204,11 @@ class ProductCreateAPIView(generics.CreateAPIView):
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
-                ProductImages.objects.create(product=product, user=user, image_url=image)
+                ProductImages.objects.create(
+                    product=product,
+                    user=user,
+                    image_url=image
+                )
 
         headers = self.get_success_headers(serializer.data)
         return Response(
@@ -214,7 +219,7 @@ class ProductCreateAPIView(generics.CreateAPIView):
 @extend_schema(tags=["상품 상세 / 수정 / 삭제"])
 # 상품 상세페이지 / 수정 / 삭제
 class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
-    http_method_names = ["get", "put", "delete"]
+    http_method_names = ["get", "patch", "delete"]
     parser_classes = [MultiPartParser, FormParser]
     queryset = Product.objects.all()
     lookup_field = "product_id"
@@ -257,10 +262,10 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
                     "stock": {"type": "integer", "description": "재고 수량"},
                     "price": {"type": "number", "description": "정상가"},
                     "discount_price": {"type": "number", "description": "할인가"},
-                    "overseas_shipping": {"type": "boolean", "description": "해외 배송 여부"},
+                    "overseas_shipping": {"type": "boolean", "description": "해외 배송 여부", "default": False},
                     "delivery_fee": {"type": "number", "description": "배송비"},
                     "description": {"type": "string", "description": "상품 설명"},
-                    "sold_out": {"type": "boolean", "description": "품절 여부"},
+                    "sold_out": {"type": "boolean", "description": "품절 여부", "default": False},
                     "categories": {
                         "type": "array",
                         "items": {"type": "integer"},
@@ -275,12 +280,12 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
                     "seller_business_name": {"type": "string", "readOnly": True},
                     "seller_business_number": {"type": "string", "readOnly": True},
                 },
-                "required": ["name", "price"],
+                "required": ["name", "origin", "price"],
             }
         },
         responses=ProductUpdateSerializer,
     )
-    def put(self, request, *args, **kwargs):
+    def patch(self, request, *args, **kwargs):
         try:
             product = self.get_object()
         except Http404:
@@ -313,12 +318,13 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
                         {"error": f"{image.name}은(는) 올바르지 않은 확장자입니다."},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
+
                 ProductImages.objects.create(
                     product=product,
-                    user=request.user,
                     image_url=image
                 )
-        return Response(ProductDetailWithSellerSerializer(product).data, status=status.HTTP_200_OK)
+        return Response(
+            ProductDetailWithSellerSerializer(product).data, status=status.HTTP_200_OK)
 
     @extend_schema(
         summary="상품 삭제", description="상품의 아이디를 입력하고 그 상품을 삭제"
@@ -378,13 +384,13 @@ class ProductsByCategoryAPIView(generics.ListAPIView):
 
 @extend_schema(tags=["상품 재고 업데이트"], summary="상품 재고 업데이트")
 class ProductStockUpdateAPIView(generics.UpdateAPIView):
-    http_method_names = ["patch"]
+    http_method_names = ["put"]
     queryset = Product.objects.all()
     serializer_class = ProductStockSerializer
     permission_classes = [permissions.IsAuthenticated]
     lookup_field = "product_id"
 
-    def patch(self, request, *args, **kwargs):
+    def put(self, request, *args, **kwargs):
         product = self.get_object()
 
         user = self.request.user
