@@ -17,13 +17,17 @@ class OrderService:
             raise OrderNotFound(f"Order {order_id} not found")
 
     @staticmethod
-    def update_status(order_id, status, user=None):
-        order = OrderService.get_order(order_id, user)
-        valid_status = [choice[0] for choice in Order.STATUS_CHOICES]
-        if status not in valid_status:
-            raise InvalidOrderStatus(f"{status} is invalid. Valid: {valid_status}")
-        order.status = status
-        order.save()
+    def update_status(order_id, new_status, user=None):
+        try:
+            order = Order.objects.get(id=order_id)
+        except Order.DoesNotExist:
+            raise OrderNotFound()
+
+        if new_status not in ["pending", "shipping", "completed", "cancelled","delivered"]:
+            raise InvalidOrderStatus()
+
+        order.status = new_status
+        order.save(update_fields=["status", "updated_at"])
         return order
 
     @staticmethod
