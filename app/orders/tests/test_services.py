@@ -1,19 +1,25 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
-
-
+from app.address.models import Address
 from app.orders.models import Order, OrderItem
 from app.products.models import Product
 from app.orders.services import OrderService, OrderItemService
 from app.sellers.models import Seller
+import uuid
 
 User = get_user_model()
+
+
+def unique_email(base="user"):
+    return f"{base}_{uuid.uuid4().hex[:6]}@example.com"
 
 
 class OrderServiceTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
-            username="testuser", email="testuser@example.com", password="testpass"
+            username="testuser_orderservice",
+            email=unique_email("orderservice"),
+            password="testpass",
         )
 
         self.seller = Seller.objects.create(
@@ -26,8 +32,16 @@ class OrderServiceTest(TestCase):
             name="Sample Product", price=12000, stock=10, seller=self.seller
         )
 
+        self.address = Address.objects.create(
+            user=self.user,
+            recipient_name="홍길동",
+            phone_number="010-1234-5678",
+            postal_code="12345",
+            street_address="테스트로 1길 1",
+        )
+
         self.order = Order.objects.create(
-            user=self.user, address="주소", payment_method="card"
+            user=self.user, address=self.address, payment_method="card"
         )
 
         self.order_item = OrderItem.objects.create(
@@ -44,7 +58,9 @@ class OrderServiceTest(TestCase):
 class OrderItemServiceTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
-            username="testuser", email="testuser@example.com", password="testpass"
+            username="testuser_orderitemservice",
+            email=unique_email("orderitemservice"),
+            password="testpass",
         )
 
         self.seller = Seller.objects.create(
@@ -55,8 +71,16 @@ class OrderItemServiceTest(TestCase):
             name="Sample Product", price=12000, stock=10, seller=self.seller
         )
 
+        self.address = Address.objects.create(
+            user=self.user,
+            recipient_name="홍길동",
+            phone_number="010-1234-5678",
+            postal_code="12345",
+            street_address="테스트로 1길 1",
+        )
+
         self.order = Order.objects.create(
-            user=self.user, address="주소", payment_method="card"
+            user=self.user, address=self.address, payment_method="card"
         )
 
         self.order_item = OrderItem.objects.create(

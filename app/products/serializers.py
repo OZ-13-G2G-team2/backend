@@ -327,10 +327,7 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
     )
     discount_rate = serializers.SerializerMethodField()
 
-    images = ProductImagesSerializer(
-        many=True,
-        write_only=True,
-        required=False)
+    images = ProductImagesSerializer(many=True, write_only=True, required=False)
 
     class Meta:
         model = Product
@@ -373,9 +370,7 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
             # 기존 이미지 전부 삭제 후 추가
             instance.images.all().delete()
             for image_data in images_data:
-                ProductImages.objects.create(
-                    product=instance, image_url=image_data
-                )
+                ProductImages.objects.create(product=instance, image_url=image_data)
 
         # stock sold_out 연동
         new_stock = validated_data.get("stock", instance.stock)
