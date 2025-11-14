@@ -1,4 +1,3 @@
-
 from django.conf import settings
 from django.shortcuts import redirect
 from rest_framework import generics, permissions, status
@@ -18,6 +17,7 @@ from app.user_auth.serializers import (
 from app.user_auth.utils import send_activation_email
 
 User = get_user_model()
+
 
 @extend_schema(tags=["이메일 전송"])
 class EmailSendView(APIView):
