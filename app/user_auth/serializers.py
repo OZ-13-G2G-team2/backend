@@ -167,11 +167,13 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         # 이메일 미인증(비활성) 체크
         if not user.is_active:
-            raise AuthenticationFailed({
-                "error": "이메일 인증이 필요합니다.",
-                "resend": True,     # 프론트에서 '재전송 버튼' 표시
-                "email": email      # 다시 입력할 필요 없이 그대로 사용 가능
-            })
+            raise AuthenticationFailed(
+                {
+                    "error": "이메일 인증이 필요합니다.",
+                    "resend": True,  # 프론트에서 '재전송 버튼' 표시
+                    "email": email,  # 다시 입력할 필요 없이 그대로 사용 가능
+                }
+            )
 
         # 토큰 생성
         self.user = user
