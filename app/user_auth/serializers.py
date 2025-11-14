@@ -137,7 +137,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
         # user 일때
-        token['username'] = user.username
+        token["username"] = user.username
 
         if Seller.objects.filter(user=user).exists():
             token["is_seller"] = True
@@ -148,9 +148,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
 
         return data
-
-
-
 
 
 # 로그아웃 시리얼라이저

@@ -1,4 +1,3 @@
-
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from app.address.models import Address
@@ -20,7 +19,7 @@ class OrderServiceTest(TestCase):
         self.user = User.objects.create_user(
             username="testuser_orderservice",
             email=unique_email("orderservice"),
-            password="testpass"
+            password="testpass",
         )
 
         self.seller = Seller.objects.create(
@@ -30,10 +29,7 @@ class OrderServiceTest(TestCase):
         )
 
         self.product = Product.objects.create(
-            name="Sample Product",
-            price=12000,
-            stock=10,
-            seller=self.seller
+            name="Sample Product", price=12000, stock=10, seller=self.seller
         )
 
         self.address = Address.objects.create(
@@ -41,20 +37,15 @@ class OrderServiceTest(TestCase):
             recipient_name="홍길동",
             phone_number="010-1234-5678",
             postal_code="12345",
-            street_address="테스트로 1길 1"
+            street_address="테스트로 1길 1",
         )
 
         self.order = Order.objects.create(
-            user=self.user,
-            address=self.address,
-            payment_method="card"
+            user=self.user, address=self.address, payment_method="card"
         )
 
         self.order_item = OrderItem.objects.create(
-            order=self.order,
-            product=self.product,
-            quantity=2,
-            price_at_purchase=12000
+            order=self.order, product=self.product, quantity=2, price_at_purchase=12000
         )
 
     def test_update_order_status(self):
@@ -69,20 +60,15 @@ class OrderItemServiceTest(TestCase):
         self.user = User.objects.create_user(
             username="testuser_orderitemservice",
             email=unique_email("orderitemservice"),
-            password="testpass"
+            password="testpass",
         )
 
         self.seller = Seller.objects.create(
-            user=self.user,
-            business_name="Test Seller",
-            business_number="1234567890"
+            user=self.user, business_name="Test Seller", business_number="1234567890"
         )
 
         self.product = Product.objects.create(
-            name="Sample Product",
-            price=12000,
-            stock=10,
-            seller=self.seller
+            name="Sample Product", price=12000, stock=10, seller=self.seller
         )
 
         self.address = Address.objects.create(
@@ -90,20 +76,15 @@ class OrderItemServiceTest(TestCase):
             recipient_name="홍길동",
             phone_number="010-1234-5678",
             postal_code="12345",
-            street_address="테스트로 1길 1"
+            street_address="테스트로 1길 1",
         )
 
         self.order = Order.objects.create(
-            user=self.user,
-            address=self.address,
-            payment_method="card"
+            user=self.user, address=self.address, payment_method="card"
         )
 
         self.order_item = OrderItem.objects.create(
-            order=self.order,
-            product=self.product,
-            quantity=2,
-            price_at_purchase=12000
+            order=self.order, product=self.product, quantity=2, price_at_purchase=12000
         )
 
     def test_update_quantity(self):

@@ -1,7 +1,6 @@
 from django.db import transaction
-from django.db.models import F
 from app.orders.models import Order
-from app.products.models import ProductStats, Product
+from app.products.models import Product
 from app.carts.models import CartItem
 from app.orders.services.order_item_service import OrderItemService
 
@@ -20,9 +19,14 @@ class OrderService:
     def update_status(order_id, new_status, user=None):
         order = OrderService.get_order(order_id, user)
 
-        if new_status not in ["pending", "shipping", "completed", "cancelled", "delivered"]:
+        if new_status not in [
+            "pending",
+            "shipping",
+            "completed",
+            "cancelled",
+            "delivered",
+        ]:
             raise ValueError("Invalid order status")
-
 
         order.status = new_status
         order.save(update_fields=["status", "updated_at"])

@@ -71,5 +71,3 @@ class OrderItemService:
             order.calculate_total()
             order.save(update_fields=["total_amount"])
         return True
-
-

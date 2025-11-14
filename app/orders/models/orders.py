@@ -3,8 +3,6 @@ from django.db import models
 from app.address.models import Address
 
 
-
-
 class Order(models.Model):
     STATUS_CHOICES = [
         ("pending", "결제 대기"),

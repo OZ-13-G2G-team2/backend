@@ -1,4 +1,3 @@
-
 from django.contrib.auth import get_user_model
 from rest_framework.test import APITestCase
 from rest_framework import status
@@ -20,7 +19,7 @@ class OrderItemsAPITest(APITestCase):
         self.user = User.objects.create_user(
             username="testuser_orderitemsapi",
             email=unique_email("orderitemsapi"),
-            password="testpass"
+            password="testpass",
         )
         self.client.force_authenticate(user=self.user)
 
@@ -31,10 +30,7 @@ class OrderItemsAPITest(APITestCase):
         )
 
         self.product = Product.objects.create(
-            name="티셔츠",
-            price=12000,
-            stock=10,
-            seller=self.seller
+            name="티셔츠", price=12000, stock=10, seller=self.seller
         )
 
         self.address = Address.objects.create(
@@ -42,24 +38,21 @@ class OrderItemsAPITest(APITestCase):
             recipient_name="홍길동",
             phone_number="010-1234-5678",
             postal_code="12345",
-            street_address="테스트로 1길 1"
+            street_address="테스트로 1길 1",
         )
 
         self.order = Order.objects.create(
-            user=self.user,
-            address=self.address,
-            payment_method="card"
+            user=self.user, address=self.address, payment_method="card"
         )
 
         self.order_item = OrderItem.objects.create(
-            order=self.order,
-            product=self.product,
-            quantity=2,
-            price_at_purchase=12000
+            order=self.order, product=self.product, quantity=2, price_at_purchase=12000
         )
 
     def test_get_order_items(self):
-        response = self.client.get(f"/api/orders/items/by_order/?order_id={self.order.id}")
+        response = self.client.get(
+            f"/api/orders/items/by_order/?order_id={self.order.id}"
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
 
@@ -74,4 +67,6 @@ class OrderItemsAPITest(APITestCase):
 
     def test_delete_order_item(self):
         response = self.client.delete(f"/api/orders/items/{self.order_item.id}/")
-        self.assertIn(response.status_code, [status.HTTP_200_OK, status.HTTP_204_NO_CONTENT])
+        self.assertIn(
+            response.status_code, [status.HTTP_200_OK, status.HTTP_204_NO_CONTENT]
+        )

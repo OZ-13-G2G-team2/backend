@@ -93,7 +93,6 @@ class OrderViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-
         order = Order.objects.create(
             user=user,
             address=address,
@@ -108,7 +107,6 @@ class OrderViewSet(viewsets.ModelViewSet):
             quantity=quantity,
             price_at_purchase=product.price,
         )
-
 
         product.stock -= quantity
         product.save()
@@ -150,16 +148,19 @@ class OrderViewSet(viewsets.ModelViewSet):
                 order.id, new_status, user=request.user
             )
         except OrderNotFound:
-            return Response({"error": "주문을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "주문을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND
+            )
         except InvalidOrderStatus:
-            return Response({"error": "잘못된 주문 상태입니다."}, status=status.HTTP_400_BAD_REQUEST)
-
+            return Response(
+                {"error": "잘못된 주문 상태입니다."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         if new_status == "completed":
             for item in updated_order.items.all():
                 ProductStats.objects.update_or_create(
                     product=item.product,
-                    defaults={"sales_count": F("sales_count") + item.quantity}
+                    defaults={"sales_count": F("sales_count") + item.quantity},
                 )
 
             for item in updated_order.items.all():

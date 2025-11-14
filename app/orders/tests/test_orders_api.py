@@ -1,8 +1,7 @@
-from django.db.models import F
 from rest_framework.test import APITestCase
 from rest_framework import status
 
-from app.orders.models import Order, OrderItem
+from app.orders.models import Order
 from app.orders.services.order_item_service import OrderItemService
 from app.products.models import Product, ProductStats
 from app.carts.models import Cart, CartItem
@@ -14,12 +13,9 @@ from app.users.models import User
 class OrdersAPITest(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(
-            username="testuser",
-            email="testuser@example.com",
-            password="testpass"
+            username="testuser", email="testuser@example.com", password="testpass"
         )
         self.client.force_authenticate(user=self.user)
-
 
         self.seller = Seller.objects.create(
             user=self.user,
@@ -27,42 +23,35 @@ class OrdersAPITest(APITestCase):
             business_number="1234567890",
         )
 
-
         self.product = Product.objects.create(
-            name="Sample Product",
-            price=12000,
-            stock=10,
-            seller=self.seller
+            name="Sample Product", price=12000, stock=10, seller=self.seller
         )
         self.product_stats = ProductStats.objects.create(product=self.product)
-
 
         self.address = Address.objects.create(
             user=self.user,
             recipient_name="홍길동",
             phone_number="010-1234-5678",
             postal_code="12345",
-            street_address="테스트로 1길 1"
+            street_address="테스트로 1길 1",
         )
-
 
         self.cart = Cart.objects.create(user=self.user)
         CartItem.objects.create(cart=self.cart, product=self.product, quantity=2)
-
 
         self.order = Order.objects.create(
             user=self.user,
             address=self.address,
             payment_method="card",
             total_amount=self.product.price * 2,
-            status="pending"
+            status="pending",
         )
 
         OrderItemService.create_item(
             order=self.order,
             product_id=self.product.pk,
             quantity=2,
-            price_at_purchase=self.product.price
+            price_at_purchase=self.product.price,
         )
 
     def test_get_order_list(self):
@@ -92,7 +81,6 @@ class OrdersAPITest(APITestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-
 
         self.product_stats.refresh_from_db()
         self.assertEqual(self.product_stats.sales_count, 2)
