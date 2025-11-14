@@ -13,6 +13,7 @@ from app.user_auth.serializers import (
     UserRegisterSerializer,
     SellerRegisterSerializer,
     LogoutSerializer,
+    CustomTokenObtainPairSerializer,
 )
 from app.user_auth.utils import send_activation_email
 
@@ -97,6 +98,7 @@ class SellerRegisterView(generics.CreateAPIView):
 @extend_schema(tags=["유저 로그인"], summary="로그인")
 class UserLoginView(TokenObtainPairView):
     permission_classes = [permissions.AllowAny]
+    serializer_class = CustomTokenObtainPairSerializer
 
 
 # 로그 아웃
