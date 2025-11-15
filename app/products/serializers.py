@@ -46,7 +46,7 @@ class ProductStatsSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     thumbnail = serializers.SerializerMethodField()
-    id = serializers.IntegerField(source="seller.user.id", read_only=True)
+    seller_id = serializers.IntegerField(source="seller.user.id", read_only=True)
     seller_name = serializers.CharField(source="seller.user.username", read_only=True)
     seller_business_name = serializers.CharField(
         source="seller.business_name", read_only=True
@@ -70,7 +70,7 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             "product_id",
-            "id",
+            "seller_id",
             "name",
             "categories",
             "origin",
