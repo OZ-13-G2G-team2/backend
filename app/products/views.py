@@ -31,7 +31,7 @@ from app.sellers.models import Seller
         OpenApiParameter("min_price", float, description="최소 가격"),
         OpenApiParameter("max_price", float, description="최대 가격"),
         OpenApiParameter("sold_out", str, description="품절 여부 (true/false)"),
-        OpenApiParameter("id", int, description="판매자 id"),
+        OpenApiParameter("seller_id", int, description="판매자 id"),
         OpenApiParameter("seller_business_name", str, description="사업자 명"),
         OpenApiParameter("overseas_shipping", str, description="해외배송 여부 (true/false)"),
     ],
@@ -54,7 +54,7 @@ class ProductListAPIView(generics.ListAPIView):
         origin = params.get("origin")
         category_name = params.get("category_name")
         sold_out = params.get("sold_out")
-        seller_id = params.get("id")
+        seller_id = params.get("seller_id")
         seller_business_name = params.get("seller_business_name")
         overseas_shipping = params.get("overseas_shipping")
 
