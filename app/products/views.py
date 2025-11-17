@@ -479,9 +479,9 @@ class SellerProductsListAPIView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        user_id = self.kwargs.get("id")
+        seller_id = self.kwargs.get("id")
         try:
-            seller = Seller.objects.get(user_id=user_id) # noqa: F841
+            seller = Seller.objects.get(pk=seller_id) # noqa: F841
         except Seller.DoesNotExist:
             raise Http404("요청한 판매자가 존재하지 않습니다.")
 
