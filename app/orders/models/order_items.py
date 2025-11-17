@@ -17,7 +17,9 @@ class OrderItem(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     quantity = models.PositiveIntegerField(verbose_name="수량")
-    options = models.ManyToManyField(ProductOptionValue, verbose_name="상품 옵션", blank=True)
+    options = models.ManyToManyField(
+        ProductOptionValue, verbose_name="상품 옵션", blank=True
+    )
     price_at_purchase = models.DecimalField(
         max_digits=10, decimal_places=2, verbose_name="구매 당시 가격"
     )
@@ -29,10 +31,13 @@ class OrderItem(models.Model):
         ordering = ["order"]
 
     def calculate_total_price(self):
-        base_price = self.product.price
-        extra_price = sum(option.extra_price for option in self.options.all())
+        base_price = self.product.discount_price if self.product.discount_price not in (None, 0) else self.product.price
+        extra_price = sum(option.extra_price or 0 for option in self.options.all())
         self.price_at_purchase = (base_price + extra_price) * self.quantity
         return self.price_at_purchase
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.order.id}번 주문 - {self.product.name} x {self.quantity}"
