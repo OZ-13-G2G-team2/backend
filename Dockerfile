@@ -54,6 +54,9 @@ RUN chmod +x /app/scripts/run.sh
 RUN mkdir -p /home/ec2-user/vol/web/static /home/ec2-user/vol/web/media \
     && chmod 755 /home/ec2-user/vol/web
 
+# 로그 디렉토리 생성
+RUN mkdir -p /app/logs && chmod 755 /app/logs
+
 # 포트 설정
 EXPOSE 8000
 

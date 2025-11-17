@@ -1,14 +1,12 @@
 from rest_framework import viewsets, status
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.request import Request
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
-from app.orders.services.order_item_service import OrderItemService
-
 
 from app.orders.models import OrderItem
 from app.orders.serializers.order_item_serializer import OrderItemSerializer
+from app.orders.services.order_item_service import OrderItemService
+from drf_spectacular.utils import extend_schema, extend_schema_view
 
 
 @extend_schema_view(
@@ -47,13 +45,12 @@ class OrderItemViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        request: Request = self.request
         queryset = OrderItem.objects.select_related("product", "order").all()
-        order_id = request.query_params.get("order_id")
+        order_id = self.request.query_params.get("order_id")
         if order_id:
             queryset = queryset.filter(order_id=order_id)
         else:
-            queryset = queryset.filter(order__user=request.user)
+            queryset = queryset.filter(order__user=self.request.user)
         return queryset.order_by("-order__order_date")
 
     def create(self, request, *args, **kwargs):
@@ -76,6 +73,8 @@ class OrderItemViewSet(viewsets.ModelViewSet):
             )
 
         quantity = int(quantity)
+
+        # Using the OrderItemService to create the order item
         item = OrderItemService.create_item(
             order=order,
             product_id=product.id,
@@ -92,7 +91,6 @@ class OrderItemViewSet(viewsets.ModelViewSet):
             return Response({"error": "quantity는 1 이상이어야 합니다."}, status=400)
 
         new_quantity = int(quantity)
-
         item = OrderItemService.update_quantity(item, new_quantity)
         return Response(self.get_serializer(item).data)
 
