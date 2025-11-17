@@ -2,6 +2,7 @@ import re
 
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework.exceptions import AuthenticationFailed
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import get_user_model
 from app.sellers.models import Seller
@@ -144,8 +145,44 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
 
     def validate(self, attrs):
-        # 기본 JWT 토큰 발급
-        data = super().validate(attrs)
+        # 이메일과 비밀번호를 확인
+        email = attrs.get("email")
+        password = attrs.get("password")
+        if not email and not password:
+            raise serializers.ValidationError("이메일과 비밀번호를 모두 입력해주세요.")
+        if not email:
+            raise serializers.ValidationError("이메일 확인해주세요.")
+        if not password:
+            raise serializers.ValidationError("비밀번호를 확인해주세요.")
+
+        # 사용자 존재 확인
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise AuthenticationFailed("이메일 또는 비밀번호가 올바르지 않습니다.")
+
+        # 비밀번호 확인
+        if not user.check_password(password):
+            raise AuthenticationFailed("비밀번호가 올바르지 않습니다.")
+
+        # 이메일 미인증(비활성) 체크
+        if not user.is_active:
+            raise AuthenticationFailed(
+                {
+                    "error": "이메일 인증이 필요합니다.",
+                    "resend": True,  # 프론트에서 '재전송 버튼' 표시
+                    "email": email,  # 다시 입력할 필요 없이 그대로 사용 가능
+                }
+            )
+
+        # 토큰 생성
+        self.user = user
+        refresh = self.get_token(user)
+
+        data = {
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+        }
 
         return data
 
