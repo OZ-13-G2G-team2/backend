@@ -7,16 +7,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from app.address.models import Address
-
 from app.orders.models import Order
 from app.orders.serializers.order_serializer import OrderSerializer
-from app.orders.serializers.order_item_serializer import OrderItemSerializer
 from app.orders.services.order_item_service import OrderItemService
 from app.orders.services import OrderService
 from app.orders.exceptions import OrderNotFound, InvalidOrderStatus
 from app.carts.models import CartItem
 from app.products.models import Product, ProductStats
-
 
 @extend_schema_view(
     list=extend_schema(summary="주문 목록 조회", tags=["주문"]),
@@ -37,7 +34,6 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     @transaction.atomic
     def perform_create(self, serializer):
-
         user = self.request.user
         order = serializer.save(user=user)
 
@@ -60,7 +56,6 @@ class OrderViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["post"], url_path="buy-now")
     @transaction.atomic
     def buy_now(self, request):
-
         user = request.user
         product_id = request.data.get("product_id")
         quantity = int(request.data.get("quantity", 1))
@@ -79,6 +74,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 {"error": "존재하지 않는 주소입니다."},
                 status=status.HTTP_404_NOT_FOUND,
             )
+
         try:
             product = Product.objects.select_for_update().get(id=product_id)
         except Product.DoesNotExist:
@@ -119,7 +115,6 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["get"])
     def items(self, request, pk=None):
-
         order = self.get_object()
         if order.user != request.user:
             return Response(
