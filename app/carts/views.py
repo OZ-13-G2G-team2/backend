@@ -17,6 +17,10 @@ from app.products.models import Product
 class CartViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = CartSerializer
+    queryset = Cart.objects.all()
+
+    def get_queryset(self):
+        return Cart.objects.filter(user=self.request.user)
 
     # POST /api/carts/ : 단일 상품 추가
     @extend_schema(
