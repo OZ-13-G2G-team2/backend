@@ -52,6 +52,10 @@ jobs:
             echo "Waiting for Postgres..."
             sleep 1
           done
+          
+      - name: Create logs directory (로그 디렉터리 생성)
+        run: mkdir -p logs
+
       - name: Run Django Migration
         env:
           DB_USER: ${{ secrets.TEST_USER }}

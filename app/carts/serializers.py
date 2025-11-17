@@ -6,8 +6,12 @@ class CartItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source="product.name", read_only=True)
     thumbnail = serializers.CharField(source="product.thumbnail", read_only=True)
     price = serializers.IntegerField(source="product.price", read_only=True)
-    original_price = serializers.IntegerField(source="product.original_price", read_only=True)
-    delivery_fee = serializers.IntegerField(source="product.delivery_fee", read_only=True)
+    original_price = serializers.IntegerField(
+        source="product.original_price", read_only=True
+    )
+    delivery_fee = serializers.IntegerField(
+        source="product.delivery_fee", read_only=True
+    )
 
     # 계산 필드
     sub_total = serializers.SerializerMethodField()

@@ -38,9 +38,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     is_staff = models.BooleanField(default=False)
 
-    # 이메일 인증용 임시 토큰
-    email_token = models.CharField(max_length=255, blank=True, null=True)
-
     username = models.CharField(max_length=20)
     address = models.CharField(max_length=100)
     phone_number = models.CharField(max_length=20)

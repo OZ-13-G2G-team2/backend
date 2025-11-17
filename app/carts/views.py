@@ -114,9 +114,13 @@ class CartViewSet(viewsets.ViewSet):
             created.append(pid)
 
         if duplicate:
-            return Response({"error": "일부 상품이 이미 장바구니에 존재합니다."}, status=409)
+            return Response(
+                {"error": "일부 상품이 이미 장바구니에 존재합니다."}, status=409
+            )
 
-        return Response({"message": "여러 상품이 장바구니에 추가되었습니다."}, status=200)
+        return Response(
+            {"message": "여러 상품이 장바구니에 추가되었습니다."}, status=200
+        )
 
     # PATCH /api/carts/items/
     # DELETE /api/carts/items/
@@ -187,7 +191,9 @@ class CartViewSet(viewsets.ViewSet):
 
             # 선택 삭제
             if not isinstance(product_ids, list):
-                return Response({"error": "product_ids는 배열이어야 합니다."}, status=400)
+                return Response(
+                    {"error": "product_ids는 배열이어야 합니다."}, status=400
+                )
 
             deleted_count, _ = CartItem.objects.filter(
                 cart=cart, product_id__in=product_ids

@@ -34,6 +34,10 @@ staticfiles/
 *.swp
 *.swo
 
+#logging
+logs/
+*.log
+
 deploy_key
 deploy_key.pub
 *.pem

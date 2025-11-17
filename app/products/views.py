@@ -146,6 +146,17 @@ class ProductListAPIView(generics.ListAPIView):
                     "items": {"type": "integer"},
                     "description": "1: 시즌(1-4) / 2: 테마(5-14) / 3: 색상(15-19) / 4: 사이즈(20-23) / 5: kg(24-32) "
                 },
+                "option_values": {
+                    "type": "array",
+                    "description": "색상(15-19,빨강 노랑 초록 파랑 검정) / 4: 사이즈(20-23, 소 중 대 특태) / 5: kg(24-32, 500 1 2 3 4 5 7 10 20)",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "category": {"type": "integer", "description": "옵션 카테고리 ID"},
+                            "extra_price": {"type": "number"}
+                        }
+                    }
+                },
                 "images": {
                     "type": "array",
                     "items": {
@@ -153,7 +164,7 @@ class ProductListAPIView(generics.ListAPIView):
                         "format": "binary"
                     }
                         },
-                    },
+            },
             "required": ["name", "origin", "price"],
         }
     },
@@ -166,7 +177,7 @@ class ProductCreateAPIView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        user = request.user
+        user = self.request.user
 
         if not user.is_authenticated:
             return Response(
@@ -277,6 +288,17 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
                         "type": "array",
                         "items": {"type": "integer"},
                         "description": "1: 시즌(1-4) / 2: 테마(5-14) / 3: 색상(15-19) / 4: 사이즈(20-23) / 5: kg(24-32)",
+                    },
+                    "option_values": {
+                        "type": "array",
+                        "description": "색상(15-19,빨강 노랑 초록 파랑 검정) / 4: 사이즈(20-23, 소 중 대 특태) / 5: kg(24-32, 500 1 2 3 4 5 7 10 20)",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "category": {"type": "integer", "description": "옵션 카테고리 ID"},
+                                "extra_price": {"type": "number"}
+                            }
+                        }
                     },
                     "images": {
                         "type": "array",
@@ -479,9 +501,9 @@ class SellerProductsListAPIView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        user_id = self.kwargs.get("id")
+        seller_id = self.kwargs.get("id")
         try:
-            seller = Seller.objects.get(user_id=user_id) # noqa: F841
+            seller = Seller.objects.get(pk=seller_id) # noqa: F841
         except Seller.DoesNotExist:
             raise Http404("요청한 판매자가 존재하지 않습니다.")
 
