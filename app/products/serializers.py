@@ -30,11 +30,14 @@ class ProductImagesSerializer(serializers.ModelSerializer):
 
 # 상품 상세 조회 시 옵션과 추가금 표시
 class ProductOptionValueSerializer(serializers.ModelSerializer):
-    category = CategorySerializer(read_only=True)
+    category_name = serializers.CharField(source="category.name", read_only=True)
+    extra_price = serializers.IntegerField()
+    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), write_only=True)
 
-    class Meta:
+
+class Meta:
         model = ProductOptionValue
-        fields = ["id", "category", "extra_price"]
+        fields = ["category", "category_name", "extra_price"]
 
 
 # 상품 통계
@@ -120,6 +123,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         child=serializers.IntegerField(),
         write_only=True,
     )
+    option_values = ProductOptionValueSerializer(many=True)
     seller_username = serializers.CharField(
         source="seller.user.username", read_only=True
     )
@@ -142,6 +146,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             "name",
             "origin",
             "stock",
+            "option_values",
             "price",
             "discount_price",
             "overseas_shipping",
@@ -160,6 +165,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         read_only_fields = ("seller",)
 
     def create(self, validated_data):
+        option_data = validated_data.pop("option_values", [])
         images_data = validated_data.pop("images", [])  # 이미지 데이터 분리
         categories_data = validated_data.pop("categories", [])  # 카테고리 분리
 
@@ -179,6 +185,10 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             ProductImages.objects.create(
                 product=product, user=seller.user, image_url=image_data
             )
+
+        for option in option_data:
+            ProductOptionValue.objects.create(product=product, **option)
+
         return product
 
 
@@ -330,6 +340,8 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
         write_only=True,
         required=False,
     )
+    option_values = ProductOptionValueSerializer(many=True)
+
     discount_rate = serializers.SerializerMethodField()
 
     images = ProductImagesSerializer(many=True, write_only=True, required=False)
@@ -340,6 +352,7 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
             "name",
             "origin",
             "stock",
+            "option_values",
             "price",
             "discount_price",
             "discount_rate",
@@ -368,8 +381,12 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
             all_ids = list(existing_ids | new_ids)  # 합집합
             instance.categories.set(all_ids)
 
-        images_data = validated_data.pop("images", None)
+        option_data = validated_data.pop("option_values", [])
+        instance.option_values.all().delete()
+        for option in option_data:
+            ProductOptionValue.objects.create(product=instance, **option)
 
+        images_data = validated_data.pop("images", None)
         # 이미지 처리
         if images_data is not None:
             # 기존 이미지 전부 삭제 후 추가
