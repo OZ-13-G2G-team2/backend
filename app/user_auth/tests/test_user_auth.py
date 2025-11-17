@@ -12,6 +12,9 @@ User = get_user_model()
 class UserAuthTests(APITestCase):
 
     def setUp(self):
+
+        self.login_url = reverse("user_auth:login")
+
         # 활성화된 일반 유저
         self.active_user = User.objects.create_user(
             email="active@example.com",
@@ -27,6 +30,11 @@ class UserAuthTests(APITestCase):
             password="StrongPassword123!",
             is_active=False,
         )
+
+        self.inactive_user_data = {
+            "email": "inactive@example.com",
+            "password": "StrongPassword123!",
+        }
 
         # 셀러 유저
         self.seller_user = User.objects.create_user(
@@ -45,6 +53,7 @@ class UserAuthTests(APITestCase):
     # ----------------------
     # 로그인 테스트
     # ----------------------
+
     # 정상 로그인
     def test_login_active_user_success(self):
         url = reverse("user_auth:login")
@@ -56,27 +65,31 @@ class UserAuthTests(APITestCase):
 
     # 이메일 비활성화 된 유저 로그인
     def test_login_inactive_user_error(self):
-        """비활성 유저 로그인 - 401 EMAIL_NOT_VERIFIED"""
-        url = reverse("user_auth:login")
-        data = {"email": "inactive@example.com", "password": "StrongPassword123!"}
-        response = self.client.post(url, data)
-
+        # url = reverse("user_auth:login")
+        # data = {"email": "inactive@example.com", "password": "StrongPassword123!"}
+        response = self.client.post(
+            self.login_url, self.inactive_user_data, format="json"
+        )
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(response.data.get("detail"), "이메일 인증이 필요합니다.")
+
+        self.assertIn("error", response.data)
+        self.assertIn("resend", response.data)
+        self.assertIn("email", response.data)
+
+        # 메시지 내용과 resend 플래그의 진위 여부를 확인합니다.
+        self.assertEqual(response.data["error"], "이메일 인증이 필요합니다.")
+        self.assertTrue(response.data["resend"])
+        self.assertEqual(response.data["email"], self.inactive_user_data["email"])
 
     def test_login_wrong_password(self):
-        """잘못된 비밀번호 - 401 INVALID_CREDENTIALS"""
         url = reverse("user_auth:login")
         data = {"email": "active@example.com", "password": "WrongPassword123!"}
         response = self.client.post(url, data)
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(
-            response.data.get("detail"), "이메일 또는 비밀번호가 올바르지 않습니다."
-        )
+        self.assertEqual(response.data.get("detail"), "비밀번호가 올바르지 않습니다.")
 
     def test_login_nonexistent_user(self):
-        """존재하지 않는 이메일 - 401 INVALID_CREDENTIALS"""
         url = reverse("user_auth:login")
         data = {"email": "nonexistent@example.com", "password": "StrongPassword123!"}
         response = self.client.post(url, data)
@@ -87,16 +100,14 @@ class UserAuthTests(APITestCase):
         )
 
     def test_login_missing_email(self):
-        """이메일 누락 - 400 MISSING_EMAIL"""
         url = reverse("user_auth:login")
         data = {"password": "StrongPassword123!"}
         response = self.client.post(url, data)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        # non_field_errors 키로 확인
         if "non_field_errors" in response.data:
             self.assertIn(
-                "이메일 확인해주세요.", str(response.data["non_field_errors"][0])
+                "이메일을 확인해주세요.", str(response.data["non_field_errors"][0])
             )
         else:
             self.assertIn("email", str(response.data))
@@ -147,7 +158,6 @@ class UserAuthTests(APITestCase):
     # 로그아웃 테스트
     # ----------------------
     def test_logout_success(self):
-        """정상 로그아웃 - 205 RESET_CONTENT"""
         # 로그인 후 refresh 토큰 발급
         url = reverse("user_auth:login")
         data = {"email": "active@example.com", "password": "StrongPassword123!"}
@@ -162,7 +172,6 @@ class UserAuthTests(APITestCase):
         self.assertEqual(resp.data.get("detail"), "로그아웃 되었습니다.")
 
     def test_logout_invalid_token_error(self):
-        """유효하지 않은 토큰으로 로그아웃 - 400 BAD_REQUEST"""
         logout_url = reverse("user_auth:logout")
         self.client.force_authenticate(user=self.active_user)
 
@@ -175,7 +184,6 @@ class UserAuthTests(APITestCase):
     # 토큰 갱신 테스트
     # ----------------------
     def test_token_refresh_success(self):
-        """정상 토큰 갱신 - 200 OK"""
         url = reverse("user_auth:login")
         data = {"email": "active@example.com", "password": "StrongPassword123!"}
         response = self.client.post(url, data)
@@ -188,7 +196,6 @@ class UserAuthTests(APITestCase):
         self.assertIn("access", resp.data)
 
     def test_token_refresh_invalid_error(self):
-        """유효하지 않은 토큰으로 갱신 - 401 UNAUTHORIZED"""
         refresh_url = reverse("user_auth:token-refresh")
         resp = self.client.post(refresh_url, {"refresh": "invalidtoken"}, format="json")
 

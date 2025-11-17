@@ -159,7 +159,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            raise AuthenticationFailed("존재하지 않은 이메일 입니다.")
+            raise AuthenticationFailed("이메일 또는 비밀번호가 올바르지 않습니다.")
 
         # 비밀번호 확인
         if not user.check_password(password):
@@ -179,7 +179,10 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         self.user = user
         refresh = self.get_token(user)
 
-        data = {"refresh": str(refresh), "access": str(refresh.access_token)}
+        data = {
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+        }
 
         return data
 
