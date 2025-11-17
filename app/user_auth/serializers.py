@@ -159,11 +159,11 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            raise AuthenticationFailed("이메일 또는 비밀번호가 올바르지 않습니다.")
+            raise AuthenticationFailed("존재하지 않은 이메일 입니다.")
 
         # 비밀번호 확인
         if not user.check_password(password):
-            raise AuthenticationFailed("이메일 또는 비밀번호가 올바르지 않습니다.")
+            raise AuthenticationFailed("비밀번호가 올바르지 않습니다.")
 
         # 이메일 미인증(비활성) 체크
         if not user.is_active:
