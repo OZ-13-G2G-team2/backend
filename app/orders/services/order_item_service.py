@@ -8,8 +8,9 @@ class OrderItemService:
     @staticmethod
     @transaction.atomic
     def create_item(order, product_id, quantity, price_at_purchase=None):
+
         try:
-            product = Product.objects.select_for_update().get(id=product_id)
+            product = Product.objects.select_for_update().get(product_id=product_id)
         except Product.DoesNotExist:
             raise ValueError("존재하지 않는 상품입니다.")
 
