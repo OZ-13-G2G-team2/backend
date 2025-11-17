@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from .models import Product, ProductImages, Category, ProductOptionValue, ProductStats
 from drf_spectacular.utils import extend_schema_field
-
+import json
 from ..sellers.models import Seller
 
 
@@ -31,15 +31,34 @@ class ProductImagesSerializer(serializers.ModelSerializer):
 # 상품 상세 조회 시 옵션과 추가금 표시
 class ProductOptionValueSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source="category.name", read_only=True)
-    extra_price = serializers.IntegerField()
-    category = serializers.PrimaryKeyRelatedField(
-        queryset=Category.objects.all(), write_only=True
-    )
+    category_input = serializers.CharField(write_only=True)
+    extra_price = serializers.DecimalField(max_digits=10, decimal_places=2)
 
+    class Meta:
+        model = ProductOptionValue
+        fields = ["category_name", "category_input", "extra_price"]
 
-class Meta:
-    model = ProductOptionValue
-    fields = ["category", "category_name", "extra_price"]
+    def create(self, validated_data):
+        category_name = validated_data.pop("category_input")
+        try:
+            category = Category.objects.get(name=category_name)
+        except Category.DoesNotExist:
+            raise serializers.ValidationError(f"존재하지 않는 카테고리: {category_name}")
+        return ProductOptionValue.objects.create(category=category, **validated_data)
+
+    def update(self, instance, validated_data):
+        category_name = validated_data.pop("category_input", None)
+        if category_name:
+            try:
+                category = Category.objects.get(name=category_name)
+            except Category.DoesNotExist:
+                raise serializers.ValidationError(f"존재하지 않는 카테고리: {category_name}")
+            instance.category = category
+
+            for attr, value in validated_data.items():
+                setattr(instance, attr, value)
+            instance.save()
+            return instance
 
 
 # 상품 통계
@@ -125,7 +144,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         child=serializers.IntegerField(),
         write_only=True,
     )
-    option_values = ProductOptionValueSerializer(many=True)
+    option_values = ProductOptionValueSerializer(many=True, required=False)
     seller_username = serializers.CharField(
         source="seller.user.username", read_only=True
     )
@@ -148,7 +167,6 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             "name",
             "origin",
             "stock",
-            "option_values",
             "price",
             "discount_price",
             "overseas_shipping",
@@ -159,6 +177,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             "updated_at",
             "images",
             "categories",
+            "option_values",
             "seller_username",
             "seller_business_name",
             "seller_business_number",
@@ -167,7 +186,9 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         read_only_fields = ("seller",)
 
     def create(self, validated_data):
-        option_data = validated_data.pop("option_values", [])
+        _request = self.context.get("request")
+
+        raw_option = validated_data.pop("option_values", None)
         images_data = validated_data.pop("images", [])  # 이미지 데이터 분리
         categories_data = validated_data.pop("categories", [])  # 카테고리 분리
 
@@ -188,8 +209,30 @@ class ProductCreateSerializer(serializers.ModelSerializer):
                 product=product, user=seller.user, image_url=image_data
             )
 
-        for option in option_data:
-            ProductOptionValue.objects.create(product=product, **option)
+        if raw_option:
+            try:
+                option_data = json.loads(raw_option)
+            except json.JSONDecodeError:
+                raise serializers.ValidationError("option_values 필드는 JSON 배열 JSON 형식이어야 합니다.")
+        else:
+            option_data = None
+
+        if option_data:
+            for option in option_data:
+                category_name = option.get("category_input")
+                extra_price = option.get("extra_price", 0)
+
+                category = Category.objects.filter(name=category_name).first()
+                if not category:
+                    raise serializers.ValidationError(
+                        f"옵션 카테고리 {category_name} 이(가) 존재하지 않습니다."
+                    )
+
+                ProductOptionValue.objects.create(
+                    product=product,
+                    category=category,
+                    extra_price=extra_price
+                )
 
         return product
 
@@ -309,8 +352,8 @@ class ProductDetailWithSellerSerializer(ProductSerializer):
             "created_at",
             "updated_at",
             "categories",
-            "images",
             "option_values",
+            "images",
             "seller_username",
             "seller_business_name",
             "seller_business_address",
@@ -342,7 +385,7 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
         write_only=True,
         required=False,
     )
-    option_values = ProductOptionValueSerializer(many=True)
+    option_values = ProductOptionValueSerializer(many=True, required=False)
 
     discount_rate = serializers.SerializerMethodField()
 
@@ -354,7 +397,6 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
             "name",
             "origin",
             "stock",
-            "option_values",
             "price",
             "discount_price",
             "discount_rate",
@@ -363,6 +405,7 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
             "description",
             "sold_out",
             "categories",
+            "option_values",
             "images",
         ]
 
@@ -375,18 +418,50 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
         return 0
 
     def update(self, instance, validated_data):
+        request = self.context.get("request")
+
         categories_data = validated_data.pop("categories", None)
         if categories_data is not None:
             # 기존 카테고리 유지 + 새로운 것 추가 (중복 제거)
             existing_ids = set(instance.categories.values_list("id", flat=True))
-            new_ids = set(categories_data)
-            all_ids = list(existing_ids | new_ids)  # 합집합
+            valid_ids = set(Category.objects.filter(id__in=categories_data).values_list("id", flat=True))
+            all_ids = list(existing_ids | valid_ids)  # 합집합
             instance.categories.set(all_ids)
 
-        option_data = validated_data.pop("option_values", [])
-        instance.option_values.all().delete()
-        for option in option_data:
-            ProductOptionValue.objects.create(product=instance, **option)
+        # 일반 필드
+        for attr, value in validated_data.items():
+            if attr not in ["option_values", "images"]:
+                setattr(instance, attr, value)
+        instance.save()
+
+        raw_option = request.data.get("option_values")
+
+        if raw_option:
+            try:
+                option_data = json.loads(raw_option)
+            except:
+                raise serializers.ValidationError("option_values 필드는 JSON 배열 형태여야 합니다.")
+        else:
+            option_data = None
+
+        if option_data is not None:
+            instance.option_values.all().delete()
+
+            for option in option_data:
+                category_name = option.get("category_input")
+                extra_price = option.get("extra_price", 0)
+
+                category = Category.objects.filter(name=category_name).first()
+                if not category:
+                    raise serializers.ValidationError(
+                        f"옵션 카테고리 {category_name} 이(가) 존재하지 않습니다."
+                    )
+
+                ProductOptionValue.objects.create(
+                    product=instance,
+                    category=category,
+                    extra_price=extra_price
+                )
 
         images_data = validated_data.pop("images", None)
         # 이미지 처리
@@ -401,9 +476,4 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
         instance.stock = new_stock
         instance.sold_out = new_stock <= 0
 
-        # 나머지 필드 업데이트
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-
-        instance.save()
         return instance
