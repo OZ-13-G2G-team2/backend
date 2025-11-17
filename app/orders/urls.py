@@ -42,4 +42,5 @@ urlpatterns = [
         OrderItemViewSet.as_view({"get": "by_order"}),
         name="orderitem_by_order",
     ),
+    path("buy-now/", OrderViewSet.as_view({"post": "buy_now"}), name="order_buy_now"),
 ]

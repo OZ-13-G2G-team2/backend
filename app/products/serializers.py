@@ -32,12 +32,14 @@ class ProductImagesSerializer(serializers.ModelSerializer):
 class ProductOptionValueSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source="category.name", read_only=True)
     extra_price = serializers.IntegerField()
-    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), write_only=True)
+    category = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(), write_only=True
+    )
 
 
 class Meta:
-        model = ProductOptionValue
-        fields = ["category", "category_name", "extra_price"]
+    model = ProductOptionValue
+    fields = ["category", "category_name", "extra_price"]
 
 
 # 상품 통계
