@@ -1,16 +1,20 @@
-import uuid
-
 from django.conf import settings
 from django.core.mail.message import EmailMultiAlternatives
+from django.core.signing import TimestampSigner
+import logging
+
+logger = logging.getLogger("app")
+
+# signer 객체 정의 토큰 유효 시간 설정
+EMAIL_SIGNER = TimestampSigner(salt="email-activation", key=settings.SECRET_KEY)
+MAX_AGE_SECONDS = 3600  # 1시간 (60 * 60)
 
 
 def send_activation_email(user):
-    user.email_token = str(uuid.uuid4())
-    user.save()
 
-    activation_link = (
-        f"{settings.BACKEND_URL}/api/auth/email-send/?token={user.email_token}"
-    )
+    token = EMAIL_SIGNER.sign(str(user.pk))
+
+    activation_link = f"{settings.BACKEND_URL}/api/auth/email-send/?token={token}"
 
     subject = "회원가입 이메일 인증"
     text_content = f"안녕하세요 {user.username}님,\n아래 링크를 클릭하여 이메일 인증을 완료해주세요:\n{activation_link}"
@@ -37,7 +41,9 @@ def send_activation_email(user):
         msg = EmailMultiAlternatives(subject, text_content, from_email, recipient_list)
         msg.attach_alternative(html_content, "text/html")
         msg.send()
+        logger.info(f"[utils] 이메일 발송 성공: {user.email}")
     except Exception as e:
-        print(f"Email sending failed: {e}")
+        logger.error(f"[utils] Email sending failed: {e}, user={user.email}")
+        raise
 
     return activation_link

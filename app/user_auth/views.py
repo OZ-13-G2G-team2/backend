@@ -1,5 +1,6 @@
 import logging
 from django.conf import settings
+from django.core.signing import BadSignature, SignatureExpired
 from django.shortcuts import redirect
 from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
@@ -16,7 +17,7 @@ from app.user_auth.serializers import (
     LogoutSerializer,
     CustomTokenObtainPairSerializer,
 )
-from app.user_auth.utils import send_activation_email
+from app.user_auth.utils import send_activation_email, EMAIL_SIGNER, MAX_AGE_SECONDS
 
 User = get_user_model()
 logger = logging.getLogger("app")
@@ -38,12 +39,18 @@ class EmailSendView(APIView):
             )
 
         try:
-            user = User.objects.select_for_update().get(email=email)
+            user = User.objects.get(email=email)
         except User.DoesNotExist:
             logger.warning(f"이메일 인증 실패 - 존재하지 않는 이메일: {email}")
             return Response(
                 {"error": "해당 이메일의 사용자가 없습니다."},
                 status=status.HTTP_404_NOT_FOUND,
+            )
+        if user.is_active:
+            logger.warning(f"이메일 인증 요청 실패 - 이미 활성화된 계정: {user.email}")
+            return Response(
+                {"error": "이미 이메일 인증이 완료된 계정입니다."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         try:
@@ -62,6 +69,7 @@ class EmailSendView(APIView):
             {"message": "인증 메일이 발송되었습니다."}, status=status.HTTP_200_OK
         )
 
+    @transaction.atomic  # DB 업데이트(is_active)가 있으므로 transaction.atomic 유지
     def get(self, request):
         token = request.query_params.get("token")
         logger.info(f"[이메일 인증 링크 GET 요청] token={token}")
@@ -72,23 +80,64 @@ class EmailSendView(APIView):
                 {"error": "token이 필요합니다."}, status=status.HTTP_400_BAD_REQUEST
             )
 
+        redirect_url_base = f"{settings.FRONTEND_URL}/email/certification"
+        user_pk_str = None
+
         try:
-            user = User.objects.get(email_token=token)
+            user_pk_str = EMAIL_SIGNER.unsign(token, max_age=MAX_AGE_SECONDS)
+
+        except SignatureExpired:
+            logger.warning("이메일 인증 실패 - 토큰 만료")
+            return redirect(f"{redirect_url_base}?status=expired")
+
+        except BadSignature:
+            logger.warning(f"이메일 인증 실패 - 잘못된 token/서명: {token}")
+            return redirect(f"{redirect_url_base}?status=invalid")
+
+        if not user_pk_str:
+            logger.error(
+                f"이메일 인증 실패 - Signer 복원 실패, 복원된 값: {user_pk_str}"
+            )
+            return redirect(f"{redirect_url_base}?status=invalid")
+
+        try:
+            user_pk = int(user_pk_str)
+
+        except (TypeError, ValueError):
+            # unsign() 결과가 유효하지 않은 경우 (None 또는 숫자가 아닌 문자열)
+            logger.error(
+                f"이메일 인증 실패 - 복원된 PK '{user_pk_str}'가 정수형이 아님."
+            )
+            return redirect(f"{redirect_url_base}?status=invalid")
+
+        except ValueError:
+            logger.warning(f"이메일 인증 실패 - 유효하지 않은 PK 형식: {user_pk}")
+            return redirect(f"{redirect_url_base}?status=invalid")
+
+        try:
+            # 복원된 pk로 사용자 조회
+            user = User.objects.get(pk=user_pk)
+
+        except (TypeError, ValueError):
+            logger.error(
+                f"이메일 인증 실패 - 복원된 PK '{user_pk_str}'가 정수형이 아님."
+            )
+            return redirect(f"{redirect_url_base}?status=invalid")
+
+        # 이미 활성화된 계정인 경우
+        try:
+            # 복원된 pk로 사용자 조회
+            user = User.objects.get(pk=user_pk)
         except User.DoesNotExist:
-            logger.warning(f"이메일 인증 실패 - 잘못된 token: {token}")
-            redirect_url = f"{settings.FRONTEND_URL}/email/certification?status=invalid"
-            return redirect(redirect_url)
+            logger.warning(f"이메일 인증 실패 - 존재하지 않는 유저 PK: {user_pk}")
 
         # 인증 완료 처리
         user.is_active = True
-        user.email_token = None
         user.save()
 
         logger.info(f"[이메일 인증 성공] user={user.email}")
 
-        redirect_url = (
-            f"{settings.FRONTEND_URL}/email/certification/{user.email}?status=success"
-        )
+        redirect_url = f"{redirect_url_base}/{user.email}?status=success"
         return redirect(redirect_url)
 
 
