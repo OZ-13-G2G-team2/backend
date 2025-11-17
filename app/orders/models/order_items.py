@@ -31,10 +31,14 @@ class OrderItem(models.Model):
         ordering = ["order"]
 
     def calculate_total_price(self):
-        base_price = self.product.price
-        extra_price = sum(option.extra_price for option in self.options.all())
+        base_price = self.product.discount_price if self.product.discount_price not in (None, 0) else self.product.price
+        extra_price = sum(option.extra_price or 0 for option in self.options.all())
         self.price_at_purchase = (base_price + extra_price) * self.quantity
         return self.price_at_purchase
+
+    def save(self, *args, **kwargs):
+        self.calculate_total_price()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.order.id}번 주문 - {self.product.name} x {self.quantity}"
