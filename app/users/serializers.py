@@ -47,7 +47,7 @@ def validate_strong_password(value):
                 "비밀번호에 특수문자가 포함되어야 합니다."
             )
     except Exception as e:
-        logger.warning(f"[비밀번호 정책 실패] 이유={e}")
+        logger.warning(f"[비밀번호 정책 실패] error={e}")
         raise e
 
     return value
