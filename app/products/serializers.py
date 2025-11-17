@@ -3,6 +3,9 @@ from rest_framework import serializers
 from .models import Product, ProductImages, Category, ProductOptionValue, ProductStats
 from drf_spectacular.utils import extend_schema_field
 
+from ..sellers.models import Seller
+
+
 class CategorySerializer(serializers.ModelSerializer):
     group_name = serializers.CharField(source="group.name", read_only=True)
 
@@ -33,6 +36,7 @@ class ProductOptionValueSerializer(serializers.ModelSerializer):
         model = ProductOptionValue
         fields = ["id", "category", "extra_price"]
 
+
 # 상품 통계
 class ProductStatsSerializer(serializers.ModelSerializer):
     class Meta:
@@ -42,11 +46,21 @@ class ProductStatsSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     thumbnail = serializers.SerializerMethodField()
+    seller_id = serializers.IntegerField(source="seller.user.id", read_only=True)
     seller_name = serializers.CharField(source="seller.user.username", read_only=True)
-    seller_business_name = serializers.CharField(source="seller.business_name", read_only=True)
-    seller_business_address = serializers.CharField(source="seller.business_address", read_only=True)
-    seller_business_number = serializers.CharField(source="seller.business_number", read_only=True)
+    seller_business_name = serializers.CharField(
+        source="seller.business_name", read_only=True
+    )
+    seller_business_address = serializers.CharField(
+        source="seller.business_address", read_only=True
+    )
+    seller_business_number = serializers.CharField(
+        source="seller.business_number", read_only=True
+    )
     discount_rate = serializers.SerializerMethodField()
+    categories = serializers.SlugRelatedField(
+        many=True, read_only=True, slug_field="name"
+    )
 
     review_count = serializers.SerializerMethodField()
     sales_count = serializers.SerializerMethodField()
@@ -56,7 +70,9 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             "product_id",
+            "seller_id",
             "name",
+            "categories",
             "origin",
             "price",
             "discount_price",
@@ -76,7 +92,10 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def get_discount_rate(self, obj):
         if obj.price and obj.discount_price and obj.discount_price < obj.price:
-            return round((float(obj.price) - float(obj.discount_price)) / float(obj.price) * 100, 2)
+            return round(
+                (float(obj.price) - float(obj.discount_price)) / float(obj.price) * 100,
+                2,
+            )
         return 0
 
     def get_review_count(self, obj):
@@ -93,7 +112,7 @@ class ProductSerializer(serializers.ModelSerializer):
         first_image = obj.images.first()
         if not first_image:
             return None
-        return self.context['request'].build_absolute_uri(first_image.image_url)
+        return self.context["request"].build_absolute_uri(first_image.image_url)
 
 
 class ProductCreateSerializer(serializers.ModelSerializer):
@@ -118,20 +137,36 @@ class ProductCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = [
-            "product_id", "seller", "name", "origin", "stock", "price",
-            "overseas_shipping", "delivery_fee", "description", "sold_out",
-            "created_at", "updated_at", "images", 'categories',"seller_username",
-            "seller_business_name", "seller_business_number", "seller_business_address",
+            "product_id",
+            "seller",
+            "name",
+            "origin",
+            "stock",
+            "price",
+            "discount_price",
+            "overseas_shipping",
+            "delivery_fee",
+            "description",
+            "sold_out",
+            "created_at",
+            "updated_at",
+            "images",
+            "categories",
+            "seller_username",
+            "seller_business_name",
+            "seller_business_number",
+            "seller_business_address",
         ]
         read_only_fields = ("seller",)
 
-
     def create(self, validated_data):
         images_data = validated_data.pop("images", [])  # 이미지 데이터 분리
-        categories_data = validated_data.pop("categories", []) # 카테고리 분리
+        categories_data = validated_data.pop("categories", [])  # 카테고리 분리
 
-        request_user = self.context['request'].user
-        seller = getattr(request_user, "seller", None)
+        seller = validated_data.pop("seller")
+        if seller is None or not Seller.objects.filter(id=seller.id).exists():
+            raise serializers.ValidationError("판매자 계정이 존재하지 않습니다.")
+
         if seller is None:
             raise serializers.ValidationError("판매자 계정이 아닙니다.")
 
@@ -142,11 +177,10 @@ class ProductCreateSerializer(serializers.ModelSerializer):
 
         for image_data in images_data:
             ProductImages.objects.create(
-                product=product,
-                user=request_user,
-                **image_data
+                product=product, user=seller.user, image_url=image_data
             )
         return product
+
 
 class ProductStockSerializer(serializers.ModelSerializer):
     class Meta:
@@ -198,7 +232,10 @@ class ProductForSellerSerializer(serializers.ModelSerializer):
 
     def get_discount_rate(self, obj):
         if obj.price and obj.discount_price and obj.discount_price < obj.price:
-            return round((float(obj.price) - float(obj.discount_price)) / float(obj.price) * 100, 2)
+            return round(
+                (float(obj.price) - float(obj.discount_price)) / float(obj.price) * 100,
+                2,
+            )
         return 0
 
     def get_review_count(self, obj):
@@ -210,14 +247,12 @@ class ProductForSellerSerializer(serializers.ModelSerializer):
     def get_wish_count(self, obj):
         return getattr(obj.stats, "wish_count", 0) if hasattr(obj, "stats") else 0
 
+
 class ProductDetailWithSellerSerializer(ProductSerializer):
     categories = serializers.SlugRelatedField(
         many=True, read_only=True, slug_field="name"
     )
-    images = ProductImagesSerializer(
-        many=True,
-        read_only=True,
-    )
+    images = ProductImagesSerializer(many=True, read_only=True, required=False)
     option_values = ProductOptionValueSerializer(many=True, read_only=True)
 
     seller_username = serializers.CharField(
@@ -268,26 +303,33 @@ class ProductDetailWithSellerSerializer(ProductSerializer):
         ]
         read_only_fields = ("seller",)
 
-        def get_discount_rate(self, obj):
-            if obj.price and obj.discount_price and obj.discount_price < obj.price:
-                return round((float(obj.price) - float(obj.discount_price)) / float(obj.price) * 100, 2)
-            return 0
+    def get_discount_rate(self, obj):
+        if obj.price and obj.discount_price and obj.discount_price < obj.price:
+            return round(
+                (float(obj.price) - float(obj.discount_price)) / float(obj.price) * 100,
+                2,
+            )
+        return 0
 
-        def get_review_count(self, obj):
-            return getattr(obj.stats, "review_count", 0) if hasattr(obj, "stats") else 0
+    def get_review_count(self, obj):
+        return getattr(obj.stats, "review_count", 0) if hasattr(obj, "stats") else 0
 
-        def get_sales_count(self, obj):
-            return getattr(obj.stats, "sales_count", 0) if hasattr(obj, "stats") else 0
+    def get_sales_count(self, obj):
+        return getattr(obj.stats, "sales_count", 0) if hasattr(obj, "stats") else 0
 
-        def get_wish_count(self, obj):
-            return getattr(obj.stats, "wish_count", 0) if hasattr(obj, "stats") else 0
+    def get_wish_count(self, obj):
+        return getattr(obj.stats, "wish_count", 0) if hasattr(obj, "stats") else 0
+
 
 class ProductUpdateSerializer(serializers.ModelSerializer):
     categories = serializers.ListField(
         child=serializers.IntegerField(),
+        write_only=True,
         required=False,
     )
-    images = ProductImagesSerializer(many=True, required=False)
+    discount_rate = serializers.SerializerMethodField()
+
+    images = ProductImagesSerializer(many=True, write_only=True, required=False)
 
     class Meta:
         model = Product
@@ -297,6 +339,7 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
             "stock",
             "price",
             "discount_price",
+            "discount_rate",
             "overseas_shipping",
             "delivery_fee",
             "description",
@@ -305,18 +348,38 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
             "images",
         ]
 
+    def get_discount_rate(self, obj):
+        if obj.price and obj.discount_price and obj.discount_price < obj.price:
+            return round(
+                (float(obj.price) - float(obj.discount_price)) / float(obj.price) * 100,
+                2,
+            )
+        return 0
+
     def update(self, instance, validated_data):
         categories_data = validated_data.pop("categories", None)
         if categories_data is not None:
-            instance.categories.set(categories_data)
+            # 기존 카테고리 유지 + 새로운 것 추가 (중복 제거)
+            existing_ids = set(instance.categories.values_list("id", flat=True))
+            new_ids = set(categories_data)
+            all_ids = list(existing_ids | new_ids)  # 합집합
+            instance.categories.set(all_ids)
 
         images_data = validated_data.pop("images", None)
+
+        # 이미지 처리
         if images_data is not None:
-            # 기존 이미지 전부 삭제 후 다시 생성
+            # 기존 이미지 전부 삭제 후 추가
             instance.images.all().delete()
             for image_data in images_data:
-                ProductImages.objects.create(product=instance, **image_data)
+                ProductImages.objects.create(product=instance, image_url=image_data)
 
+        # stock sold_out 연동
+        new_stock = validated_data.get("stock", instance.stock)
+        instance.stock = new_stock
+        instance.sold_out = new_stock <= 0
+
+        # 나머지 필드 업데이트
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
 
