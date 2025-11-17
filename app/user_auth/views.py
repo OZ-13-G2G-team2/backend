@@ -69,7 +69,7 @@ class EmailSendView(APIView):
             {"message": "인증 메일이 발송되었습니다."}, status=status.HTTP_200_OK
         )
 
-    @transaction.atomic  # DB 업데이트(is_active)가 있으므로 transaction.atomic 유지
+    @transaction.atomic  # DB 업데이트
     def get(self, request):
         token = request.query_params.get("token")
         logger.info(f"[이메일 인증 링크 GET 요청] token={token}")
