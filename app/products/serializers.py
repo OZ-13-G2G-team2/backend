@@ -439,7 +439,7 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
         if raw_option:
             try:
                 option_data = json.loads(raw_option)
-            except:
+            except json.JSONDecodeError:
                 raise serializers.ValidationError("option_values 필드는 JSON 배열 형태여야 합니다.")
         else:
             option_data = None
