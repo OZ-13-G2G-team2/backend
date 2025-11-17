@@ -212,6 +212,12 @@ ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 
 
+
+# logging 설정 전 로그 디렉토리 생성
+LOG_DIR = Path(os.getenv("LOG_DIR", str(BASE_DIR / "logs")))
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+
+
 # logging
 LOGGING = {
     "version": 1,
@@ -229,7 +235,7 @@ LOGGING = {
         },
         "file": {  # 파일 저장
             "class": "logging.FileHandler",
-            "filename": "logs/app.log",
+            "filename": str(LOG_DIR / "app.log"),
             "formatter": "standard",
         },
     },
