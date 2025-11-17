@@ -37,7 +37,6 @@ class OrderItem(models.Model):
         return self.price_at_purchase
 
     def save(self, *args, **kwargs):
-        self.calculate_total_price()
         super().save(*args, **kwargs)
 
     def __str__(self):
