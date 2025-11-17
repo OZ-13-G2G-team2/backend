@@ -17,7 +17,9 @@ class OrderItem(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     quantity = models.PositiveIntegerField(verbose_name="수량")
-    options = models.ManyToManyField(ProductOptionValue, verbose_name="상품 옵션", blank=True)
+    options = models.ManyToManyField(
+        ProductOptionValue, verbose_name="상품 옵션", blank=True
+    )
     price_at_purchase = models.DecimalField(
         max_digits=10, decimal_places=2, verbose_name="구매 당시 가격"
     )

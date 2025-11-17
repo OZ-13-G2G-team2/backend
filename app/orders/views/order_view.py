@@ -14,6 +14,8 @@ from app.orders.services import OrderService
 from app.orders.exceptions import OrderNotFound, InvalidOrderStatus
 from app.carts.models import CartItem
 from app.products.models import Product, ProductStats
+from app.orders.serializers import OrderItemSerializer
+
 
 @extend_schema_view(
     list=extend_schema(summary="주문 목록 조회", tags=["주문"]),
