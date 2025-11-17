@@ -1,6 +1,7 @@
 import pytest
 from django.core.exceptions import ValidationError
 
+
 @pytest.mark.django_db
 def test_product_create(test_product, test_seller, test_user):
     product = test_product
