@@ -210,3 +210,34 @@ REST_USE_JWT = True
 ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+
+
+# logging
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "standard": {
+            "format": "[{levelname}] {asctime} {name}: {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {  # 개발용: 콘솔 출력
+            "class": "logging.StreamHandler",
+            "formatter": "standard",
+        },
+        "file": {  # 파일 저장
+            "class": "logging.FileHandler",
+            "filename": "logs/app.log",
+            "formatter": "standard",
+        },
+    },
+    "loggers": {
+        "app": {  # app.* 로거 사용
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}
