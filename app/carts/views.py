@@ -41,7 +41,7 @@ class CartViewSet(viewsets.ModelViewSet):
                 request_only=True
             )
         ],
-        request=CartSerializer
+        request=CartSerializer,
     )
     def create(self, request):
         _ = request.data.get("user_id")
@@ -157,11 +157,16 @@ class CartViewSet(viewsets.ModelViewSet):
 
         if duplicate:
             return Response(
-                {"error": "일부 상품이 이미 장바구니에 존재합니다.", "duplicate": duplicate},
-                status=409
+                {
+                    "error": "일부 상품이 이미 장바구니에 존재합니다.",
+                    "duplicate": duplicate,
+                },
+                status=409,
             )
 
-        return Response({"message": "여러 상품이 장바구니에 추가되었습니다."}, status=200)
+        return Response(
+            {"message": "여러 상품이 장바구니에 추가되었습니다."}, status=200
+        )
 
     # PATCH /api/carts/items/
     # DELETE /api/carts/items/
@@ -230,13 +235,17 @@ class CartViewSet(viewsets.ModelViewSet):
 
             # 선택 삭제
             if not isinstance(product_ids, list):
-                return Response({"error": "product_ids는 배열이어야 합니다."}, status=400)
+                return Response(
+                    {"error": "product_ids는 배열이어야 합니다."}, status=400
+                )
 
             deleted_count = 0
             for pid in product_ids:
                 try:
                     product = Product.objects.get(product_id=pid)
-                    deleted, _ = CartItem.objects.filter(cart=cart, product=product).delete()
+                    deleted, _ = CartItem.objects.filter(
+                        cart=cart, product=product
+                    ).delete()
                     deleted_count += deleted
                 except Product.DoesNotExist:
                     continue
