@@ -194,9 +194,8 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
 
         raw_option = request.data.get("option_values")
-        images_data = request.FILES.getlist("images", [])  # 이미지 데이터 분리
-        categories_data = validated_data.pop("categories", [])  # 카테고리 분리
-        valid_category_ids = list(Category.objects.filter(id__in=categories_data).values_list("id", flat=True))
+        images_data = request.FILES.getlist("images", []) if request.FILES else [] # 이미지 데이터 분리
+        categories_data = validated_data.pop("categories", [])
 
         seller = validated_data.pop("seller")
         if seller is None or not Seller.objects.filter(id=seller.id).exists():
@@ -204,8 +203,8 @@ class ProductCreateSerializer(serializers.ModelSerializer):
 
         product = Product.objects.create(seller=seller, **validated_data)
 
-        if valid_category_ids:
-            product.categories.set(valid_category_ids)
+        if categories_data:
+            product.categories.set(categories_data)
 
         for image_data in images_data:
             ProductImages.objects.create(
