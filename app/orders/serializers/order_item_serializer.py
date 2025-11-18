@@ -15,7 +15,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
     subtotal = serializers.SerializerMethodField()
     order_status = serializers.CharField(source="order.status", read_only=True)
     order_date = serializers.DateTimeField(source="order.order_date", read_only=True)
-    options = ProductOptionValueSerializer(many=True)
+    options = ProductOptionValueSerializer(many=True, required=False, read_only=True)
 
     quantity = serializers.IntegerField(
         min_value=1,
