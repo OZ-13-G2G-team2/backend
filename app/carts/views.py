@@ -14,7 +14,7 @@ from app.products.models import Product
     summary="장바구니 관리",
     description="상품 담기, 조회, 수정, 삭제 기능",
 )
-class CartViewSet(viewsets.ViewSet):
+class CartViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = CartSerializer
     queryset = Cart.objects.all()
@@ -41,6 +41,8 @@ class CartViewSet(viewsets.ViewSet):
         request=CartSerializer
     )
     def create(self, request):
+        _ = request.data.get("user_id")
+
         user = request.user
         product_id = request.data.get("product_id")
         quantity = request.data.get("quantity", 1)
@@ -66,6 +68,8 @@ class CartViewSet(viewsets.ViewSet):
         description="장바구니 상품 목록 조회",
     )
     def list(self, request):
+        _ = request.query_params.get("user_id")
+
         try:
             cart = Cart.objects.get(user=request.user)
         except Cart.DoesNotExist:
