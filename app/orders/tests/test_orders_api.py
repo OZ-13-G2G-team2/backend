@@ -24,7 +24,7 @@ class OrdersAPITest(APITestCase):
         self.product = Product.objects.create(
             name="Sample Product", price=12000, stock=10, seller=self.seller
         )
-        self.product_stats = ProductStats.objects.create(product=self.product)
+        self.product_stats, _ = ProductStats.objects.get_or_create(product=self.product)
 
         self.address = Address.objects.create(
             user=self.user,
