@@ -147,6 +147,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
     categories = serializers.ListField(
         child=serializers.IntegerField(),
         write_only=True,
+        required=False,
     )
     option_values = ProductOptionValueSerializer(many=True, required=False)
     seller_username = serializers.CharField(
@@ -190,23 +191,21 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         read_only_fields = ("seller",)
 
     def create(self, validated_data):
-        _request = self.context.get("request")
+        request = self.context.get("request")
 
-        raw_option = validated_data.pop("option_values", None)
-        images_data = validated_data.pop("images", [])  # 이미지 데이터 분리
+        raw_option = request.data.get("option_values")
+        images_data = request.FILES.getlist("images", [])  # 이미지 데이터 분리
         categories_data = validated_data.pop("categories", [])  # 카테고리 분리
+        valid_category_ids = list(Category.objects.filter(id__in=categories_data).values_list("id", flat=True))
 
         seller = validated_data.pop("seller")
         if seller is None or not Seller.objects.filter(id=seller.id).exists():
             raise serializers.ValidationError("판매자 계정이 존재하지 않습니다.")
 
-        if seller is None:
-            raise serializers.ValidationError("판매자 계정이 아닙니다.")
-
         product = Product.objects.create(seller=seller, **validated_data)
 
-        if categories_data:
-            product.categories.set(categories_data)
+        if valid_category_ids:
+            product.categories.set(valid_category_ids)
 
         for image_data in images_data:
             ProductImages.objects.create(
@@ -223,7 +222,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         else:
             option_data = None
 
-        if option_data:
+        if option_data is not None:
             for option in option_data:
                 category_name = option.get("category_input")
                 extra_price = option.get("extra_price", 0)
@@ -471,7 +470,7 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
                     product=instance, category=category, extra_price=extra_price
                 )
 
-        images_data = validated_data.pop("images", None)
+        images_data = request.FILES.getlist("images")
         # 이미지 처리
         if images_data is not None:
             # 기존 이미지 전부 삭제 후 추가
