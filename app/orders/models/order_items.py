@@ -31,7 +31,11 @@ class OrderItem(models.Model):
         ordering = ["order"]
 
     def calculate_total_price(self):
-        base_price = self.product.discount_price if self.product.discount_price not in (None, 0) else self.product.price
+        base_price = (
+            self.product.discount_price
+            if self.product.discount_price not in (None, 0)
+            else self.product.price
+        )
         extra_price = sum(option.extra_price or 0 for option in self.options.all())
         self.price_at_purchase = (base_price + extra_price) * self.quantity
         return self.price_at_purchase

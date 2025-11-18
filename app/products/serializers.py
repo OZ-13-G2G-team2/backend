@@ -43,7 +43,9 @@ class ProductOptionValueSerializer(serializers.ModelSerializer):
         try:
             category = Category.objects.get(name=category_name)
         except Category.DoesNotExist:
-            raise serializers.ValidationError(f"존재하지 않는 카테고리: {category_name}")
+            raise serializers.ValidationError(
+                f"존재하지 않는 카테고리: {category_name}"
+            )
         return ProductOptionValue.objects.create(category=category, **validated_data)
 
     def update(self, instance, validated_data):
@@ -52,7 +54,9 @@ class ProductOptionValueSerializer(serializers.ModelSerializer):
             try:
                 category = Category.objects.get(name=category_name)
             except Category.DoesNotExist:
-                raise serializers.ValidationError(f"존재하지 않는 카테고리: {category_name}")
+                raise serializers.ValidationError(
+                    f"존재하지 않는 카테고리: {category_name}"
+                )
             instance.category = category
 
             for attr, value in validated_data.items():
@@ -213,7 +217,9 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             try:
                 option_data = json.loads(raw_option)
             except json.JSONDecodeError:
-                raise serializers.ValidationError("option_values 필드는 JSON 배열 JSON 형식이어야 합니다.")
+                raise serializers.ValidationError(
+                    "option_values 필드는 JSON 배열 JSON 형식이어야 합니다."
+                )
         else:
             option_data = None
 
@@ -229,9 +235,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
                     )
 
                 ProductOptionValue.objects.create(
-                    product=product,
-                    category=category,
-                    extra_price=extra_price
+                    product=product, category=category, extra_price=extra_price
                 )
 
         return product
@@ -424,7 +428,11 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
         if categories_data is not None:
             # 기존 카테고리 유지 + 새로운 것 추가 (중복 제거)
             existing_ids = set(instance.categories.values_list("id", flat=True))
-            valid_ids = set(Category.objects.filter(id__in=categories_data).values_list("id", flat=True))
+            valid_ids = set(
+                Category.objects.filter(id__in=categories_data).values_list(
+                    "id", flat=True
+                )
+            )
             all_ids = list(existing_ids | valid_ids)  # 합집합
             instance.categories.set(all_ids)
 
@@ -440,7 +448,9 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
             try:
                 option_data = json.loads(raw_option)
             except json.JSONDecodeError:
-                raise serializers.ValidationError("option_values 필드는 JSON 배열 형태여야 합니다.")
+                raise serializers.ValidationError(
+                    "option_values 필드는 JSON 배열 형태여야 합니다."
+                )
         else:
             option_data = None
 
@@ -458,9 +468,7 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
                     )
 
                 ProductOptionValue.objects.create(
-                    product=instance,
-                    category=category,
-                    extra_price=extra_price
+                    product=instance, category=category, extra_price=extra_price
                 )
 
         images_data = validated_data.pop("images", None)
