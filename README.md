@@ -1,28 +1,36 @@
-#### 기술 스택
-Backend<br>
-Python: 3.13<br>
-Django: 5.2.7<br>
-Django REST Framework: 3.16.1<br>
-PostgreSQL: 프로덕션 데이터베이스<br>
-SQLite: 개발 데이터베이스
+### **[G2G]** 백엔드 레포지토리
+> 프로젝트의 백엔드 시스템을 Django와 DRF로 구축합니다.
 
-### Infrastructure
-Poetry: 의존성 관리
-Django runserver: 현재 서버 (개발/테스트용)
-GitHub Actions: CI/CD 파이프라인
+## 🏗️ 시스템 아키텍처 (System Architecture)
+프로젝트의 백엔드, 인프라, 배포 구성을 나타내는 다이어그램입니다.
+
+
+#### 기술 스택
+* **Python**: 3.13 (또는 현재 사용 버전)
+* **Django**: 5.2.7 (또는 현재 사용 버전)
+* **Django REST Framework**: 3.16.1
+* **Authentication**: OAuth2 / JWT
+* **Database**: SQLite (개발용), PostgreSQL (프로덕션용)
+
+### ⚙️ Infrastructure & Deployment
+* **Poetry**: 의존성 관리 및 가상 환경
+* **Docker**: 컨테이너화
+* **Nginx**: 리버스 프록시
+* **AWS**: EC2, RDS (클라우드 인프라)
+* **GitHub Actions**: CI/CD 파이프라인
 
 ### Development Tools
-PyCharm: IDE
-Git: 버전 관리
-Postman: API 테스트 (권장)
+PyCharm: IDE<br>
+Git: 버전 관리<br>
+Postman: API 테스트<br>
 
 ### 빠른 시작
-1. 저장소 클론
+#### 1. 저장소 클론
 ```
 git clone https://github.com/OZ-13-G2G-team2/backend.git
 cd backend
 ```
-2. Poetry 설치 및 의존성 설치
+#### 2. Poetry 설치 및 의존성 설치
 ```
 # Poetry 설치 (없는 경우)
 curl -sSL https://install.python-poetry.org | python3 -
@@ -30,22 +38,26 @@ curl -sSL https://install.python-poetry.org | python3 -
 # 의존성 설치
 poetry install
 ```
-3. 환경변수 설정
+#### 3. 환경변수 설정
 ```
 # .env 파일 내용 (로컬 개발용)
 SECRET_KEY=your-super-secret-key-here
 DEBUG=True
 USE_S3_STORAGE=False
 ```
-4. 데이터베이스 마이그레이션
+#### 4. 데이터베이스 마이그레이션
 ```
-poetry run python manage.py migrate --settings=config.settings
+poetry run python manage.py migrate --settings=config.dev
 ```
-5. 개발 서버 실행
+#### 5. 개발 서버 실행
 ```
 poetry run python manage.py runserver --settings=config.settings.dev
 ```
 http://127.0.0.1:8000 에서 확인 가능!
+
+#### 6. API 문서 확인
+개발 서버 실행 후 아래 주소에서 Swagger UI 문서를 확인합니다.<br>
+http://127.0.0.1:8000/docs/
 
 
 
@@ -66,44 +78,136 @@ PR 생성 전 충돌 해결
 
 ## 프로젝트 구조
 ```
-backend/
+.
+├── Dockerfile
 ├── README.md
+├── app
+│   ├── __init__.py
+│   ├── address
+│   │   ├── __init__.py
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── migrations
+│   │   ├── models.py
+│   │   ├── serializers.py
+│   │   ├── tests.py
+│   │   ├── urls.py
+│   │   └── views.py
+│   ├── carts
+│   │   ├── __init__.py
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── migrations
+│   │   ├── models.py
+│   │   ├── serializers.py
+│   │   ├── tests.py
+│   │   ├── urls.py
+│   │   └── views.py
+│   ├── orders
+│   │   ├── __init__.py
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── constants.py
+│   │   ├── exceptions.py
+│   │   ├── migrations
+│   │   ├── models
+│   │   │   ├── __init__.py
+│   │   │   ├── order_items.py
+│   │   │   └── orders.py
+│   │   ├── permissions.py
+│   │   ├── serializers
+│   │   │   ├── __init__.py
+│   │   │   ├── order_item_serializer.py
+│   │   │   └── order_serializer.py
+│   │   ├── services
+│   │   │   ├── __init__.py
+│   │   │   ├── order_item_service.py
+│   │   │   └── order_service.py
+│   │   ├── signals.py
+│   │   ├── tests
+│   │   ├── urls.py
+│   │   ├── utils.py
+│   │   └── views
+│   │       ├── __init__.py
+│   │       ├── order_item_view.py
+│   │       └── order_view.py
+│   ├── products
+│   │   ├── __init__.py
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── migrations
+│   │   ├── models.py
+│   │   ├── serializers.py
+│   │   ├── signals.py
+│   │   ├── tests
+│   │   ├── urls.py
+│   │   └── views.py
+│   ├── reviews
+│   │   ├── __init__.py
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── migrations
+│   │   ├── models.py
+│   │   ├── serializers.py
+│   │   ├── tests.py
+│   │   ├── urls.py
+│   │   └── views.py
+│   ├── sellers
+│   │   ├── __init__.py
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── migrations
+│   │   ├── models.py
+│   │   ├── serializers.py
+│   │   ├── tests.py
+│   │   ├── urls.py
+│   │   └── views.py
+│   ├── user_auth
+│   │   ├── __init__.py
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── migrations
+│   │   ├── models.py
+│   │   ├── serializers.py
+│   │   ├── tests
+│   │   ├── urls.py
+│   │   ├── utils.py
+│   │   └── views.py
+│   ├── users
+│   │   ├── __init__.py
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── migrations
+│   └── wishlists
+│       ├── __init__.py
+│       ├── admin.py
+│       ├── apps.py
+│       ├── migrations
+│       ├── models.py
+│       ├── serializers.py
+│       ├── tests.py
+│       ├── urls.py
+│       └── views.py
+├── ci_db
 ├── config
-│   ├── settings.py
+│   ├── __init__.py
+│   ├── asgi.py
+│   ├── settings
+│   │   ├── __init__.py
+│   │   ├── base.py
+│   │   ├── dev.py
+│   │   └── prod.py
 │   ├── urls.py
 │   └── wsgi.py
-├── db.sqlite3
+├── docker-compose.yml
+├── logs
+│   └── app.log
 ├── manage.py
-├── media 
-├── orders
-│   ├── __init__.py
-│   ├── __pycache__
-│   ├── admin.py
-│   ├── apps.py
-│   ├── migrations
-│   ├── models.py
-│   ├── tests.py
-│   └── views.py
 ├── poetry.lock
-├── products
-│   ├── __init__.py
-│   ├── __pycache__
-│   ├── admin.py
-│   ├── apps.py
-│   ├── migrations
-│   ├── models.py
-│   ├── tests.py
-│   └── views.py
 ├── pyproject.toml
-└── users
-    ├── __init__.py
-    ├── __pycache__
-    ├── admin.py
-    ├── apps.py
-    ├── migrations
-    ├── models.py
-    ├── tests.py
-    └── views.py
+├── pytest.ini
+└── scripts
+    └── run.sh
 ```
 ## 🔧 개발 가이드
 ### 환경별 설정<br>
@@ -112,12 +216,13 @@ backend/
 - DEBUG = True<br>
 - REST API 권한: AllowAny<br>
 - 정적 파일: 로컬 서빙<br>
+- Django runserver
 
 ### 프로덕션 환경 (prod)<br>
-- PostgreSQL 데이터베이스 사용 (SSL 비활성화)<br>
-- S3 Object Storage 연동<br>
-- Django runserver 사용 (IP 접근)<br>
+- PostgreSQL 데이터베이스 사용<br>
+- DEBUG = False<br>
 - 보안 설정 강화
+- Gunicorn/uWSGI + Nginx 기반
 
 
 ## ⚠️의존성 관리 (중요!)
@@ -143,42 +248,45 @@ backend/
 ### API 개발
 REST API는 Django REST Framework를 사용합니다:
 
-- **Base** URL: /api/
-- **API v1**: /api/v1/
-- **Admin Panel**: /admin/
-- **API Auth**: /api-auth/
-- **Token Auth**: /api/token/
+* **API Base URL**: `/api/`
+* **Swagger UI (API 문서)**: `/docs/`
+* **API Schema (OpenAPI)**: `/api/schema/`
+* **Admin Panel**: `/admin/`
 
 ## 🌿 브랜치 전략
 
 ### 브랜치 구조
 - main: 프로덕션 배포용 브랜치
-- dev: 개발 통합 브랜치
-- feature/*: 기능 개발용 브랜치
+- develop: 개발 통합 브랜치
+- feat/*: 기능 개발용 브랜치
 
 ### 워크플로우
-1. develop 브랜치에서 feature/기능명브랜치 생성
+1. develop 브랜치에서 feat/기능명브랜치 생성
 2. 개발이 완료 후 develop으로 PR 생성
 3. 코드 리뷰 후 develop에 머지
 4. develop에서 테스트 완료 후 main머지
 
 ### 코드 작업중에 팀원이 pr요청 -> 원격 develop 브랜치가 최신화 되었을때
 
-1. 내가 작업하던 브랜치에 최신화된 원격 기록 가져오기
+1. develop 브랜치 최신화 하기(develop브랜치에서 실행)
  ```
  git fetch origin
  ```
- 2. 원격 develop rebase
+ 2. 원격 develop 내용 가져오기
  ```
- git rebase origin develop
+ git pull origin develop
  ```
-3. 로컬 develop 브랜치로 이동
+3. migrate
 ```
-git switch develop
+python manage.py migrate
 ```
-4. 원격 내용으로 최신화
+4. 작업 브랜치로 이동
 ```
-git pull origin develop
+git switch <작업브랜치명>
+```
+5. 최신 내역으로 최신화(최신화한 develop 내용을 rebase합니다.)
+```
+git rebase develop
 ```
 
 

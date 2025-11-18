@@ -194,7 +194,9 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
 
         raw_option = request.data.get("option_values")
-        images_data = request.FILES.getlist("images", []) if request.FILES else [] # 이미지 데이터 분리
+        images_data = (
+            request.FILES.getlist("images", []) if request.FILES else []
+        )  # 이미지 데이터 분리
         categories_data = validated_data.pop("categories", [])
 
         seller = validated_data.pop("seller")
