@@ -32,6 +32,7 @@ class CartViewSet(viewsets.ModelViewSet):
                 name='single_item',
                 summary='단일 상품 추가 예시',
                 value={
+                    "user_id": "string",
                     "product_id": 1,
                     "quantity": 2
                 },
