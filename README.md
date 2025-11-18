@@ -2,8 +2,7 @@
 > 프로젝트의 백엔드 시스템을 Django와 DRF로 구축합니다.
 
 ## 🏗️ 시스템 아키텍처 (System Architecture)
-프로젝트의 백엔드, 인프라, 배포 구성을 나타내는 다이어그램입니다.
-
+<img width="720" height="720" alt="Image" src="https://github.com/user-attachments/assets/f682230c-81f7-47c1-9c74-dea5adab6ff2" />
 
 #### 기술 스택
 * **Python**: 3.13 (또는 현재 사용 버전)
