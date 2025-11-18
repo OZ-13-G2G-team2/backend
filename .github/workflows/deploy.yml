@@ -82,12 +82,17 @@ jobs:
           
           EOT
 
+          mkdir -p /home/ec2-user/app/media/product_images /home/ec2-user/app/static \
+          && chmod -R 755 /home/ec2-user/app/media /home/ec2-user/app/static \
+          && chown -R ec2-user:ec2-user /home/ec2-user/app/media /home/ec2-user/app/static
 
           # 컨테이너 실행
           docker run -d \
           --name web \
           --env-file /home/ec2-user/app/.env \
           -p 8000:8000 \
+          -v /home/ec2-user/app/media:/app/media \
+          -v /home/ec2-user/app/static:/app/static \
           lusieda/django-app:latest \
           /bin/bash -c "/app/scripts/run.sh"
 
