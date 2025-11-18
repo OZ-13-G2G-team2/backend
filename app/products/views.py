@@ -28,7 +28,7 @@ from app.sellers.models import Seller
     parameters=[
         OpenApiParameter("q", str, description="검색어"),
         OpenApiParameter("origin", str, description="원산지"),
-        OpenApiParameter("category_name", str, description="카테고리(그룹2,ex.축산물)"),
+        OpenApiParameter("category_name", str, description="카테고리 이름"),
         OpenApiParameter("min_price", float, description="최소 가격"),
         OpenApiParameter("max_price", float, description="최대 가격"),
         OpenApiParameter("sold_out", str, description="품절 여부 (true/false)"),
@@ -91,7 +91,7 @@ class ProductListAPIView(generics.ListAPIView):
 
         # 카테고리 필터
         if category_name:
-            my_filters &= Q(categories__name__icontains=q, categories__group=2)
+            my_filters &= Q(categories__name__icontains=category_name)
 
         # 가격 범위 필터
         if min_price:
