@@ -161,18 +161,11 @@ class ProductListAPIView(generics.ListAPIView):
                     "description": "1: 시즌(1-4) / 2: 테마(5-14) / 3: 색상(15-19) / 4: 사이즈(20-23) / 5: kg(24-32) ",
                 },
                 "option_values": {
-                    "type": "array",
-                    "description": "색상(15-19,빨강 노랑 초록 파랑 검정) / 4: 사이즈(20-23, 소 중 대 특태) / 5: kg(24-32, 500 1 2 3 4 5 7 10 20)",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "category": {
-                                "type": "integer",
-                                "description": "옵션 카테고리 ID",
-                            },
-                            "extra_price": {"type": "number"},
-                        },
-                    },
+                    "type": "string",
+                    "description": "색상(빨강 노랑 초록 파랑 검정) / 사이즈(소 중 대 특대) / kg(500g 1kg 2kg 3kg 4kg 5kg 7kg 10kg 20kg)",
+                    "example": '[{"category_input": "특대", "extra_price": 3000},'
+                               '{"category_input": "빨강", "extra_price": 0},'
+                               '{"category_input": "10kg", "extra_price": 5000}]'
                 },
                 "images": {
                     "type": "array",
@@ -243,8 +236,9 @@ class ProductCreateAPIView(generics.CreateAPIView):
                 )
 
         headers = self.get_success_headers(serializer.data)
+        product.refresh_from_db()
         return Response(
-            serializer.data,
+            ProductDetailWithSellerSerializer(product).data,
             status=status.HTTP_201_CREATED,
             headers=headers,
         )
@@ -313,19 +307,13 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
                         "description": "1: 시즌(1-4) / 2: 테마(5-14) / 3: 색상(15-19) / 4: 사이즈(20-23) / 5: kg(24-32)",
                     },
                     "option_values": {
-                        "type": "array",
-                        "description": "색상(15-19,빨강 노랑 초록 파랑 검정) / 4: 사이즈(20-23, 소 중 대 특태) / 5: kg(24-32, 500 1 2 3 4 5 7 10 20)",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "category": {
-                                    "type": "integer",
-                                    "description": "옵션 카테고리 ID",
-                                },
-                                "extra_price": {"type": "number"},
-                            },
-                        },
-                    },
+                        "type": "string",
+                        "description": "색상(빨강 노랑 초록 파랑 검정) / 사이즈(소 중 대 특대) / kg(500g 1kg 2kg 3kg 4kg 5kg 7kg 10kg 20kg)",
+                        "example": '[{"category_input": "특대", "extra_price": 3000},'
+                                   '{"category_input": "빨강", "extra_price": 0},'
+                                   '{"category_input": "10kg", "extra_price": 5000}]'
+},
+
                     "images": {
                         "type": "array",
                         "items": {"type": "string", "format": "binary"},
