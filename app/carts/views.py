@@ -45,7 +45,6 @@ class CartViewSet(viewsets.ViewSet):
         product_id = request.data.get("product_id")
         quantity = request.data.get("quantity", 1)
 
-        # Product PK 이름이 product_id
         try:
             product = Product.objects.get(product_id=product_id)
         except Product.DoesNotExist:
