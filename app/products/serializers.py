@@ -144,8 +144,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 class ProductCreateSerializer(serializers.ModelSerializer):
-    categories = serializers.ListField(
-        child=serializers.IntegerField(),
+    categories = serializers.CharField(
         write_only=True,
         required=False,
     )
@@ -194,10 +193,19 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
 
         raw_option = request.data.get("option_values")
-        images_data = (
-            request.FILES.getlist("images", []) if request.FILES else []
-        )  # 이미지 데이터 분리
-        categories_data = validated_data.pop("categories", [])
+        images_data = request.FILES.getlist("images", []) if request.FILES else [] # 이미지 데이터 분리
+        categories_raw = validated_data.pop("categories", [])
+        if categories_raw:
+            if isinstance(categories_raw, str):
+                categories_ids = [
+                    int(x.strip()) for x in categories_raw.split(",") if x.strip().isdigit()
+                ]
+            elif isinstance(categories_raw, list):
+                categories_ids = [int(x) for x in categories_raw]
+            else:
+                categories_ids = []
+        else:
+            categories_ids = []
 
         seller = validated_data.pop("seller")
         if seller is None or not Seller.objects.filter(id=seller.id).exists():
@@ -205,8 +213,8 @@ class ProductCreateSerializer(serializers.ModelSerializer):
 
         product = Product.objects.create(seller=seller, **validated_data)
 
-        if categories_data:
-            product.categories.set(categories_data)
+        if categories_ids:
+            product.categories.set(categories_ids)
 
         for image_data in images_data:
             ProductImages.objects.create(
@@ -384,8 +392,7 @@ class ProductDetailWithSellerSerializer(ProductSerializer):
 
 
 class ProductUpdateSerializer(serializers.ModelSerializer):
-    categories = serializers.ListField(
-        child=serializers.IntegerField(),
+    categories = serializers.CharField(
         write_only=True,
         required=False,
     )
@@ -424,17 +431,20 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         request = self.context.get("request")
 
-        categories_data = validated_data.pop("categories", None)
-        if categories_data is not None:
-            # 기존 카테고리 유지 + 새로운 것 추가 (중복 제거)
-            existing_ids = set(instance.categories.values_list("id", flat=True))
-            valid_ids = set(
-                Category.objects.filter(id__in=categories_data).values_list(
-                    "id", flat=True
-                )
-            )
-            all_ids = list(existing_ids | valid_ids)  # 합집합
-            instance.categories.set(all_ids)
+        categories_raw = validated_data.pop("categories", [])
+        if categories_raw is not None:
+            if isinstance(categories_raw, str):
+                categories_ids = [
+                    int(x.strip()) for x in categories_raw.split(",") if x.strip().isdigit()
+                ]
+            elif isinstance(categories_raw, list):
+                categories_ids = [int(x) for x in categories_raw]
+            else:
+                categories_ids = []
+        else:
+            categories_ids = []
+        if categories_ids:
+            instance.categories.set(categories_ids)
 
         # 일반 필드
         for attr, value in validated_data.items():
