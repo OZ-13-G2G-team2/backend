@@ -1,6 +1,6 @@
-from django.db.models.signals import post_migrate
+from django.db.models.signals import post_migrate, post_save
 from django.dispatch import receiver
-from app.products.models import CategoryGroup, Category
+from app.products.models import CategoryGroup, Category, Product, ProductStats
 
 
 @receiver(post_migrate)
@@ -53,3 +53,9 @@ def create_default_categories(sender, **kwargs):
             Category(name="20kg", group=g5),
         ]
     )
+
+
+@receiver(post_save, sender=Product)
+def crate_product_stats(sender, instance, created, **kwargs):
+    if created:
+        ProductStats.objects.create(product=instance)
