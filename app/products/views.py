@@ -54,7 +54,7 @@ class ProductListAPIView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        queryset = Product.objects.select_related("stats").all()
+        queryset = Product.objects.select_related("stats").prefetch_related("categories").all()
         params = self.request.query_params
 
         q = params.get("q", "").strip()
