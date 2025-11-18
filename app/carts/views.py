@@ -22,7 +22,7 @@ class CartViewSet(viewsets.ViewSet):
     def get_queryset(self):
         return Cart.objects.filter(user=self.request.user)
 
-    # POST /api/carts/ : 단일 상품 추가
+    # POST /api/carts/
     @extend_schema(
         tags=["장바구니 관리"],
         summary="장바구니 추가",
@@ -32,7 +32,7 @@ class CartViewSet(viewsets.ViewSet):
                 name='single_item',
                 summary='단일 상품 추가 예시',
                 value={
-                    "product_id": 12345,
+                    "product_id": 1,
                     "quantity": 2
                 },
                 request_only=True
@@ -45,18 +45,22 @@ class CartViewSet(viewsets.ViewSet):
         product_id = request.data.get("product_id")
         quantity = request.data.get("quantity", 1)
 
-        if not Product.objects.filter(id=product_id).exists():
+        # Product PK 이름이 product_id
+        try:
+            product = Product.objects.get(product_id=product_id)
+        except Product.DoesNotExist:
             return Response({"error": "유효하지 않은 상품 ID"}, status=400)
 
         cart, _ = Cart.objects.get_or_create(user=user)
 
-        if CartItem.objects.filter(cart=cart, product_id=product_id).exists():
+        # 중복 체크
+        if CartItem.objects.filter(cart=cart, product=product).exists():
             return Response({"error": "이미 장바구니에 존재"}, status=409)
 
-        CartItem.objects.create(cart=cart, product_id=product_id, quantity=quantity)
+        CartItem.objects.create(cart=cart, product=product, quantity=quantity)
         return Response({"message": "상품이 장바구니에 추가되었습니다."}, status=200)
 
-    # GET /api/carts/ : 본인 장바구니 조회
+    # GET /api/carts/
     @extend_schema(
         tags=["장바구니 관리"],
         summary="장바구니 조회",
@@ -103,24 +107,25 @@ class CartViewSet(viewsets.ViewSet):
         for it in items:
             pid, qty = it.get("product_id"), it.get("quantity", 1)
 
-            if not Product.objects.filter(id=pid).exists():
+            try:
+                product = Product.objects.get(product_id=pid)
+            except Product.DoesNotExist:
                 return Response({"error": "유효하지 않은 상품 ID"}, status=400)
 
-            if CartItem.objects.filter(cart=cart, product_id=pid).exists():
+            if CartItem.objects.filter(cart=cart, product=product).exists():
                 duplicate.append(pid)
                 continue
 
-            CartItem.objects.create(cart=cart, product_id=pid, quantity=qty)
+            CartItem.objects.create(cart=cart, product=product, quantity=qty)
             created.append(pid)
 
         if duplicate:
             return Response(
-                {"error": "일부 상품이 이미 장바구니에 존재합니다."}, status=409
+                {"error": "일부 상품이 이미 장바구니에 존재합니다.", "duplicate": duplicate},
+                status=409
             )
 
-        return Response(
-            {"message": "여러 상품이 장바구니에 추가되었습니다."}, status=200
-        )
+        return Response({"message": "여러 상품이 장바구니에 추가되었습니다."}, status=200)
 
     # PATCH /api/carts/items/
     # DELETE /api/carts/items/
@@ -128,7 +133,7 @@ class CartViewSet(viewsets.ViewSet):
         tags=["장바구니 관리"],
         summary="장바구니 상품 변경·삭제",
         description=(
-            "PATCH: product_id 기반 수량 변경(부분 수정)\n"
+            "PATCH: product_id 기반 수량 변경\n"
             "DELETE: product_ids 배열 기반 선택 삭제 / 비어있으면 전체 삭제"
         ),
         examples=[
@@ -144,12 +149,6 @@ class CartViewSet(viewsets.ViewSet):
                 value={"product_ids": [12345, 23456]},
                 request_only=True
             ),
-            OpenApiExample(
-                name='delete_all',
-                summary='전체 삭제 예시 (DELETE, 바디 비어있음)',
-                value= {},  # 일부 Swagger UI는 빈 바디 표시를 위해 {} 사용
-                request_only=True
-            )
         ]
     )
     @action(detail=False, methods=["patch", "delete"], url_path="items")
@@ -161,17 +160,15 @@ class CartViewSet(viewsets.ViewSet):
         except Cart.DoesNotExist:
             return Response({"error": "장바구니 없음"}, status=404)
 
-        # --- PATCH: 수량 부분 수정 ---
+        # PATCH
         if request.method == "PATCH":
             product_id = request.data.get("product_id")
-            if product_id is None:
-                return Response({"error": "product_id 필요"}, status=400)
-
-            quantity = request.data.get("quantity", None)
+            quantity = request.data.get("quantity")
 
             try:
-                item = CartItem.objects.get(cart=cart, product_id=product_id)
-            except CartItem.DoesNotExist:
+                product = Product.objects.get(product_id=product_id)
+                item = CartItem.objects.get(cart=cart, product=product)
+            except (Product.DoesNotExist, CartItem.DoesNotExist):
                 return Response({"error": "해당 상품 없음"}, status=404)
 
             if quantity is not None:
@@ -180,7 +177,7 @@ class CartViewSet(viewsets.ViewSet):
 
             return Response({"message": "수정 완료"}, status=200)
 
-        # --- DELETE: 선택/전체 삭제 ---
+        # DELETE
         if request.method == "DELETE":
             product_ids = request.data.get("product_ids", None)
 
@@ -191,13 +188,15 @@ class CartViewSet(viewsets.ViewSet):
 
             # 선택 삭제
             if not isinstance(product_ids, list):
-                return Response(
-                    {"error": "product_ids는 배열이어야 합니다."}, status=400
-                )
+                return Response({"error": "product_ids는 배열이어야 합니다."}, status=400)
 
-            deleted_count, _ = CartItem.objects.filter(
-                cart=cart, product_id__in=product_ids
-            ).delete()
+            deleted_count = 0
+            for pid in product_ids:
+                try:
+                    product = Product.objects.get(product_id=pid)
+                    deleted, _ = CartItem.objects.filter(cart=cart, product=product).delete()
+                    deleted_count += deleted
+                except Product.DoesNotExist:
+                    continue
 
             return Response({"message": f"{deleted_count}개 삭제 완료"}, status=200)
-        return None
