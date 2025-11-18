@@ -12,8 +12,9 @@ echo "=== Collecting static files ==="
 $POETRY_BIN run python manage.py collectstatic --noinput
 
 echo "=== Starting Gunicorn server ==="
+WORKERS=$(nproc)
 $POETRY_BIN run gunicorn config.wsgi:application \
 --bind 0.0.0.0:8000 \
---workers 2 \
+--workers $WORKERS \
 --threads 2 \
 --timeout 120
