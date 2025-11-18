@@ -15,7 +15,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class ProductImagesSerializer(serializers.ModelSerializer):
-    image_url = serializers.ImageField(read_only=False)
+    image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = ProductImages
@@ -137,10 +137,15 @@ class ProductSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(serializers.CharField())
     def get_thumbnail(self, obj):
+        request = self.context.get("request")
         first_image = obj.images.first()
         if not first_image:
             return None
-        return self.context["request"].build_absolute_uri(first_image.image_url)
+
+        image_url = first_image.image_url.url
+        if request:
+            return request.build_absolute_uri(image_url)
+        return image_url
 
 
 class ProductCreateSerializer(serializers.ModelSerializer):
