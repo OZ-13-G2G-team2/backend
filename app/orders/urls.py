@@ -40,7 +40,12 @@ urlpatterns = [
     path(
         "items/by_order/",
         OrderItemViewSet.as_view({"get": "by_order"}),
-        name="orderitem_by_order",
+        name="orderitem_list_by_order",
     ),
     path("buy-now/", OrderViewSet.as_view({"post": "buy_now"}), name="order_buy_now"),
+    path(
+        "cart-purchase/",
+        OrderViewSet.as_view({"post": "cart_purchase"}),
+        name="order_cart_purchase",
+    ),
 ]
