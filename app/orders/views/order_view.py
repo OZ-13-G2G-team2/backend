@@ -1,5 +1,4 @@
 from django.db import transaction
-from django.db.models import F
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -18,7 +17,7 @@ from app.orders.services.order_item_service import OrderItemService
 from app.orders.services import OrderService
 from app.orders.exceptions import OrderNotFound, InvalidOrderStatus
 from app.carts.models import CartItem
-from app.products.models import Product, ProductStats
+from app.products.models import Product
 
 
 @extend_schema_view(

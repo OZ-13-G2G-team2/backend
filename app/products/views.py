@@ -164,8 +164,8 @@ class ProductListAPIView(generics.ListAPIView):
                     "type": "string",
                     "description": "색상(빨강 노랑 초록 파랑 검정) / 사이즈(소 중 대 특대) / kg(500g 1kg 2kg 3kg 4kg 5kg 7kg 10kg 20kg)",
                     "example": '[{"category_input": "특대", "extra_price": 3000},'
-                               '{"category_input": "빨강", "extra_price": 0},'
-                               '{"category_input": "10kg", "extra_price": 5000}]'
+                    '{"category_input": "빨강", "extra_price": 0},'
+                    '{"category_input": "10kg", "extra_price": 5000}]',
                 },
                 "images": {
                     "type": "array",
@@ -310,10 +310,9 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
                         "type": "string",
                         "description": "색상(빨강 노랑 초록 파랑 검정) / 사이즈(소 중 대 특대) / kg(500g 1kg 2kg 3kg 4kg 5kg 7kg 10kg 20kg)",
                         "example": '[{"category_input": "특대", "extra_price": 3000},'
-                                   '{"category_input": "빨강", "extra_price": 0},'
-                                   '{"category_input": "10kg", "extra_price": 5000}]'
-},
-
+                        '{"category_input": "빨강", "extra_price": 0},'
+                        '{"category_input": "10kg", "extra_price": 5000}]',
+                    },
                     "images": {
                         "type": "array",
                         "items": {"type": "string", "format": "binary"},

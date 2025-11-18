@@ -29,16 +29,13 @@ class CartViewSet(viewsets.ViewSet):
         description="단일 상품을 장바구니에 추가",
         examples=[
             OpenApiExample(
-                name='single_item',
-                summary='단일 상품 추가 예시',
-                value={
-                    "product_id": 12345,
-                    "quantity": 2
-                },
-                request_only=True
+                name="single_item",
+                summary="단일 상품 추가 예시",
+                value={"product_id": 12345, "quantity": 2},
+                request_only=True,
             )
         ],
-        request=CartSerializer
+        request=CartSerializer,
     )
     def create(self, request):
         user = request.user
@@ -78,17 +75,17 @@ class CartViewSet(viewsets.ViewSet):
         description="여러 상품을 장바구니에 추가",
         examples=[
             OpenApiExample(
-                name='bulk_items',
-                summary='여러 상품 추가 예시',
+                name="bulk_items",
+                summary="여러 상품 추가 예시",
                 value={
                     "items": [
                         {"product_id": 12345, "quantity": 1},
-                        {"product_id": 23456, "quantity": 2}
+                        {"product_id": 23456, "quantity": 2},
                     ]
                 },
-                request_only=True
+                request_only=True,
             )
-        ]
+        ],
     )
     @action(detail=False, methods=["post"], url_path="bulk_add")
     def bulk_add(self, request):
@@ -133,24 +130,24 @@ class CartViewSet(viewsets.ViewSet):
         ),
         examples=[
             OpenApiExample(
-                name='patch_update_quantity',
-                summary='수량 변경 예시 (PATCH)',
+                name="patch_update_quantity",
+                summary="수량 변경 예시 (PATCH)",
                 value={"product_id": 12345, "quantity": 3},
-                request_only=True
+                request_only=True,
             ),
             OpenApiExample(
-                name='delete_selected',
-                summary='선택 삭제 예시 (DELETE)',
+                name="delete_selected",
+                summary="선택 삭제 예시 (DELETE)",
                 value={"product_ids": [12345, 23456]},
-                request_only=True
+                request_only=True,
             ),
             OpenApiExample(
-                name='delete_all',
-                summary='전체 삭제 예시 (DELETE, 바디 비어있음)',
-                value= {},  # 일부 Swagger UI는 빈 바디 표시를 위해 {} 사용
-                request_only=True
-            )
-        ]
+                name="delete_all",
+                summary="전체 삭제 예시 (DELETE, 바디 비어있음)",
+                value={},  # 일부 Swagger UI는 빈 바디 표시를 위해 {} 사용
+                request_only=True,
+            ),
+        ],
     )
     @action(detail=False, methods=["patch", "delete"], url_path="items")
     def items(self, request):

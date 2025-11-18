@@ -131,7 +131,7 @@ class OrdersAPITest(APITestCase):
 
     def test_cart_purchase_empty_cart(self):
         CartItem.objects.filter(cart__user=self.user).delete()
-        data = {
+        _data = {
             "address_id": self.address.id,
             "payment_method": "card",
         }
@@ -147,7 +147,7 @@ class OrdersAPITest(APITestCase):
     def test_cart_purchase_creates_order_and_clears_cart(self):
         CartItem.objects.filter(cart=self.cart).delete()
         CartItem.objects.create(cart=self.cart, product=self.product, quantity=2)
-        data = {
+        _data = {
             "address_id": self.address.id,
             "payment_method": "card",
         }
