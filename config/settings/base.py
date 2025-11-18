@@ -176,8 +176,8 @@ AUTH_USER_MODEL = "users.User"
 # CORS 관련
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "http://127.0.0.1:5173",
     "http://13.124.51.27",
+    "https://frontend-g2g.vercel.app"
 ]
 
 CORS_ALLOW_CREDENTIALS = True  # 인증 요청 허용
