@@ -6,8 +6,8 @@ services:
     image: lusieda/django-app:latest
     env_file:
       - /home/ec2-user/app/.env
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
 
     command: bash -c "poetry run gunicorn config.wsgi:application --bind 0.0.0.0:8000"
     restart: always
