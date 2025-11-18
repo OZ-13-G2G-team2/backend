@@ -26,7 +26,7 @@ class OrderItemService:
             order=order,
             product_id=product.pk,
             quantity=quantity,
-            price_at_purchase=price_at_purchase,
+            price_at_purchase=price_at_purchase or product.price,
         )
 
         order.calculate_total()

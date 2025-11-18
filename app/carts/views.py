@@ -2,7 +2,7 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiExample
 
 from .models import Cart, CartItem
 from .serializers import CartSerializer
@@ -17,12 +17,28 @@ from app.products.models import Product
 class CartViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = CartSerializer
+    queryset = Cart.objects.all()
+
+    def get_queryset(self):
+        return Cart.objects.filter(user=self.request.user)
 
     # POST /api/carts/ : 단일 상품 추가
     @extend_schema(
         tags=["장바구니 관리"],
         summary="장바구니 추가",
         description="단일 상품을 장바구니에 추가",
+        examples=[
+            OpenApiExample(
+                name='single_item',
+                summary='단일 상품 추가 예시',
+                value={
+                    "product_id": 12345,
+                    "quantity": 2
+                },
+                request_only=True
+            )
+        ],
+        request=CartSerializer
     )
     def create(self, request):
         user = request.user
@@ -60,6 +76,19 @@ class CartViewSet(viewsets.ViewSet):
         tags=["장바구니 관리"],
         summary="여러 상품 추가",
         description="여러 상품을 장바구니에 추가",
+        examples=[
+            OpenApiExample(
+                name='bulk_items',
+                summary='여러 상품 추가 예시',
+                value={
+                    "items": [
+                        {"product_id": 12345, "quantity": 1},
+                        {"product_id": 23456, "quantity": 2}
+                    ]
+                },
+                request_only=True
+            )
+        ]
     )
     @action(detail=False, methods=["post"], url_path="bulk_add")
     def bulk_add(self, request):
@@ -102,6 +131,26 @@ class CartViewSet(viewsets.ViewSet):
             "PATCH: product_id 기반 수량 변경(부분 수정)\n"
             "DELETE: product_ids 배열 기반 선택 삭제 / 비어있으면 전체 삭제"
         ),
+        examples=[
+            OpenApiExample(
+                name='patch_update_quantity',
+                summary='수량 변경 예시 (PATCH)',
+                value={"product_id": 12345, "quantity": 3},
+                request_only=True
+            ),
+            OpenApiExample(
+                name='delete_selected',
+                summary='선택 삭제 예시 (DELETE)',
+                value={"product_ids": [12345, 23456]},
+                request_only=True
+            ),
+            OpenApiExample(
+                name='delete_all',
+                summary='전체 삭제 예시 (DELETE, 바디 비어있음)',
+                value= {},  # 일부 Swagger UI는 빈 바디 표시를 위해 {} 사용
+                request_only=True
+            )
+        ]
     )
     @action(detail=False, methods=["patch", "delete"], url_path="items")
     def items(self, request):
