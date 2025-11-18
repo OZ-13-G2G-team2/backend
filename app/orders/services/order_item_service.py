@@ -8,9 +8,8 @@ class OrderItemService:
     @staticmethod
     @transaction.atomic
     def create_item(order, product_id, quantity, price_at_purchase=None):
-
         try:
-            product = Product.objects.select_for_update().get(product_id=product_id)
+            product = Product.objects.select_for_update().get(pk=product_id)
         except Product.DoesNotExist:
             raise ValueError("존재하지 않는 상품입니다.")
 
@@ -19,12 +18,13 @@ class OrderItemService:
 
         product.stock = F("stock") - quantity
         product.save(update_fields=["stock"])
+        product.refresh_from_db()  # 재고 최신화
 
         price_at_purchase = price_at_purchase or product.price
 
         item = OrderItem.objects.create(
             order=order,
-            product=product,
+            product_id=product.pk,
             quantity=quantity,
             price_at_purchase=price_at_purchase,
         )
@@ -47,6 +47,7 @@ class OrderItemService:
 
         product.stock = F("stock") - diff
         product.save(update_fields=["stock"])
+        product.refresh_from_db()
 
         item.quantity = new_quantity
         item.save(update_fields=["quantity"])
@@ -61,6 +62,7 @@ class OrderItemService:
         product = item.product
         product.stock = F("stock") + item.quantity
         product.save(update_fields=["stock"])
+        product.refresh_from_db()
 
         order = item.order
         item.delete()
