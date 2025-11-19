@@ -389,7 +389,9 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
             )
 
         product.delete()
-        return Response({"detail":"상품이 삭제되었습니다."}, status=status.HTTP_204_NO_CONTENT)
+        return Response(
+            {"detail": "상품이 삭제되었습니다."}, status=status.HTTP_204_NO_CONTENT
+        )
 
 
 @extend_schema(
