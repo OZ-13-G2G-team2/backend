@@ -176,7 +176,7 @@ AUTH_USER_MODEL = "users.User"
 # CORS 관련
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "http://backend-g2g.p-e.kr/",
+    "http://backend-g2g.p-e.kr",
     "https://frontend-g2g.vercel.app",
 ]
 
