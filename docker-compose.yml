@@ -18,7 +18,6 @@ services:
       retries: 5
       start_period: 10s
     volumes:
-      - /home/ec2-user/app:/app
       - /home/ec2-user/app/static:/app/static
       - /home/ec2-user/app/media:/app/media
 
@@ -36,3 +35,6 @@ services:
     restart: always
     networks:
       - ws
+networks:
+  ws:
+    driver: bridge

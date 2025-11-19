@@ -198,12 +198,16 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
 
         raw_option = request.data.get("option_values")
-        images_data = request.FILES.getlist("images", []) if request.FILES else [] # 이미지 데이터 분리
+        images_data = (
+            request.FILES.getlist("images", []) if request.FILES else []
+        )  # 이미지 데이터 분리
         categories_raw = validated_data.pop("categories", [])
         if categories_raw:
             if isinstance(categories_raw, str):
                 categories_ids = [
-                    int(x.strip()) for x in categories_raw.split(",") if x.strip().isdigit()
+                    int(x.strip())
+                    for x in categories_raw.split(",")
+                    if x.strip().isdigit()
                 ]
             elif isinstance(categories_raw, list):
                 categories_ids = [int(x) for x in categories_raw]
@@ -440,7 +444,9 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
         if categories_raw is not None:
             if isinstance(categories_raw, str):
                 categories_ids = [
-                    int(x.strip()) for x in categories_raw.split(",") if x.strip().isdigit()
+                    int(x.strip())
+                    for x in categories_raw.split(",")
+                    if x.strip().isdigit()
                 ]
             elif isinstance(categories_raw, list):
                 categories_ids = [int(x) for x in categories_raw]

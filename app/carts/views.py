@@ -31,14 +31,10 @@ class CartViewSet(viewsets.ModelViewSet):
         description="단일 상품을 장바구니에 추가",
         examples=[
             OpenApiExample(
-                name='single_item',
-                summary='단일 상품 추가 예시',
-                value={
-                    "user_id": "string",
-                    "product_id": 1,
-                    "quantity": 2
-                },
-                request_only=True
+                name="single_item",
+                summary="단일 상품 추가 예시",
+                value={"user_id": "string", "product_id": 1, "quantity": 2},
+                request_only=True,
             )
         ],
         request=CartSerializer,
@@ -69,15 +65,15 @@ class CartViewSet(viewsets.ModelViewSet):
         tags=["장바구니 관리"],
         summary="장바구니 조회",
         description="장바구니 상품 목록 조회. 기본적으로 자신의 장바구니를 반환합니다. "
-                    "관리자는 쿼리 파라미터 user_id로 다른 사용자의 장바구니를 조회할 수 있습니다.",
+        "관리자는 쿼리 파라미터 user_id로 다른 사용자의 장바구니를 조회할 수 있습니다.",
         parameters=[
             OpenApiParameter(
                 name="user_id",
                 description="조회할 대상 사용자의 ID (관리자 전용). 본인 조회시 생략 가능",
                 required=False,
-                type=int
+                type=int,
             )
-        ]
+        ],
     )
     def list(self, request):
         # 인증 확인
@@ -93,11 +89,16 @@ class CartViewSet(viewsets.ModelViewSet):
         else:
             # user_id가 전달된 경우: 관리자만 허용
             if not request.user.is_staff:
-                return Response({"error": "권한 없음"}, status=status.HTTP_403_FORBIDDEN)
+                return Response(
+                    {"error": "권한 없음"}, status=status.HTTP_403_FORBIDDEN
+                )
             try:
                 user_id = int(user_id_param)
             except (ValueError, TypeError):
-                return Response({"error": "user_id는 정수여야 합니다."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": "user_id는 정수여야 합니다."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             User = get_user_model()
             user_obj = get_object_or_404(User, id=user_id)
@@ -106,7 +107,9 @@ class CartViewSet(viewsets.ModelViewSet):
         try:
             cart = Cart.objects.get(user=user_obj)
         except Cart.DoesNotExist:
-            return Response({"error": "장바구니가 비어있음"}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "장바구니가 비어있음"}, status=status.HTTP_404_NOT_FOUND
+            )
 
         serializer = CartSerializer(cart)
         return Response({"data": serializer.data}, status=status.HTTP_200_OK)
