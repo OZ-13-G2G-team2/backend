@@ -10,7 +10,7 @@ load_dotenv(BASE_DIR / "/home/ec2-user/app/.env")  # noqa: F405
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 DEBUG = False
-ALLOWED_HOSTS = ["backend-g2g.p-e.kr', 'www.backend-g2g.p-e.kr"]
+ALLOWED_HOSTS = ["backend-g2g.p-e.kr", "www.backend-g2g.p-e.kr"]
 
 # CORS 관련
 CSRF_TRUSTED_ORIGINS = [
