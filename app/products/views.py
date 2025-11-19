@@ -13,7 +13,7 @@ from .serializers import (
     ProductUpdateSerializer,
     save_product_images,
 )
-from .models import Product, Category, CategoryGroup, ProductImages
+from .models import Product, Category, CategoryGroup
 from django.http.response import Http404
 from django.db.models import Q, Count
 from drf_spectacular.utils import extend_schema, OpenApiParameter
