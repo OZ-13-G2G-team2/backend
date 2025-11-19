@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   web:
     container_name: web
@@ -20,11 +18,12 @@ services:
       retries: 5
       start_period: 10s
     volumes:
-      - ./static:/app/static
+      - /home/ec2-user/app:/app
+      - /home/ec2-user/app/static:/app/static
       - /home/ec2-user/app/media:/app/media
 
   nginx:
-    container_name: NGINX
+    container_name: nginx
     image: nginx:latest
     ports:
       - "80:80"
