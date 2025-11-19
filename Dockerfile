@@ -51,8 +51,10 @@ COPY --chown=ec2-user:ec2-user . /app
 RUN chmod +x /app/scripts/run.sh
 
 # 정적 파일 저장용 디렉토리 (collectstatic용)
-RUN mkdir -p /home/ec2-user/vol/web/static /home/ec2-user/vol/web/media \
-    && chmod 755 /home/ec2-user/vol/web
+RUN mkdir -p /home/ec2-user/app/static /home/ec2-user/app/media \
+    && chown -R ec2-user:ec2-user /home/ec2-user/app/static /home/ec2-user/app/media \
+    && chmod -R 755 /home/ec2-user/app/static /home/ec2-user/app/media
+
 
 # 로그 디렉토리 생성
 RUN mkdir -p /app/logs && chmod 755 /app/logs
