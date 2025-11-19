@@ -33,9 +33,9 @@ DATABASES = {
 }
 
 STATIC_ROOT = BASE_DIR / "static"  # noqa: F405
-MEDIA_URL = "/media/"   # noqa: F405
+MEDIA_URL = "/media/"  # noqa: F405
 MEDIA_ROOT = BASE_DIR / "media"  # noqa: F405
 
 # build_absolute_uri 문제 방지 (중요)
 USE_X_FORWARDED_HOST = True
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

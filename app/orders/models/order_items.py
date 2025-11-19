@@ -14,7 +14,6 @@ class OrderItem(models.Model):
         verbose_name="상품",
     )
 
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     quantity = models.PositiveIntegerField(verbose_name="수량")
