@@ -1,3 +1,7 @@
+import os
+import uuid
+
+from django.core.files.base import ContentFile
 from rest_framework import serializers
 
 from .models import Product, ProductImages, Category, ProductOptionValue, ProductStats
@@ -5,6 +9,18 @@ from drf_spectacular.utils import extend_schema_field
 import json
 from ..sellers.models import Seller
 
+def save_product_images(product, seller, images):
+    valid_extensions = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
+    for image in images:
+        if not any(image.name.lower().endswith(ext) for ext in valid_extensions):
+            raise serializers.ValidationError(f"{image.name} 올바르지 않은 확장자입니다.")
+            # 고유 파일명 생성
+        ext = os.path.splitext(image.name)[1]  # 파일 확장자
+        unique_name = f"{uuid.uuid4()}{ext}"
+
+        product_image = ProductImages(product=product, user=seller.user)
+        product_image.image_url.save(unique_name, ContentFile(image.read()))
+        product_image.save()
 
 class CategorySerializer(serializers.ModelSerializer):
     group_name = serializers.CharField(source="group.name", read_only=True)
@@ -22,10 +38,14 @@ class ProductImagesSerializer(serializers.ModelSerializer):
         fields = ["image_id", "product", "user", "image_url"]
 
     def get_image_url(self, obj):
+        if not obj.image_url:
+            return None
+
         request = self.context.get("request")
+        url = obj.image_url.url
         if request:
-            return request.build_absolute_uri(obj.image_url.url)
-        return obj.image_url.url
+            return request.build_absolute_uri(url)
+        return url
 
 
 # 상품 상세 조회 시 옵션과 추가금 표시
@@ -196,11 +216,12 @@ class ProductCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         request = self.context.get("request")
+        seller = validated_data.pop("seller")
+        if seller is None or not Seller.objects.filter(id=seller.id).exists():
+            raise serializers.ValidationError("판매자 계정이 존재하지 않습니다.")
 
-        raw_option = request.data.get("option_values")
-        images_data = (
-            request.FILES.getlist("images", []) if request.FILES else []
-        )  # 이미지 데이터 분리
+        product = Product.objects.create(seller=seller, **validated_data)
+
         categories_raw = validated_data.pop("categories", [])
         if categories_raw:
             if isinstance(categories_raw, str):
@@ -216,20 +237,17 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         else:
             categories_ids = []
 
-        seller = validated_data.pop("seller")
-        if seller is None or not Seller.objects.filter(id=seller.id).exists():
-            raise serializers.ValidationError("판매자 계정이 존재하지 않습니다.")
-
-        product = Product.objects.create(seller=seller, **validated_data)
 
         if categories_ids:
             product.categories.set(categories_ids)
 
-        for image_data in images_data:
-            ProductImages.objects.create(
-                product=product, user=seller.user, image_url=image_data
-            )
+        images_data = (
+            request.FILES.getlist("images", []) if request.FILES else []
+        )  # 이미지 데이터 분리
+        if images_data:
+            save_product_images(product, seller, images_data)
 
+        raw_option = request.data.get("option_values")
         if raw_option:
             try:
                 option_data = json.loads(raw_option)
@@ -492,13 +510,12 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
                     product=instance, category=category, extra_price=extra_price
                 )
 
-        images_data = request.FILES.getlist("images")
+        images_data = request.FILES.getlist("images") if request.FILES else []
         # 이미지 처리
-        if images_data is not None:
+        if images_data:
             # 기존 이미지 전부 삭제 후 추가
             instance.images.all().delete()
-            for image_data in images_data:
-                ProductImages.objects.create(product=instance, image_url=image_data)
+            save_product_images(instance, instance.seller, images_data)
 
         # stock sold_out 연동
         new_stock = validated_data.get("stock", instance.stock)

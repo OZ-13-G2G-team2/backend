@@ -51,6 +51,8 @@ jobs:
           # 기존 컨테이너 중지/삭제
           docker stop $WEB_CONTAINER || true
           docker rm $WEB_CONTAINER || true
+          docker stop nginx || true
+          docker rm nginx || true
 
             # 최신 이미지 pull
           docker pull $IMAGE_NAME 
@@ -95,6 +97,16 @@ jobs:
           -v /home/ec2-user/app/static:/app/static \
           lusieda/django-app:latest \
           /bin/bash -c "/app/scripts/run.sh"
+          
+          docker run -d \
+          --name nginx \
+          -p 80:80 -p 443:443 \
+          -v /home/ec2-user/app/static:/app/static \
+          -v /home/ec2-user/app/media:/app/media \
+          -v /home/ec2-user/app/nginx.conf:/etc/nginx/conf.d/default.conf:ro \
+          -v /etc/nginx/ssl:/etc/nginx/ssl:ro \
+          nginx:latest
+
 
           # Django migration & static collect
           sleep 5

@@ -11,6 +11,7 @@ from .serializers import (
     ProductDetailWithSellerSerializer,
     ProductCreateSerializer,
     ProductUpdateSerializer,
+    save_product_images,
 )
 from .models import Product, Category, CategoryGroup, ProductImages
 from django.http.response import Http404
@@ -214,33 +215,10 @@ class ProductCreateAPIView(generics.CreateAPIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        image_files = request.FILES.getlist("images")
-        if image_files:
-            valid_extensions = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
-
-            for image in image_files:
-                if not image or not hasattr(image, "name"):
-                    return Response(
-                        {"error": "유효하지 않은 이미지 파일입니다."},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-
-                if not any(
-                    image.name.lower().endswith(ext) for ext in valid_extensions
-                ):
-                    return Response(
-                        {"error": f"{image.name}은(는) 올바르지 않은 확장자입니다."},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-
-                ProductImages.objects.create(
-                    product=product, user=user, image_url=image
-                )
-
         headers = self.get_success_headers(serializer.data)
         product.refresh_from_db()
         return Response(
-            ProductDetailWithSellerSerializer(product).data,
+            ProductDetailWithSellerSerializer(product, context={"request": request}).data,
             status=status.HTTP_201_CREATED,
             headers=headers,
         )
@@ -351,21 +329,6 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
 
         product = serializer.save()
 
-        image_files = request.FILES.getlist("images")
-        if image_files:
-            product.images.all().delete()
-            valid_extensions = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
-
-            for image in image_files:
-                if not any(
-                    image.name.lower().endswith(ext) for ext in valid_extensions
-                ):
-                    return Response(
-                        {"error": f"{image.name}은(는) 올바르지 않은 확장자입니다."},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-
-                ProductImages.objects.create(product=product, image_url=image)
         return Response(
             ProductDetailWithSellerSerializer(product).data, status=status.HTTP_200_OK
         )
@@ -483,21 +446,18 @@ class ProductImageUploadAPIView(generics.CreateAPIView):
                 {"error": "인증이 필요합니다."},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        image = self.request.data.get("image_url")
+        image = self.request.FILES.get("image_url")
         if not image:
             return Response(
                 {"error": "이미지 파일이 필요합니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        valid_extensions = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
-        if not any(image.name.lower().endswith(ext) for ext in valid_extensions):
-            return Response(
-                {"error": "올바르지 않은 확장자입니다."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save(product=product, user=self.request.user, image_url=image)
+        try:
+            save_product_images(product, product.seller, [image])
+        except serializers.ValidationError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer(product.images.last())
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
